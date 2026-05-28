@@ -1,0 +1,26 @@
+<mat-toolbar color="primary">{{ projectName }} starter</mat-toolbar>
+
+<main class="page-content">
+	<section class="panel">
+		<h1>Frontend is ready</h1>
+		<p>
+			Angular + NgRx + Reactive Forms + Material are configured. You can now
+			build the CV builder features.
+		</p>
+
+		<form [formGroup]="sampleForm" (ngSubmit)="saveDraft()">
+			<mat-form-field appearance="outline">
+				<mat-label>Draft name</mat-label>
+				<input matInput formControlName="name" placeholder="My CV draft" />
+			</mat-form-field>
+
+			<button mat-raised-button color="primary" type="submit">
+				Save Draft (demo)
+			</button>
+		</form>
+
+		<lib-ui></lib-ui>
+	</section>
+
+	<router-outlet></router-outlet>
+</main>

@@ -1,0 +1,14 @@
+@import '@angular/material/prebuilt-themes/azure-blue.css';
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+	color: #1f2937;
+	background: #eef2f7;
+}

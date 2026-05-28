@@ -1,0 +1,17 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:16
+    container_name: cvbilder-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cvbilder
+    ports:
+      - '5432:5432'
+    volumes:
+      - cvbilder-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  cvbilder-postgres-data:
