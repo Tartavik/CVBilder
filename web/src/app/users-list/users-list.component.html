@@ -1,0 +1,33 @@
+<div class="page">
+  <div class="container">
+    <div class="header">
+      <h1>Users</h1>
+      <a routerLink="/register" class="btn">+ New user</a>
+    </div>
+    @if (loading()) {
+      <p>Loading...</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr>
+              <td>{{ user.email }}</td>
+              <td><span class="badge">{{ user.role }}</span></td>
+              <td>{{ user.createdAt | date: 'dd.MM.yyyy HH:mm' }}</td>
+            </tr>
+          }
+          @empty {
+            <tr><td colspan="3" class="empty">No users yet</td></tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>

@@ -6,7 +6,12 @@
     "start:web": "nx serve web",
     "start:api": "nx serve api",
     "start:all": "nx run-many -t serve -p web,api --parallel=2",
-    "build": "nx run-many -t build -p web,api"
+    "build": "nx run-many -t build -p web,api",
+    "typeorm": "ts-node --transpile-only --project api/tsconfig.app.json -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d api/src/db/data-source.ts",
+    "migration:generate": "npm run typeorm -- migration:generate api/src/db/migrations/AutoMigration",
+    "migration:run": "npm run typeorm -- migration:run",
+    "migration:revert": "npm run typeorm -- migration:revert",
+    "migration:show": "npm run typeorm -- migration:show"
   },
   "private": true,
   "devDependencies": {
@@ -40,6 +45,7 @@
     "nx": "22.7.5",
     "prettier": "~3.6.2",
     "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "tslib": "^2.3.0",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.40.0",

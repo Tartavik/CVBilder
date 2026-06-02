@@ -15,7 +15,8 @@
     "skipDefaultLibCheck": true,
     "paths": {
       "@cvbilder/core": ["./backend/core/src/index.ts"],
-      "@cvbilder/ui": ["./frontend/ui/src/index.ts"]
+      "@cvbilder/ui": ["./frontend/ui/src/index.ts"],
+      "@cvbilder/users": ["./backend/users/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

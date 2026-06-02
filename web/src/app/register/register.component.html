@@ -1,0 +1,21 @@
+<div class="page">
+  <div class="card">
+    <h1>Register</h1>
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <label>
+        Email
+        <input type="email" formControlName="email" placeholder="user@example.com" />
+      </label>
+      <label>
+        Password
+        <input type="password" formControlName="password" placeholder="••••••••" />
+      </label>
+      @if (error) {
+        <p class="error">{{ error }}</p>
+      }
+      <button type="submit" [disabled]="form.invalid || loading">
+        {{ loading ? 'Creating...' : 'Create account' }}
+      </button>
+    </form>
+  </div>
+</div>

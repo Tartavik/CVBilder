@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CoreModule } from '@cvbilder/core';
+import { UsersModule } from '@cvbilder/users';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -25,6 +26,7 @@ import { AppService } from './app.service';
       }),
     }),
     CoreModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
