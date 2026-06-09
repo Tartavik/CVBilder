@@ -1,0 +1,39 @@
+<form [formGroup]="form" class="section-form">
+  <!-- Photo upload -->
+  <div class="photo-row">
+    <div class="photo-preview">
+      @if (photo()) {
+        <img [src]="photo()" alt="Profile photo" class="photo-img" />
+      } @else {
+        <mat-icon class="photo-placeholder-icon">person</mat-icon>
+      }
+    </div>
+    <div class="photo-actions">
+      <p class="photo-hint">Profile photo</p>
+      <div class="photo-btn-row">
+        <button mat-stroked-button type="button" (click)="photoInput.click()">Upload photo</button>
+        @if (photo()) {
+          <button mat-icon-button color="warn" type="button" (click)="removePhoto()" aria-label="Remove photo">
+            <mat-icon>delete</mat-icon>
+          </button>
+        }
+        <input #photoInput type="file" accept="image/*" hidden (change)="onPhotoChange($event)" />
+      </div>
+    </div>
+  </div>
+
+  <div class="field-row">
+    <mat-form-field appearance="outline">
+      <mat-label>Full name</mat-label>
+      <input matInput formControlName="fullName" placeholder="John Doe" />
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Job title</mat-label>
+      <input matInput formControlName="jobTitle" placeholder="Frontend Developer" />
+    </mat-form-field>
+  </div>
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Summary</mat-label>
+    <textarea matInput formControlName="summary" rows="4" placeholder="Brief professional summary..."></textarea>
+  </mat-form-field>
+</form>

@@ -1,0 +1,108 @@
+<div class="classic-page">
+
+  <!-- Left column -->
+  <aside class="classic-left">
+    @if (cv().personal.photo) {
+      <img [src]="cv().personal.photo" alt="Profile" class="classic-photo" />
+    } @else {
+      <div class="classic-photo-placeholder"></div>
+    }
+
+    @if (cv().personal.email || cv().personal.phone || cv().personal.city) {
+      <div class="classic-block">
+        <h3 class="classic-block-title">DETAILS</h3>
+        @if (cv().personal.email) {
+          <div class="classic-detail">
+            <span class="detail-icon">✉</span>
+            <span>{{ cv().personal.email }}</span>
+          </div>
+        }
+        @if (cv().personal.city) {
+          <div class="classic-detail">
+            <span class="detail-icon">⌖</span>
+            <span>{{ cv().personal.city }}</span>
+          </div>
+        }
+        @if (cv().personal.phone) {
+          <div class="classic-detail">
+            <span class="detail-icon">✆</span>
+            <span>{{ cv().personal.phone }}</span>
+          </div>
+        }
+      </div>
+    }
+
+    @if (cv().skills.length) {
+      <div class="classic-block">
+        <h3 class="classic-block-title">SKILLS</h3>
+        @for (skill of cv().skills; track skill) {
+          <div class="classic-bullet">{{ skill }}</div>
+        }
+      </div>
+    }
+  </aside>
+
+  <!-- Right column — respects sectionOrder, skips 'skills' (shown in sidebar) -->
+  <main class="classic-right">
+    <div class="classic-name-block">
+      @if (cv().personal.fullName) {
+        <h1 class="classic-name">{{ cv().personal.fullName }}</h1>
+      }
+      @if (cv().personal.jobTitle) {
+        <p class="classic-job-title">{{ cv().personal.jobTitle }}</p>
+      }
+    </div>
+
+    @for (sectionId of cv().sectionOrder; track sectionId) {
+      @switch (sectionId) {
+        @case ('personal') {
+          @if (cv().personal.summary) {
+            <div class="classic-section">
+              <h2 class="classic-section-title">Summary</h2>
+              <p class="classic-summary">{{ cv().personal.summary }}</p>
+            </div>
+          }
+        }
+        @case ('experience') {
+          @if (cv().experience.length) {
+            <div class="classic-section">
+              <h2 class="classic-section-title">Experience</h2>
+              @for (exp of cv().experience; track exp.id) {
+                <div class="classic-exp-item">
+                  <div class="classic-exp-header">
+                    <strong>{{ exp.position }}, {{ exp.company }}</strong>
+                    <span class="classic-dates">{{ exp.startDate }} — {{ exp.current ? 'Present' : exp.endDate }}</span>
+                  </div>
+                  @if (exp.description) {
+                    @for (line of exp.description.split('\n'); track $index) {
+                      @if (line.trim()) {
+                        <div class="classic-bullet-item">{{ line.trim() }}</div>
+                      }
+                    }
+                  }
+                </div>
+              }
+            </div>
+          }
+        }
+        @case ('education') {
+          @if (cv().education.length) {
+            <div class="classic-section">
+              <h2 class="classic-section-title">Education</h2>
+              @for (edu of cv().education; track edu.id) {
+                <div class="classic-edu-item">
+                  <strong>{{ edu.degree }}@if (edu.field) {, {{ edu.field }}}</strong>
+                  <div class="classic-edu-institution">{{ edu.institution }}</div>
+                  @if (edu.year) {
+                    <div class="classic-dates">{{ edu.year }}</div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        }
+      }
+    }
+  </main>
+
+</div>

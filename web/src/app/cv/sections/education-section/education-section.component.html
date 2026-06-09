@@ -1,0 +1,35 @@
+@for (group of groups; track $index; let i = $index) {
+  <div [formGroup]="group" class="edu-item">
+    <div class="field-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Institution</mat-label>
+        <input matInput formControlName="institution" placeholder="KPI" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Year</mat-label>
+        <input matInput formControlName="year" placeholder="2023" />
+      </mat-form-field>
+    </div>
+    <div class="field-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Degree</mat-label>
+        <input matInput formControlName="degree" placeholder="Bachelor" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Field of study</mat-label>
+        <input matInput formControlName="field" placeholder="Computer Science" />
+      </mat-form-field>
+    </div>
+    <button mat-icon-button color="warn" type="button" (click)="remove(i)" aria-label="Remove">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </div>
+}
+
+@if (groups.length === 0) {
+  <p class="empty">No education added yet.</p>
+}
+
+<button mat-stroked-button type="button" (click)="add()">
+  <mat-icon>add</mat-icon> Add education
+</button>

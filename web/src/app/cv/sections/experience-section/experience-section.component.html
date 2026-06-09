@@ -1,0 +1,40 @@
+@for (group of groups; track $index; let i = $index) {
+  <div [formGroup]="group" class="exp-item">
+    <div class="field-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Company</mat-label>
+        <input matInput formControlName="company" placeholder="Google" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Position</mat-label>
+        <input matInput formControlName="position" placeholder="Software Engineer" />
+      </mat-form-field>
+    </div>
+    <div class="field-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Start date</mat-label>
+        <input matInput formControlName="startDate" placeholder="Jan 2022" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>End date</mat-label>
+        <input matInput formControlName="endDate" placeholder="Present" />
+      </mat-form-field>
+      <mat-checkbox formControlName="current">Current</mat-checkbox>
+    </div>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Description</mat-label>
+      <textarea matInput formControlName="description" rows="3" placeholder="What you did..."></textarea>
+    </mat-form-field>
+    <button mat-icon-button color="warn" type="button" (click)="remove(i)" aria-label="Remove">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </div>
+}
+
+@if (groups.length === 0) {
+  <p class="empty">No experience added yet.</p>
+}
+
+<button mat-stroked-button type="button" (click)="add()">
+  <mat-icon>add</mat-icon> Add experience
+</button>

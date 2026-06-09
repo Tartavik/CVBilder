@@ -1,0 +1,114 @@
+<div class="cv-layout">
+
+  <!-- Classic sidebar: fixed left-column + draggable right-column -->
+  @if (activeTemplate() === 'classic') {
+    <aside class="cv-sidebar">
+      <div class="cv-sidebar__logo">CVBilder</div>
+      <p class="cv-sidebar__hint">Left column</p>
+      <div class="section-list">
+        <button type="button" class="section-item fixed" [class.active]="activeSection() === 'details'" (click)="activeSection.set('details')">
+          <span class="drag-handle">⠿</span> Details
+        </button>
+        <button type="button" class="section-item fixed" [class.active]="activeSection() === 'skills'" (click)="activeSection.set('skills')">
+          <span class="drag-handle">⠿</span> Skills
+        </button>
+      </div>
+      <p class="cv-sidebar__hint">Right column — drag to reorder</p>
+      <div
+        cdkDropList
+        [cdkDropListData]="classicDraggableSections()"
+        (cdkDropListDropped)="onClassicDrop($event)"
+        class="section-list"
+      >
+        @for (section of classicOrderedSections(); track section.id) {
+          <div
+            cdkDrag
+            class="section-item"
+            role="button"
+            tabindex="0"
+            [class.active]="activeSection() === section.id"
+            (click)="activeSection.set(section.id)"
+            (keydown.enter)="activeSection.set(section.id)"
+            (keydown.space)="activeSection.set(section.id)"
+          >
+            <span class="drag-handle">⠿</span>
+            {{ section.label }}
+          </div>
+        }
+      </div>
+    </aside>
+
+  } @else {
+    <!-- Single sidebar: all sections draggable -->
+    <aside class="cv-sidebar">
+      <div class="cv-sidebar__logo">CVBilder</div>
+      <p class="cv-sidebar__hint">Drag to reorder</p>
+      <div
+        cdkDropList
+        [cdkDropListData]="sectionOrder()"
+        (cdkDropListDropped)="onDrop($event)"
+        class="section-list"
+      >
+        @for (section of orderedSections(); track section.id) {
+          <div
+            cdkDrag
+            class="section-item"
+            role="button"
+            tabindex="0"
+            [class.active]="activeSection() === section.id"
+            (click)="activeSection.set(section.id)"
+            (keydown.enter)="activeSection.set(section.id)"
+            (keydown.space)="activeSection.set(section.id)"
+          >
+            <span class="drag-handle">⠿</span>
+            {{ section.label }}
+          </div>
+        }
+      </div>
+    </aside>
+  }
+
+  <!-- Center: editor -->
+  <section class="cv-editor">
+    <div class="editor-card">
+      <h2 class="editor-title">{{ activeLabel() }}</h2>
+      @if (activeTemplate() === 'classic') {
+        @switch (activeSection()) {
+          @case ('personal') { <app-personal-main-section /> }
+          @case ('details')  { <app-personal-details-section /> }
+          @case ('experience') { <app-experience-section /> }
+          @case ('education') { <app-education-section /> }
+          @case ('skills') { <app-skills-section /> }
+        }
+      } @else {
+        @switch (activeSection()) {
+          @case ('personal') { <app-personal-section /> }
+          @case ('experience') { <app-experience-section /> }
+          @case ('education') { <app-education-section /> }
+          @case ('skills') { <app-skills-section /> }
+        }
+      }
+    </div>
+  </section>
+
+  <!-- Right: live preview -->
+  <aside class="cv-preview-pane">
+    <div class="preview-actions">
+      <div class="template-switcher">
+        <button type="button" class="tpl-btn" [class.active]="activeTemplate() === 'single'" (click)="setTemplate('single')">Single</button>
+        <button type="button" class="tpl-btn" [class.active]="activeTemplate() === 'classic'" (click)="setTemplate('classic')">Classic</button>
+      </div>
+      <button mat-raised-button color="primary" (click)="exportPdf()">
+        <mat-icon>picture_as_pdf</mat-icon>
+        Export PDF
+      </button>
+    </div>
+    <div class="preview-scroll">
+      @if (activeTemplate() === 'classic') {
+        <app-cv-preview-classic />
+      } @else {
+        <app-cv-preview />
+      }
+    </div>
+  </aside>
+</div>

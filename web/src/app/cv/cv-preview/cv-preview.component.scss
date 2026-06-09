@@ -1,0 +1,102 @@
+.preview-page {
+  width: 100%;
+  min-height: 297mm;
+  background: white;
+  padding: 16mm 14mm;
+  font-family: 'Georgia', serif;
+  font-size: 11pt;
+  color: #1a1a1a;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  box-sizing: border-box;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid #1a1a1a;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.header-text {
+  flex: 1;
+}
+
+.header-photo {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  flex-shrink: 0;
+}
+
+.preview-header h1 {
+  font-size: 22pt;
+  margin: 0 0 0.2rem;
+}
+
+.job-title {
+  font-size: 12pt;
+  color: #555;
+  margin: 0 0 0.5rem;
+}
+
+.contacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  font-size: 9pt;
+  color: #444;
+}
+
+.preview-section {
+  margin-bottom: 1.25rem;
+}
+
+.preview-section h2 {
+  font-size: 12pt;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 3px;
+  margin: 0 0 0.6rem;
+}
+
+.summary { margin: 0; line-height: 1.5; }
+
+.exp-item, .edu-item {
+  margin-bottom: 0.75rem;
+}
+
+.exp-header, .edu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.dates { font-size: 9pt; color: #666; }
+.company, .edu-degree { font-size: 9.5pt; color: #444; margin-top: 1px; }
+.desc {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    margin: 4px 0 0;
+    font-size: 9.5pt;
+    line-height: 1.4;
+    color: #333;
+}
+
+.skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.skill-tag {
+  background: #f0f0f0;
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 9pt;
+}

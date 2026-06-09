@@ -1,15 +1,13 @@
-<div class="layout">
-  <aside class="sidebar">
+<mat-sidenav-container class="layout">
+  <mat-sidenav mode="side" opened class="sidebar">
     <div class="sidebar-logo">CVBilder</div>
-    <nav class="sidebar-nav">
-      <button class="btn-create">
-        <span class="btn-create__icon">+</span>
-        Create new CV
-      </button>
-    </nav>
-  </aside>
+    <a mat-button routerLink="/cv" class="nav-btn">
+      <mat-icon>add_circle</mat-icon>
+      New CV
+    </a>
+  </mat-sidenav>
 
-  <main class="content">
+  <mat-sidenav-content class="content">
     <p class="empty-hint">Select or create a CV to get started.</p>
-  </main>
-</div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

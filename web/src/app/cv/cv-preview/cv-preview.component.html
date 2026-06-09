@@ -1,0 +1,80 @@
+<div class="preview-page">
+  <div class="preview-header">
+    <div class="header-text">
+      @if (cv().personal.fullName) {
+        <h1>{{ cv().personal.fullName }}</h1>
+      }
+      @if (cv().personal.jobTitle) {
+        <p class="job-title">{{ cv().personal.jobTitle }}</p>
+      }
+      <div class="contacts">
+        @if (cv().personal.email) { <span>{{ cv().personal.email }}</span> }
+        @if (cv().personal.phone) { <span>{{ cv().personal.phone }}</span> }
+        @if (cv().personal.city) { <span>{{ cv().personal.city }}</span> }
+      </div>
+    </div>
+    @if (cv().personal.photo) {
+      <img [src]="cv().personal.photo" alt="Profile" class="header-photo" />
+    }
+  </div>
+
+  @for (sectionId of cv().sectionOrder; track sectionId) {
+    @switch (sectionId) {
+      @case ('personal') {
+        @if (cv().personal.summary) {
+          <div class="preview-section">
+            <h2>Summary</h2>
+            <p class="summary">{{ cv().personal.summary }}</p>
+          </div>
+        }
+      }
+      @case ('experience') {
+        @if (cv().experience.length) {
+          <div class="preview-section">
+            <h2>Experience</h2>
+            @for (exp of cv().experience; track exp.id) {
+              <div class="exp-item">
+                <div class="exp-header">
+                  <strong>{{ exp.position }}</strong>
+                  <span class="dates">{{ exp.startDate }} — {{ exp.current ? 'Present' : exp.endDate }}</span>
+                </div>
+                <div class="company">{{ exp.company }}</div>
+                @if (exp.description) {
+                  <pre class="desc">{{ exp.description }}</pre>
+                }
+              </div>
+            }
+          </div>
+        }
+      }
+      @case ('education') {
+        @if (cv().education.length) {
+          <div class="preview-section">
+            <h2>Education</h2>
+            @for (edu of cv().education; track edu.id) {
+              <div class="edu-item">
+                <div class="edu-header">
+                  <strong>{{ edu.institution }}</strong>
+                  <span class="dates">{{ edu.year }}</span>
+                </div>
+                <div class="edu-degree">{{ edu.degree }}@if (edu.field) {, {{ edu.field }}}</div>
+              </div>
+            }
+          </div>
+        }
+      }
+      @case ('skills') {
+        @if (cv().skills.length) {
+          <div class="preview-section">
+            <h2>Skills</h2>
+            <div class="skills-list">
+              @for (skill of cv().skills; track skill) {
+                <span class="skill-tag">{{ skill }}</span>
+              }
+            </div>
+          </div>
+        }
+      }
+    }
+  }
+</div>
