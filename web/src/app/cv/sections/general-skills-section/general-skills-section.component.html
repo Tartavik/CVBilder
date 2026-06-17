@@ -1,9 +1,13 @@
+<p class="section-hint">
+  Optional skills that describe your overall professional profile.
+</p>
+
 <mat-chip-set class="tags">
-  @for (skill of skills(); track skill) {
+  @for (skill of generalSkills(); track skill) {
     <mat-chip draggable="false" (removed)="remove(skill)">
       {{ skill }}
       <button matChipRemove aria-label="Remove skill">
-        <mat-icon>cancel</mat-icon>
+        <app-icon name="cancel" />
       </button>
     </mat-chip>
   }
@@ -11,10 +15,10 @@
 
 <div class="add-row">
   <mat-form-field appearance="outline">
-    <mat-label>New skill</mat-label>
+    <mat-label>New general skill</mat-label>
     <input matInput [formControl]="newSkill" placeholder="e.g. TypeScript" (keydown.enter)="add()" />
   </mat-form-field>
   <button mat-raised-button color="primary" type="button" (click)="add()">
-    <mat-icon>add</mat-icon> Add
+    <app-icon name="add" /> Add
   </button>
 </div>

@@ -1,13 +1,131 @@
-<mat-sidenav-container class="layout">
-  <mat-sidenav mode="side" opened class="sidebar">
-    <div class="sidebar-logo">CVBilder</div>
-    <a mat-button routerLink="/cv" class="nav-btn">
-      <mat-icon>add_circle</mat-icon>
-      New CV
-    </a>
-  </mat-sidenav>
+<div class="dashboard">
+  <header class="dashboard-header">
+    <div>
+      <p class="eyebrow">CVBilder</p>
+      <h1>Your CV workspace</h1>
+      <p class="subtitle">Create, edit and share CVs with a public link.</p>
+    </div>
+    <button mat-stroked-button type="button" (click)="logout()">Logout</button>
+  </header>
 
-  <mat-sidenav-content class="content">
-    <p class="empty-hint">Select or create a CV to get started.</p>
-  </mat-sidenav-content>
-</mat-sidenav-container>
+  <section class="create-panel">
+    <div>
+      <h2>Create a new CV</h2>
+      <p>Start with an empty CV and choose its layout in the editor.</p>
+    </div>
+    <button
+      mat-raised-button
+      color="primary"
+      type="button"
+      [disabled]="creating()"
+      (click)="createCv()"
+    >
+      <app-icon name="add_circle" />
+      {{ creating() ? 'Creating...' : 'New CV' }}
+    </button>
+  </section>
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <div class="loading"><mat-spinner diameter="42" /></div>
+  } @else {
+    <section class="cv-section">
+      <div class="section-heading">
+        <div>
+          <h2>My CVs</h2>
+          <p>Open the editor or view the public version.</p>
+        </div>
+        <span class="count">{{ myCvs().length }}</span>
+      </div>
+
+      @if (myCvs().length) {
+        <div class="cv-grid">
+          @for (cv of myCvs(); track cv.id) {
+            <mat-card class="cv-card">
+              <mat-card-content>
+                <h3>{{ cv.title }}</h3>
+                <p>Updated {{ cv.updatedAt | date: 'medium' }}</p>
+                <code>/public/cv/{{ cv.id }}</code>
+              </mat-card-content>
+              <mat-card-actions>
+                <a mat-button color="primary" [routerLink]="['/cv', cv.id, 'edit']">
+                  <app-icon name="edit" />
+                  Edit
+                </a>
+                <a mat-button [routerLink]="['/public/cv', cv.id]">
+                  <app-icon name="visibility" />
+                  Public link
+                </a>
+              </mat-card-actions>
+            </mat-card>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">You have no CVs yet. Create the first one above.</div>
+      }
+    </section>
+
+    <section class="cv-section">
+      <div class="section-heading">
+        <div>
+          <h2>All public CVs</h2>
+          <p>Browse every CV currently published in CVBilder.</p>
+        </div>
+        <span class="count">{{ allCvs().length }}</span>
+      </div>
+
+      <div class="skill-search">
+        <mat-form-field appearance="outline">
+          <mat-label>Search by skills</mat-label>
+          <input
+            matInput
+            [formControl]="skillSearch"
+            placeholder="Angular, NestJS, PostgreSQL"
+            (keydown.enter)="searchCvs()"
+          />
+          <mat-hint>Separate skills with commas. All entered skills must match.</mat-hint>
+        </mat-form-field>
+        <button
+          mat-raised-button
+          color="primary"
+          type="button"
+          [disabled]="searching()"
+          (click)="searchCvs()"
+        >
+          <app-icon name="search" />
+          {{ searching() ? 'Searching...' : 'Search' }}
+        </button>
+        @if (skillSearch.value) {
+          <button mat-stroked-button type="button" (click)="clearSearch()">
+            Clear
+          </button>
+        }
+      </div>
+
+      @if (allCvs().length) {
+        <div class="cv-grid">
+          @for (cv of allCvs(); track cv.id) {
+            <mat-card class="cv-card public-card">
+              <mat-card-content>
+                <h3>{{ cv.title }}</h3>
+                <p>By {{ cv.ownerEmail }}</p>
+                <p>Updated {{ cv.updatedAt | date: 'mediumDate' }}</p>
+              </mat-card-content>
+              <mat-card-actions>
+                <a mat-button color="primary" [routerLink]="['/public/cv', cv.id]">
+                  <app-icon name="visibility" />
+                  View CV
+                </a>
+              </mat-card-actions>
+            </mat-card>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">No public CVs yet.</div>
+      }
+    </section>
+  }
+</div>

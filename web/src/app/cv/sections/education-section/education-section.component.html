@@ -7,7 +7,7 @@
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Year</mat-label>
-        <input matInput formControlName="year" placeholder="2023" />
+        <input matInput type="number" min="1000" max="9999" formControlName="year" placeholder="2023" />
       </mat-form-field>
     </div>
     <div class="field-row">
@@ -21,7 +21,7 @@
       </mat-form-field>
     </div>
     <button mat-icon-button color="warn" type="button" (click)="remove(i)" aria-label="Remove">
-      <mat-icon>delete</mat-icon>
+      <app-icon name="delete" />
     </button>
   </div>
 }
@@ -31,5 +31,5 @@
 }
 
 <button mat-stroked-button type="button" (click)="add()">
-  <mat-icon>add</mat-icon> Add education
+  <app-icon name="add" /> Add education
 </button>

@@ -32,10 +32,10 @@
       </div>
     }
 
-    @if (cv().skills.length) {
+    @if (cv().generalSkills.length) {
       <div class="classic-block">
-        <h3 class="classic-block-title">SKILLS</h3>
-        @for (skill of cv().skills; track skill) {
+        <h3 class="classic-block-title">GENERAL SKILLS</h3>
+        @for (skill of cv().generalSkills; track skill) {
           <div class="classic-bullet">{{ skill }}</div>
         }
       </div>
@@ -78,6 +78,21 @@
                       @if (line.trim()) {
                         <div class="classic-bullet-item">{{ line.trim() }}</div>
                       }
+                    }
+                  }
+                  @if (exp.skills.length) {
+                    @if (cv().experienceSkillMode === 'icons') {
+                      <div class="classic-experience-skill-icons">
+                        @for (skill of exp.skills; track skill.name) {
+                          <app-skill-icon [name]="skill.name" [icon]="skill.icon" />
+                        }
+                      </div>
+                    } @else {
+                      <div class="classic-experience-skills">
+                        @for (skill of exp.skills; track skill.name) {
+                          <span>{{ skill.name }}</span>
+                        }
+                      </div>
                     }
                   }
                 </div>

@@ -1,1 +1,21 @@
+@if (errors.latest(); as error) {
+  <div class="app-error-banner" role="alert">
+    <div>
+      <strong>{{ error.title }}</strong>
+      <p>{{ error.message }}</p>
+      @if (error.source === 'http') {
+        <code>
+          {{ error.method }} {{ error.url }} ·
+          {{ error.status ? 'HTTP ' + error.status : error.statusText }}
+        </code>
+      } @else if (error.operation) {
+        <code>{{ error.operation }}</code>
+      }
+    </div>
+    <button type="button" aria-label="Dismiss error" (click)="errors.clear()">
+      ×
+    </button>
+  </div>
+}
+
 <router-outlet />

@@ -1,11 +1,15 @@
+/* eslint-disable @nx/enforce-module-boundaries */
 import { join } from 'path';
 import { DataSource } from 'typeorm';
-// eslint-disable-next-line @nx/enforce-module-boundaries
 import { ProfileEntity } from '../../../backend/users/src/lib/profile.entity';
-// eslint-disable-next-line @nx/enforce-module-boundaries
 import { SettingsEntity } from '../../../backend/users/src/lib/settings.entity';
-// eslint-disable-next-line @nx/enforce-module-boundaries
 import { UserEntity } from '../../../backend/users/src/lib/user.entity';
+import { GeneralSkillEntity } from '../../../backend/users/src/lib/general-skill.entity';
+import { ExperienceSkillEntity } from '../../../backend/users/src/lib/experience-skill.entity';
+import { PersonalDetailEntity } from '../../../backend/users/src/lib/personalDetail.entity';
+import { ExperienceEntity } from '../../../backend/users/src/lib/experience.entity';
+import { CvEntity } from '../../../backend/users/src/lib/cv.entity';
+import { EducationEntity } from '../../../backend/users/src/lib/education.entity';
 
 export const AppDataSource = new DataSource({
 	type: 'postgres',
@@ -14,6 +18,6 @@ export const AppDataSource = new DataSource({
 	username: process.env.DB_USERNAME ?? 'postgres',
 	password: process.env.DB_PASSWORD ?? 'postgres',
 	database: process.env.DB_NAME ?? 'cvbilder',
-	entities: [UserEntity, ProfileEntity, SettingsEntity],
+	entities: [UserEntity, ProfileEntity, SettingsEntity, CvEntity, ExperienceEntity, ExperienceSkillEntity, PersonalDetailEntity, GeneralSkillEntity, EducationEntity],
 	migrations: [join(__dirname, 'migrations/*{.ts,.js}')],
 });

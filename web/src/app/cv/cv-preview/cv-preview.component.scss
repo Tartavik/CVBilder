@@ -92,6 +92,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.3rem;
+  margin-top: 0.45rem;
 }
 
 .skill-tag {
@@ -99,4 +100,15 @@
   border-radius: 3px;
   padding: 2px 8px;
   font-size: 9pt;
+}
+
+.experience-skill-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+
+  app-skill-icon {
+    font-size: 0.85rem;
+  }
 }

@@ -3,15 +3,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { debounceTime } from 'rxjs';
+import { AppIconComponent } from '../../../shared/app-icon.component';
 import { CvStore, EducationItem } from '../../cv.store';
 
 @Component({
   selector: 'app-education-section',
   standalone: true,
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, AppIconComponent],
   templateUrl: './education-section.component.html',
 })
 export class EducationSectionComponent implements OnInit {
@@ -30,8 +30,10 @@ export class EducationSectionComponent implements OnInit {
     );
 
     this.form.valueChanges
-      .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
+      .pipe(debounceTime(300),
+      takeUntilDestroyed(this.destroyRef))
       .subscribe((values: Partial<EducationItem>[]) => {
+        console.log(values, "value changes");
         const ids = this.store.cv().education.map((e) => e.id);
         values.forEach((v, i) => {
           if (ids[i]) this.store.updateEducation(ids[i], v);

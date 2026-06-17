@@ -1,3 +1,20 @@
+<div class="experience-skill-mode">
+  <div>
+    <span class="field-label">Experience skill style</span>
+    <p class="section-hint">
+      Use text tags or icon-only technology badges in the CV.
+    </p>
+  </div>
+  <mat-button-toggle-group
+    [value]="skillMode()"
+    aria-label="Experience skill style"
+    (change)="setSkillMode($event.value)"
+  >
+    <mat-button-toggle value="text">Text</mat-button-toggle>
+    <mat-button-toggle value="icons">Icons</mat-button-toggle>
+  </mat-button-toggle-group>
+</div>
+
 @for (group of groups; track $index; let i = $index) {
   <div [formGroup]="group" class="exp-item">
     <div class="field-row">
@@ -13,11 +30,11 @@
     <div class="field-row">
       <mat-form-field appearance="outline">
         <mat-label>Start date</mat-label>
-        <input matInput formControlName="startDate" placeholder="Jan 2022" />
+        <input matInput type="date" formControlName="startDate" />
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>End date</mat-label>
-        <input matInput formControlName="endDate" placeholder="Present" />
+        <input matInput type="date" formControlName="endDate" />
       </mat-form-field>
       <mat-checkbox formControlName="current">Current</mat-checkbox>
     </div>
@@ -25,8 +42,61 @@
       <mat-label>Description</mat-label>
       <textarea matInput formControlName="description" rows="3" placeholder="What you did..."></textarea>
     </mat-form-field>
+
+    <div class="experience-skills-editor">
+      <span class="field-label">Skills used in this role</span>
+      <mat-chip-set>
+        @for (skill of skillsAt(i); track skill.name) {
+          <mat-chip draggable="false" (removed)="removeSkill(i, skill)">
+            @if (skillMode() === 'icons') {
+              <app-skill-icon [name]="skill.name" [icon]="skill.icon" />
+            } @else {
+              {{ skill.name }}
+            }
+            <button matChipRemove [attr.aria-label]="'Remove ' + skill.name">
+              <app-icon name="cancel" />
+            </button>
+          </mat-chip>
+        }
+      </mat-chip-set>
+
+      @if (skillMode() === 'text') {
+        <div class="add-row experience-skill-add">
+          <mat-form-field appearance="outline">
+            <mat-label>Add skill</mat-label>
+            <input
+              matInput
+              [formControl]="skillInputs.at(i)"
+              placeholder="e.g. Angular"
+              (keydown.enter)="addSkill(i)"
+            />
+          </mat-form-field>
+          <button mat-stroked-button type="button" (click)="addSkill(i)">
+            <app-icon name="add" />
+            Add skill
+          </button>
+        </div>
+      } @else {
+        <div class="skill-icon-picker" aria-label="Available skill icons">
+          @for (option of skillOptions; track option.icon) {
+            <button
+              type="button"
+              class="skill-icon-option"
+              [class.selected]="isSkillSelected(i, option.name)"
+              [disabled]="isSkillSelected(i, option.name)"
+              (click)="addIconSkill(i, option)"
+              [attr.aria-label]="'Add ' + option.name"
+            >
+              <app-skill-icon [name]="option.name" [icon]="option.icon" />
+              <span>{{ option.name }}</span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+
     <button mat-icon-button color="warn" type="button" (click)="remove(i)" aria-label="Remove">
-      <mat-icon>delete</mat-icon>
+      <app-icon name="delete" />
     </button>
   </div>
 }
@@ -36,5 +106,5 @@
 }
 
 <button mat-stroked-button type="button" (click)="add()">
-  <mat-icon>add</mat-icon> Add experience
+  <app-icon name="add" /> Add experience
 </button>

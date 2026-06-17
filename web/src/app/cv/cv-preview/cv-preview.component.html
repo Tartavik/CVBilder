@@ -42,6 +42,21 @@
                 @if (exp.description) {
                   <pre class="desc">{{ exp.description }}</pre>
                 }
+                @if (exp.skills.length) {
+                  @if (cv().experienceSkillMode === 'icons') {
+                    <div class="experience-skill-icons">
+                      @for (skill of exp.skills; track skill.name) {
+                        <app-skill-icon [name]="skill.name" [icon]="skill.icon" />
+                      }
+                    </div>
+                  } @else {
+                    <div class="skills-list">
+                      @for (skill of exp.skills; track skill.name) {
+                        <span class="skill-tag">{{ skill.name }}</span>
+                      }
+                    </div>
+                  }
+                }
               </div>
             }
           </div>
@@ -64,11 +79,11 @@
         }
       }
       @case ('skills') {
-        @if (cv().skills.length) {
+        @if (cv().generalSkills.length) {
           <div class="preview-section">
-            <h2>Skills</h2>
+            <h2>General Skills</h2>
             <div class="skills-list">
-              @for (skill of cv().skills; track skill) {
+              @for (skill of cv().generalSkills; track skill) {
                 <span class="skill-tag">{{ skill }}</span>
               }
             </div>

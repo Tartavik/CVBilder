@@ -37,11 +37,10 @@
   display: block;
 }
 
-.photo-placeholder-icon.mat-icon {
-  font-size: 40px;
+.photo-placeholder-icon {
+  width: 40px;
+  height: 40px;
   color: #9ca3af;
-  height: auto;
-  width: auto;
 }
 
 .photo-actions {
@@ -105,6 +104,85 @@
   }
 }
 
+.section-hint {
+  margin: 0 0 1rem;
+  color: #667085;
+  font-size: 0.875rem;
+}
+
+.experience-skills-editor {
+  padding-top: 0.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.experience-skill-mode {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #f8fafc;
+
+  .field-label,
+  .section-hint {
+    margin-bottom: 0;
+  }
+}
+
+.skill-icon-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.skill-icon-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.5rem;
+  border: 1px solid #d0d5dd;
+  border-radius: 7px;
+  background: white;
+  color: #344054;
+  cursor: pointer;
+
+  span {
+    overflow: hidden;
+    font-size: 0.78rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: #2563eb;
+  }
+
+  &.selected,
+  &:disabled {
+    border-color: #98a2b3;
+    background: #f2f4f7;
+    opacity: 0.65;
+    cursor: default;
+  }
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #475467;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.experience-skill-add {
+  margin-top: 0.75rem;
+}
+
 html,
 body {
 	margin: 0;
@@ -113,5 +191,3 @@ body {
 	color: #1f2937;
 	background: #eef2f7;
 }
-
-

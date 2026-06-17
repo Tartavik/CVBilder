@@ -2,3 +2,39 @@
 	display: block;
 }
 
+.app-error-banner {
+  position: fixed;
+  z-index: 1000;
+  top: 1rem;
+  left: 50%;
+  display: flex;
+  width: min(720px, calc(100% - 2rem));
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid #fda29b;
+  border-radius: 10px;
+  background: #fffbfa;
+  color: #912018;
+  box-shadow: 0 8px 24px rgb(16 24 40 / 18%);
+  transform: translateX(-50%);
+
+  p {
+    margin: 0.25rem 0;
+  }
+
+  code {
+    color: #b42318;
+    overflow-wrap: anywhere;
+  }
+
+  button {
+    align-self: flex-start;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+}
+

@@ -7,6 +7,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { UsersApiService } from '../users-api.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ErrorService } from '../shared/errors/error.service';
 
 @Component({
   selector: 'app-register',
@@ -25,6 +27,7 @@ import { UsersApiService } from '../users-api.service';
 export class RegisterComponent {
   private readonly api = inject(UsersApiService);
   private readonly router = inject(Router);
+  private readonly errors = inject(ErrorService);
 
   form = new FormGroup({
     email: new FormControl('', [Validators.required, Validators.email]),
@@ -41,9 +44,9 @@ export class RegisterComponent {
     const email = this.form.value.email ?? '';
     const password = this.form.value.password ?? '';
     this.api.register(email, password).subscribe({
-      next: () => this.router.navigate(['/users']),
-      error: (err) => {
-        this.error = err.error?.message ?? 'Something went wrong';
+      next: () => this.router.navigate(['/login']),
+      error: (err: HttpErrorResponse) => {
+        this.error = this.errors.getMessage(err, 'Registration failed');
         this.loading = false;
       },
     });

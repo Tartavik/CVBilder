@@ -3,7 +3,7 @@
     <div class="header">
       <h1>Users</h1>
       <a mat-raised-button color="primary" routerLink="/register">
-        <mat-icon>person_add</mat-icon>
+        <app-icon name="person_add" />
         New user
       </a>
     </div>
@@ -12,6 +12,8 @@
       <div class="spinner-wrapper">
         <mat-spinner />
       </div>
+    } @else if (error()) {
+      <p class="request-error">{{ error() }}</p>
     } @else {
       <table mat-table [dataSource]="users()" class="mat-elevation-z2 full-width">
         <ng-container matColumnDef="email">

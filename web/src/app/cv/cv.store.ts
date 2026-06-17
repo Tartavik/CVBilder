@@ -1,4 +1,10 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import {
+  UsersApiService,
+  CvData as ApiCvData,
+} from '../users-api.service';
+import { ErrorService } from '../shared/errors/error.service';
 
 export interface PersonalData {
   fullName: string;
@@ -18,6 +24,12 @@ export interface ExperienceItem {
   endDate: string;
   current: boolean;
   description: string;
+  skills: ExperienceSkill[];
+}
+
+export interface ExperienceSkill {
+  name: string;
+  icon: string | null;
 }
 
 export interface EducationItem {
@@ -29,19 +41,28 @@ export interface EducationItem {
 }
 
 export interface CvSection {
-  id: 'personal' | 'experience' | 'education' | 'skills';
+  id: 'personal' | 'experience' | 'education' | 'skills' | 'details';
   label: string;
+  isDraggable?: boolean;
 }
 
 export type CvTemplate = 'single' | 'classic';
+export type ExperienceSkillMode = 'text' | 'icons';
 
 export interface CvData {
   personal: PersonalData;
   experience: ExperienceItem[];
   education: EducationItem[];
-  skills: string[];
+  generalSkills: string[];
+  experienceSkillMode: ExperienceSkillMode;
   sectionOrder: CvSection['id'][];
   template: CvTemplate;
+}
+
+export interface CvMetadata {
+  id: string;
+  title: string;
+  ownerEmail: string;
 }
 
 const DEFAULT_DATA: CvData = {
@@ -56,40 +77,185 @@ const DEFAULT_DATA: CvData = {
   },
   experience: [],
   education: [],
-  skills: [],
-  sectionOrder: ['personal', 'experience', 'education', 'skills'],
+  generalSkills: [],
+  experienceSkillMode: 'text',
+  sectionOrder: ['personal', 'experience', 'education', 'skills', 'details'],
   template: 'single',
 };
 
-const STORAGE_KEY = 'cvbilder_cv';
-
-function loadFromStorage(): CvData {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? { ...DEFAULT_DATA, ...JSON.parse(raw) } : { ...DEFAULT_DATA };
-  } catch {
-    return { ...DEFAULT_DATA };
-  }
-}
-
 @Injectable({ providedIn: 'root' })
 export class CvStore {
-  readonly cv = signal<CvData>(loadFromStorage());
+  private readonly api = inject(UsersApiService);
+  private readonly errors = inject(ErrorService);
+  readonly cv = signal<CvData>(DEFAULT_DATA);
+  readonly loading = signal(false);
+  readonly ready = signal(false);
+  readonly error = signal<string | null>(null);
+  readonly metadata = signal<CvMetadata | null>(null);
+  readonly photoUploading = signal(false);
+  private activeUserId = '';
+  private activeCvId = '';
 
   readonly sections: CvSection[] = [
-    { id: 'personal', label: 'Personal Info' },
-    { id: 'experience', label: 'Experience' },
-    { id: 'education', label: 'Education' },
-    { id: 'skills', label: 'Skills' },
+    { id: 'personal', label: 'Personal Info', isDraggable: true },
+    { id: 'experience', label: 'Experience', isDraggable: true },
+    { id: 'education', label: 'Education', isDraggable: true },
+    { id: 'skills', label: 'General Skills', isDraggable: true },
+    { id: 'details', label: 'Details', isDraggable: false },
   ];
 
-  private save(data: CvData) {
+  private updateState(data: CvData) {
     this.cv.set(data);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  loadFromDB(userId: string, cvId: string) {
+    this.activeUserId = userId;
+    this.activeCvId = cvId;
+    this.loading.set(true);
+    this.ready.set(false);
+    this.error.set(null);
+    this.api.getCv(userId, cvId).subscribe({
+      next: (data) => {
+        this.updateState(this.mapApiDataToStore(data));
+        this.updateMetadata(data);
+        this.loading.set(false);
+        this.ready.set(true);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.error.set(this.getErrorMessage(err, 'Failed to load CV'));
+        this.loading.set(false);
+        this.updateState(DEFAULT_DATA);
+        this.metadata.set(null);
+        this.ready.set(true);
+      },
+    });
+  }
+
+  loadPublic(cvId: string) {
+    this.activeUserId = '';
+    this.activeCvId = '';
+    this.loading.set(true);
+    this.ready.set(false);
+    this.error.set(null);
+    this.api.getPublicCv(cvId).subscribe({
+      next: (data) => {
+        this.updateState(this.mapApiDataToStore(data));
+        this.updateMetadata(data);
+        this.loading.set(false);
+        this.ready.set(true);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.error.set(this.getErrorMessage(err, 'Failed to load CV'));
+        this.loading.set(false);
+        this.updateState(DEFAULT_DATA);
+        this.metadata.set(null);
+        this.ready.set(true);
+      },
+    });
+  }
+
+  saveToDB(userId: string, cvId: string, callback?: () => void) {
+    this.loading.set(true);
+    this.error.set(null);
+    const cvData = this.mapStoreDataToApi(this.cv());
+    this.api.saveCv(userId, cvId, cvData).subscribe({
+      next: () => {
+        const currentMetadata = this.metadata();
+        if (currentMetadata) {
+          this.metadata.set({
+            ...currentMetadata,
+            title:
+              this.cv().personal.fullName.trim() ||
+              this.cv().personal.jobTitle.trim() ||
+              currentMetadata.title,
+          });
+        }
+        this.loading.set(false);
+        callback?.();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.error.set(this.getErrorMessage(err, 'Failed to save CV'));
+        this.loading.set(false);
+      },
+    });
+  }
+
+  private mapApiDataToStore(apiData: ApiCvData): CvData {
+    return {
+      personal: {
+        ...DEFAULT_DATA.personal,
+        ...(apiData.personal || {}),
+        photo: apiData.personal?.photo || '',
+      },
+      experience: (apiData.experience || []).map(exp => ({
+        id: exp.id || crypto.randomUUID(),
+        company: exp.company || '',
+        position: exp.position || '',
+        startDate: exp.startDate || '',
+        endDate: exp.endDate || '',
+        current: exp.current ?? false,
+        description: exp.description || '',
+        skills: (exp.skills || []).map((skill) =>
+          typeof skill === 'string'
+            ? { name: skill, icon: null }
+            : { name: skill.name, icon: skill.icon || null },
+        ),
+      })),
+      education: (apiData.education || []).map(edu => ({
+        ...edu,
+        id: edu.id || crypto.randomUUID(),
+      })),
+      generalSkills: apiData.generalSkills || [],
+      experienceSkillMode: apiData.experienceSkillMode || 'text',
+      sectionOrder: apiData.sectionOrder?.length
+        ? apiData.sectionOrder as CvSection['id'][]
+        : DEFAULT_DATA.sectionOrder,
+      template: apiData.template || 'single',
+    };
+  }
+
+  private getErrorMessage(error: HttpErrorResponse, fallback: string): string {
+    return this.errors.getMessage(error, fallback);
+  }
+
+  private updateMetadata(apiData: ApiCvData): void {
+    this.metadata.set({
+      id: apiData.id || '',
+      title: apiData.title || 'Untitled CV',
+      ownerEmail: apiData.ownerEmail || '',
+    });
+  }
+
+  private mapStoreDataToApi(storeData: CvData): ApiCvData {
+    return {
+      personal: {
+        fullName: storeData.personal.fullName,
+        jobTitle: storeData.personal.jobTitle,
+        email: storeData.personal.email,
+        phone: storeData.personal.phone,
+        city: storeData.personal.city,
+        summary: storeData.personal.summary,
+      },
+      experience: storeData.experience.map(exp => ({
+        id: exp.id,
+        company: exp.company,
+        position: exp.position,
+        startDate: exp.startDate,
+        endDate: exp.endDate || undefined,
+        current: exp.current,
+        description: exp.description || undefined,
+        skills: exp.skills,
+      })),
+      education: storeData.education,
+      generalSkills: storeData.generalSkills,
+      experienceSkillMode: storeData.experienceSkillMode,
+      sectionOrder: storeData.sectionOrder,
+      template: storeData.template,
+    };
   }
 
   updatePersonal(personal: PersonalData) {
-    this.save({ ...this.cv(), personal });
+    this.updateState({ ...this.cv(), personal });
   }
 
   addExperience() {
@@ -101,19 +267,20 @@ export class CvStore {
       endDate: '',
       current: false,
       description: '',
+      skills: [],
     };
-    this.save({ ...this.cv(), experience: [...this.cv().experience, item] });
+    this.updateState({ ...this.cv(), experience: [...this.cv().experience, item] });
   }
 
   updateExperience(id: string, patch: Partial<ExperienceItem>) {
     const experience = this.cv().experience.map((e) =>
       e.id === id ? { ...e, ...patch } : e
     );
-    this.save({ ...this.cv(), experience });
+    this.updateState({ ...this.cv(), experience });
   }
 
   removeExperience(id: string) {
-    this.save({ ...this.cv(), experience: this.cv().experience.filter((e) => e.id !== id) });
+    this.updateState({ ...this.cv(), experience: this.cv().experience.filter((e) => e.id !== id) });
   }
 
   addEducation() {
@@ -124,29 +291,69 @@ export class CvStore {
       field: '',
       year: '',
     };
-    this.save({ ...this.cv(), education: [...this.cv().education, item] });
+    this.updateState({ ...this.cv(), education: [...this.cv().education, item] });
   }
 
   updateEducation(id: string, patch: Partial<EducationItem>) {
     const education = this.cv().education.map((e) =>
       e.id === id ? { ...e, ...patch } : e
     );
-    this.save({ ...this.cv(), education });
+    this.updateState({ ...this.cv(), education });
   }
 
   removeEducation(id: string) {
-    this.save({ ...this.cv(), education: this.cv().education.filter((e) => e.id !== id) });
+    this.updateState({ ...this.cv(), education: this.cv().education.filter((e) => e.id !== id) });
   }
 
-  updateSkills(skills: string[]) {
-    this.save({ ...this.cv(), skills });
+  updateGeneralSkills(generalSkills: string[]) {
+    this.updateState({ ...this.cv(), generalSkills });
+  }
+
+  updateExperienceSkillMode(experienceSkillMode: ExperienceSkillMode) {
+    this.updateState({ ...this.cv(), experienceSkillMode });
+  }
+
+  uploadProfilePhoto(file: File): void {
+    if (!this.activeUserId || !this.activeCvId) return;
+
+    this.photoUploading.set(true);
+    this.error.set(null);
+    this.api
+      .uploadCvPhoto(this.activeUserId, this.activeCvId, file)
+      .subscribe({
+        next: ({ photoUrl }) => {
+          this.updatePersonal({ ...this.cv().personal, photo: photoUrl });
+          this.photoUploading.set(false);
+        },
+        error: (err: HttpErrorResponse) => {
+          this.error.set(this.getErrorMessage(err, 'Failed to upload photo'));
+          this.photoUploading.set(false);
+        },
+      });
+  }
+
+  deleteProfilePhoto(): void {
+    if (!this.activeUserId || !this.activeCvId) return;
+
+    this.photoUploading.set(true);
+    this.error.set(null);
+    this.api.deleteCvPhoto(this.activeUserId, this.activeCvId).subscribe({
+      next: () => {
+        this.updatePersonal({ ...this.cv().personal, photo: '' });
+        this.photoUploading.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.error.set(this.getErrorMessage(err, 'Failed to delete photo'));
+        this.photoUploading.set(false);
+      },
+    });
   }
 
   updateSectionOrder(sectionOrder: CvSection['id'][]) {
-    this.save({ ...this.cv(), sectionOrder });
+    this.updateState({ ...this.cv(), sectionOrder });
   }
 
   updateTemplate(template: CvTemplate) {
-    this.save({ ...this.cv(), template });
+    this.updateState({ ...this.cv(), template });
   }
 }

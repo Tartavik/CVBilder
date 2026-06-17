@@ -1,0 +1,29 @@
+<div class="public-page">
+  <header class="public-header">
+    <div>
+      <p class="eyebrow">Public CV</p>
+      <h1>{{ metadata()?.title || 'CV' }}</h1>
+      @if (metadata()?.ownerEmail) {
+        <p>Created by {{ metadata()?.ownerEmail }}</p>
+      }
+    </div>
+    <a mat-stroked-button [routerLink]="backLink()">
+      <app-icon name="home" />
+      {{ backLink() === '/home' ? 'Dashboard' : 'Login' }}
+    </a>
+  </header>
+
+  @if (!ready()) {
+    <div class="state">Loading CV...</div>
+  } @else if (error()) {
+    <div class="state error">{{ error() }}</div>
+  } @else {
+    <main class="preview-wrapper">
+      @if (template() === 'classic') {
+        <app-cv-preview-classic />
+      } @else {
+        <app-cv-preview />
+      }
+    </main>
+  }
+</div>

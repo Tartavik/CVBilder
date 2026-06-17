@@ -1,16 +1,19 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AppIconComponent } from '../../shared/app-icon.component';
 import { CvSection, CvStore, CvTemplate } from '../cv.store';
+import { CvExportService } from '../cv-export.service';
 import { PersonalSectionComponent } from '../sections/personal-section/personal-section.component';
 import { PersonalDetailsSectionComponent } from '../sections/personal-details-section/personal-details-section.component';
 import { PersonalMainSectionComponent } from '../sections/personal-main-section/personal-main-section.component';
 import { ExperienceSectionComponent } from '../sections/experience-section/experience-section.component';
 import { EducationSectionComponent } from '../sections/education-section/education-section.component';
-import { SkillsSectionComponent } from '../sections/skills-section/skills-section.component';
+import { GeneralSkillsSectionComponent } from '../sections/general-skills-section/general-skills-section.component';
 import { CvPreviewComponent } from '../cv-preview/cv-preview.component';
 import { CvPreviewClassicComponent } from '../cv-preview-classic/cv-preview-classic.component';
+import { AuthService } from '../../auth.service';
 
 @Component({
   selector: 'app-cv-editor',
@@ -18,25 +21,71 @@ import { CvPreviewClassicComponent } from '../cv-preview-classic/cv-preview-clas
   imports: [
     DragDropModule,
     MatButtonModule,
-    MatIconModule,
+    RouterLink,
+    AppIconComponent,
     PersonalSectionComponent,
     PersonalDetailsSectionComponent,
     PersonalMainSectionComponent,
     ExperienceSectionComponent,
     EducationSectionComponent,
-    SkillsSectionComponent,
+    GeneralSkillsSectionComponent,
     CvPreviewComponent,
     CvPreviewClassicComponent,
   ],
   templateUrl: './cv-editor.component.html',
   styleUrl: './cv-editor.component.scss',
 })
-export class CvEditorComponent {
+export class CvEditorComponent implements OnInit {
   private readonly store = inject(CvStore);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly cvExport = inject(CvExportService);
+  private userId = '';
 
-  readonly sectionOrder = computed(() => this.store.cv().sectionOrder);
-  readonly activeSection = signal<string>('personal');
-  readonly activeTemplate = computed(() => this.store.cv().template ?? 'single');
+  readonly cvId = this.route.snapshot.paramMap.get('cvId') ?? '';
+
+  readonly cv = this.store.cv;
+  readonly saving = this.store.loading;
+  readonly ready = this.store.ready;
+  readonly error = this.store.error;
+  readonly activeSection = signal<CvSection['id']>('personal');
+  readonly saveSuccess = signal(false);
+
+  readonly orderedSections = computed(() =>
+    this.getSections(this.cv().sectionOrder),
+  );
+
+  readonly classicDraggableSections = computed<CvSection['id'][]>(() =>
+    this.cv().sectionOrder.filter((id) => id !== 'skills'),
+  );
+
+  readonly classicOrderedSections = computed(() =>
+    this.getSections(this.classicDraggableSections()),
+  );
+
+  readonly activeLabel = computed(
+    () =>
+      this.store.sections.find(
+        (section) => section.id === this.activeSection(),
+      )?.label ?? '',
+  );
+
+  ngOnInit(): void {
+    const userId = this.auth.getCurrentUserId();
+    if (!userId) {
+      void this.router.navigate(['/login']);
+      return;
+    }
+
+    if (!this.cvId) {
+      void this.router.navigate(['/home']);
+      return;
+    }
+
+    this.userId = userId;
+    this.store.loadFromDB(userId, this.cvId);
+  }
 
   setTemplate(t: CvTemplate) {
     this.store.updateTemplate(t);
@@ -45,27 +94,8 @@ export class CvEditorComponent {
     }
   }
 
-  // Single template
-  readonly orderedSections = computed(() =>
-    this.sectionOrder().map((id) => this.store.sections.find((s) => s.id === id)!)
-  );
-
-  // Classic template — only right-column sections (no skills)
-  readonly classicDraggableSections = computed(() =>
-    this.sectionOrder().filter((id) => id !== 'skills') as CvSection['id'][]
-  );
-
-  readonly classicOrderedSections = computed(() =>
-    this.classicDraggableSections().map((id) => this.store.sections.find((s) => s.id === id)!)
-  );
-
-  readonly activeLabel = computed(() => {
-    if (this.activeSection() === 'details') return 'Details';
-    return this.store.sections.find((s) => s.id === this.activeSection())?.label ?? '';
-  });
-
   onDrop(event: CdkDragDrop<CvSection['id'][]>) {
-    const order = [...this.sectionOrder()];
+    const order = [...this.cv().sectionOrder];
     moveItemInArray(order, event.previousIndex, event.currentIndex);
     this.store.updateSectionOrder(order);
   }
@@ -76,42 +106,27 @@ export class CvEditorComponent {
     this.store.updateSectionOrder([...order, 'skills']);
   }
 
+  saveCv(): void {
+    this.saveSuccess.set(false);
+    this.store.saveToDB(this.userId, this.cvId, () => {
+      this.saveSuccess.set(true);
+      setTimeout(() => this.saveSuccess.set(false), 2000);
+    });
+  }
+
+  logout(): void {
+    this.auth.logout();
+  }
+
   exportPdf(): void {
-    const selector = this.activeTemplate() === 'classic' ? 'app-cv-preview-classic' : 'app-cv-preview';
-    const previewEl = document.querySelector(selector);
-    if (!previewEl) return;
+    this.cvExport.exportPdf(this.cv().template);
+  }
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const styleTags = Array.from(document.querySelectorAll('style'))
-      .map((s) => s.outerHTML)
-      .join('\n');
-
-    const linkTags = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
-      .map((l) => l.outerHTML)
-      .join('\n');
-
-    printWindow.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>CV</title>
-  ${linkTags}
-  ${styleTags}
-  <style>
-    @page { size: A4; margin: 0; }
-    body { margin: 0; padding: 0; background: white; }
-    .preview-page { min-height: auto !important; box-shadow: none !important; }
-  </style>
-</head>
-<body>${previewEl.outerHTML}</body>
-</html>`);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 500);
+  private getSections(ids: CvSection['id'][]): CvSection[] {
+    return ids
+      .map((id) =>
+        this.store.sections.find((section) => section.id === id),
+      )
+      .filter((section): section is CvSection => Boolean(section));
   }
 }

@@ -1,3 +1,16 @@
+.cv-loading {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  color: #5f6368;
+  font-size: 1.1rem;
+}
+
+.save-error {
+  color: #b3261e;
+  font-size: 0.85rem;
+}
+
 .cv-layout {
   display: flex;
   height: 100vh;
@@ -118,6 +131,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .template-switcher {
@@ -144,6 +159,38 @@
     font-weight: 600;
     box-shadow: 0 1px 3px rgba(0,0,0,0.15);
   }
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+
+  button,
+  a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+
+    app-icon {
+      width: 1.2rem;
+      height: 1.2rem;
+    }
+  }
+}
+
+.save-success {
+  color: #10b981;
+  font-weight: 600;
+  font-size: 0.875rem;
+  animation: fadeInOut 2s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0; }
+  10%, 90% { opacity: 1; }
 }
 
 .preview-scroll {

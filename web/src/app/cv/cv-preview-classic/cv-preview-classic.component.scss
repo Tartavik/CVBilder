@@ -175,6 +175,32 @@
   }
 }
 
+.classic-experience-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.45rem;
+
+  span {
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: #e7eef5;
+    color: #2d4a6a;
+    font-size: 8pt;
+  }
+}
+
+.classic-experience-skill-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+
+  app-skill-icon {
+    font-size: 0.78rem;
+  }
+}
+
 .classic-edu-item {
   margin-bottom: 0.6rem;
 

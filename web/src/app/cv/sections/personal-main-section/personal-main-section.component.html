@@ -5,19 +5,21 @@
       @if (photo()) {
         <img [src]="photo()" alt="Profile photo" class="photo-img" />
       } @else {
-        <mat-icon class="photo-placeholder-icon">person</mat-icon>
+        <app-icon class="photo-placeholder-icon" name="person" />
       }
     </div>
     <div class="photo-actions">
       <p class="photo-hint">Profile photo</p>
       <div class="photo-btn-row">
-        <button mat-stroked-button type="button" (click)="photoInput.click()">Upload photo</button>
+        <button mat-stroked-button type="button" [disabled]="photoUploading()" (click)="photoInput.click()">
+          {{ photoUploading() ? 'Uploading...' : 'Upload photo' }}
+        </button>
         @if (photo()) {
-          <button mat-icon-button color="warn" type="button" (click)="removePhoto()" aria-label="Remove photo">
-            <mat-icon>delete</mat-icon>
+          <button mat-icon-button color="warn" type="button" [disabled]="photoUploading()" (click)="removePhoto()" aria-label="Remove photo">
+            <app-icon name="delete" />
           </button>
         }
-        <input #photoInput type="file" accept="image/*" hidden (change)="onPhotoChange($event)" />
+        <input #photoInput type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="onPhotoChange($event)" />
       </div>
     </div>
   </div>

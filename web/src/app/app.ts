@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { ErrorService } from './shared/errors/error.service';
 
 @Component({
   imports: [RouterModule],
@@ -7,5 +8,6 @@ import { RouterModule } from '@angular/router';
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
-export class App {}
-
+export class App {
+  readonly errors = inject(ErrorService);
+}
