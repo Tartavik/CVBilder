@@ -4,20 +4,34 @@
       <mat-form-field appearance="outline">
         <mat-label>Institution</mat-label>
         <input matInput formControlName="institution" placeholder="KPI" />
+        @if (hasError(group, 'institution', 'required')) {
+          <mat-error>Institution is required</mat-error>
+        }
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Year</mat-label>
         <input matInput type="number" min="1000" max="9999" formControlName="year" placeholder="2023" />
+        @if (hasError(group, 'year', 'required')) {
+          <mat-error>Year is required</mat-error>
+        } @else if (hasError(group, 'year', 'pattern')) {
+          <mat-error>Use a four-digit year</mat-error>
+        }
       </mat-form-field>
     </div>
     <div class="field-row">
       <mat-form-field appearance="outline">
         <mat-label>Degree</mat-label>
         <input matInput formControlName="degree" placeholder="Bachelor" />
+        @if (hasError(group, 'degree', 'required')) {
+          <mat-error>Degree is required</mat-error>
+        }
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Field of study</mat-label>
         <input matInput formControlName="field" placeholder="Computer Science" />
+        @if (hasError(group, 'field', 'required')) {
+          <mat-error>Field of study is required</mat-error>
+        }
       </mat-form-field>
     </div>
     <button mat-icon-button color="warn" type="button" (click)="remove(i)" aria-label="Remove">

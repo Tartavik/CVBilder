@@ -1,0 +1,75 @@
+@if (cv().template === 'classic') {
+  <aside class="cv-sidebar">
+    <div class="cv-sidebar__logo">CVBilder</div>
+    <p class="cv-sidebar__hint">Left column</p>
+    <div class="section-list">
+      <button
+        type="button"
+        class="section-item fixed"
+        [class.active]="activeSection() === 'details'"
+        (click)="setActive('details')"
+      >
+        <span class="drag-handle">⠿</span> Details
+      </button>
+      <button
+        type="button"
+        class="section-item fixed"
+        [class.active]="activeSection() === 'skills'"
+        (click)="setActive('skills')"
+      >
+        <span class="drag-handle">⠿</span> General Skills
+      </button>
+    </div>
+
+    <p class="cv-sidebar__hint">Right column — drag to reorder</p>
+    <div
+      cdkDropList
+      [cdkDropListData]="classicDraggableSections()"
+      (cdkDropListDropped)="onClassicDrop($event)"
+      class="section-list"
+    >
+      @for (section of classicOrderedSections(); track section.id) {
+        <div
+          cdkDrag
+          class="section-item"
+          role="button"
+          tabindex="0"
+          [class.active]="activeSection() === section.id"
+          (click)="setActive(section.id)"
+          (keydown.enter)="setActive(section.id)"
+          (keydown.space)="setActive(section.id)"
+        >
+          <span class="drag-handle">⠿</span>
+          {{ section.label }}
+        </div>
+      }
+    </div>
+  </aside>
+} @else {
+  <aside class="cv-sidebar">
+    <div class="cv-sidebar__logo">CVBilder</div>
+    <p class="cv-sidebar__hint">Drag to reorder</p>
+    <div
+      cdkDropList
+      [cdkDropListData]="cv().sectionOrder"
+      (cdkDropListDropped)="onDrop($event)"
+      class="section-list"
+    >
+      @for (section of orderedSections(); track section.id) {
+        <div
+          cdkDrag
+          class="section-item"
+          role="button"
+          tabindex="0"
+          [class.active]="activeSection() === section.id"
+          (click)="setActive(section.id)"
+          (keydown.enter)="setActive(section.id)"
+          (keydown.space)="setActive(section.id)"
+        >
+          <span class="drag-handle">⠿</span>
+          {{ section.label }}
+        </div>
+      }
+    </div>
+  </aside>
+}

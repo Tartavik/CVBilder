@@ -1,5 +1,5 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -17,9 +17,9 @@ export class PersonalDetailsSectionComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly form = new FormGroup({
-    email: new FormControl(''),
-    phone: new FormControl(''),
-    city: new FormControl(''),
+    email: new FormControl('', [Validators.required, Validators.email]),
+    phone: new FormControl('', Validators.required),
+    city: new FormControl('', Validators.required),
   });
 
   ngOnInit() {

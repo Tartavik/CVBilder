@@ -17,6 +17,10 @@ export class AuthService {
     return this.currentUserId();
   }
 
+  isLoggedIn(): boolean {
+    return Boolean(this.currentUserId());
+  }
+
   private getStoredUserId(): string | null {
     if (typeof sessionStorage === 'undefined') return null;
     return sessionStorage.getItem('currentUserId');

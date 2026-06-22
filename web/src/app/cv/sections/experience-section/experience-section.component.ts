@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormArray, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -68,15 +68,40 @@ export class ExperienceSectionComponent implements OnInit {
   }
 
   private createGroup(item?: Partial<ExperienceItem>): FormGroup {
-    return new FormGroup({
-      company:     new FormControl(item?.company     ?? ''),
-      position:    new FormControl(item?.position    ?? ''),
-      startDate:   new FormControl(item?.startDate   ?? ''),
+    const group = new FormGroup({
+      company:     new FormControl(item?.company     ?? '', Validators.required),
+      position:    new FormControl(item?.position    ?? '', Validators.required),
+      startDate:   new FormControl(item?.startDate   ?? '', [Validators.required, Validators.pattern(/^\d{4}-\d{2}-\d{2}$/)]),
       endDate:     new FormControl(item?.endDate     ?? ''),
       current:     new FormControl(item?.current     ?? false),
-      description: new FormControl(item?.description ?? ''),
+      description: new FormControl(item?.description ?? '', Validators.required),
       skills:      new FormControl(item?.skills      ?? []),
     });
+
+    const currentControl = group.get('current');
+    const endDateControl = group.get('endDate');
+    const syncEndDateValidators = (current: unknown) => {
+      if (current) {
+        endDateControl?.clearValidators();
+      } else {
+        endDateControl?.setValidators([
+          Validators.required,
+          Validators.pattern(/^\d{4}-\d{2}-\d{2}$/),
+        ]);
+      }
+      endDateControl?.updateValueAndValidity({ emitEvent: false });
+    };
+
+    syncEndDateValidators(currentControl?.value);
+    currentControl?.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(syncEndDateValidators);
+
+    return group;
+  }
+
+  hasError(group: FormGroup, controlName: string, errorName: string): boolean {
+    return group.get(controlName)?.hasError(errorName) ?? false;
   }
 
   add() {

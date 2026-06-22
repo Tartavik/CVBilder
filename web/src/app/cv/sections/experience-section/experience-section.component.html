@@ -21,26 +21,45 @@
       <mat-form-field appearance="outline">
         <mat-label>Company</mat-label>
         <input matInput formControlName="company" placeholder="Google" />
+        @if (hasError(group, 'company', 'required')) {
+          <mat-error>Company is required</mat-error>
+        }
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Position</mat-label>
         <input matInput formControlName="position" placeholder="Software Engineer" />
+        @if (hasError(group, 'position', 'required')) {
+          <mat-error>Position is required</mat-error>
+        }
       </mat-form-field>
     </div>
     <div class="field-row">
       <mat-form-field appearance="outline">
         <mat-label>Start date</mat-label>
         <input matInput type="date" formControlName="startDate" />
+        @if (hasError(group, 'startDate', 'required')) {
+          <mat-error>Start date is required</mat-error>
+        } @else if (hasError(group, 'startDate', 'pattern')) {
+          <mat-error>Use YYYY-MM-DD format</mat-error>
+        }
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>End date</mat-label>
         <input matInput type="date" formControlName="endDate" />
+        @if (hasError(group, 'endDate', 'required')) {
+          <mat-error>End date is required</mat-error>
+        } @else if (hasError(group, 'endDate', 'pattern')) {
+          <mat-error>Use YYYY-MM-DD format</mat-error>
+        }
       </mat-form-field>
       <mat-checkbox formControlName="current">Current</mat-checkbox>
     </div>
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Description</mat-label>
       <textarea matInput formControlName="description" rows="3" placeholder="What you did..."></textarea>
+      @if (hasError(group, 'description', 'required')) {
+        <mat-error>Description is required</mat-error>
+      }
     </mat-form-field>
 
     <div class="experience-skills-editor">

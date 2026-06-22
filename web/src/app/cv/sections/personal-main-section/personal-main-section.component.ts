@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -22,9 +22,9 @@ export class PersonalMainSectionComponent implements OnInit {
   readonly photoUploading = this.store.photoUploading;
 
   readonly form = new FormGroup({
-    fullName: new FormControl(''),
-    jobTitle: new FormControl(''),
-    summary:  new FormControl(''),
+    fullName: new FormControl('', Validators.required),
+    jobTitle: new FormControl('', Validators.required),
+    summary:  new FormControl('', Validators.required),
   });
 
   ngOnInit() {

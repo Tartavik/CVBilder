@@ -28,28 +28,48 @@
     <mat-form-field appearance="outline">
       <mat-label>Full name</mat-label>
       <input matInput formControlName="fullName" placeholder="John Doe" />
+      @if (form.controls.fullName.hasError('required')) {
+        <mat-error>Full name is required</mat-error>
+      }
     </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>Job title</mat-label>
       <input matInput formControlName="jobTitle" placeholder="Frontend Developer" />
+      @if (form.controls.jobTitle.hasError('required')) {
+        <mat-error>Job title is required</mat-error>
+      }
     </mat-form-field>
   </div>
   <div class="field-row">
     <mat-form-field appearance="outline">
       <mat-label>Email</mat-label>
       <input matInput type="email" formControlName="email" placeholder="john@example.com" />
+      @if (form.controls.email.hasError('required')) {
+        <mat-error>Email is required</mat-error>
+      } @else if (form.controls.email.hasError('email')) {
+        <mat-error>Enter a valid email</mat-error>
+      }
     </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>Phone</mat-label>
       <input matInput type="tel" formControlName="phone" placeholder="+38 000 000 0000" />
+      @if (form.controls.phone.hasError('required')) {
+        <mat-error>Phone is required</mat-error>
+      }
     </mat-form-field>
   </div>
   <mat-form-field appearance="outline" class="full-width">
     <mat-label>City</mat-label>
     <input matInput formControlName="city" placeholder="Kyiv, Ukraine" />
+    @if (form.controls.city.hasError('required')) {
+      <mat-error>City is required</mat-error>
+    }
   </mat-form-field>
   <mat-form-field appearance="outline" class="full-width">
     <mat-label>Summary</mat-label>
     <textarea matInput formControlName="summary" rows="4" placeholder="Brief professional summary..."></textarea>
+    @if (form.controls.summary.hasError('required')) {
+      <mat-error>Summary is required</mat-error>
+    }
   </mat-form-field>
 </form>

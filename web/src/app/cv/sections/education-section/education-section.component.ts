@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormArray, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -33,7 +33,6 @@ export class EducationSectionComponent implements OnInit {
       .pipe(debounceTime(300),
       takeUntilDestroyed(this.destroyRef))
       .subscribe((values: Partial<EducationItem>[]) => {
-        console.log(values, "value changes");
         const ids = this.store.cv().education.map((e) => e.id);
         values.forEach((v, i) => {
           if (ids[i]) this.store.updateEducation(ids[i], v);
@@ -43,11 +42,18 @@ export class EducationSectionComponent implements OnInit {
 
   private createGroup(item?: Partial<EducationItem>): FormGroup {
     return new FormGroup({
-      institution: new FormControl(item?.institution ?? ''),
-      degree:      new FormControl(item?.degree      ?? ''),
-      field:       new FormControl(item?.field       ?? ''),
-      year:        new FormControl(item?.year        ?? ''),
+      institution: new FormControl(item?.institution ?? '', Validators.required),
+      degree:      new FormControl(item?.degree      ?? '', Validators.required),
+      field:       new FormControl(item?.field       ?? '', Validators.required),
+      year:        new FormControl(item?.year        ?? '', [
+        Validators.required,
+        Validators.pattern(/^\d{4}$/),
+      ]),
     });
+  }
+
+  hasError(group: FormGroup, controlName: string, errorName: string): boolean {
+    return group.get(controlName)?.hasError(errorName) ?? false;
   }
 
   add() {

@@ -28,14 +28,23 @@
     <mat-form-field appearance="outline">
       <mat-label>Full name</mat-label>
       <input matInput formControlName="fullName" placeholder="John Doe" />
+      @if (form.controls.fullName.hasError('required')) {
+        <mat-error>Full name is required</mat-error>
+      }
     </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>Job title</mat-label>
       <input matInput formControlName="jobTitle" placeholder="Frontend Developer" />
+      @if (form.controls.jobTitle.hasError('required')) {
+        <mat-error>Job title is required</mat-error>
+      }
     </mat-form-field>
   </div>
   <mat-form-field appearance="outline" class="full-width">
     <mat-label>Summary</mat-label>
     <textarea matInput formControlName="summary" rows="4" placeholder="Brief professional summary..."></textarea>
+    @if (form.controls.summary.hasError('required')) {
+      <mat-error>Summary is required</mat-error>
+    }
   </mat-form-field>
 </form>

@@ -17,6 +17,7 @@ import {
   EducationItemDto,
   ExperienceItemDto,
   ExperienceSkillDto,
+  PersonalDataDto,
   SaveCvDto,
 } from './dto/save-cv.dto';
 
@@ -28,6 +29,7 @@ const DEFAULT_SECTION_ORDER = [
   'details',
 ];
 const VALID_SECTION_IDS = new Set(DEFAULT_SECTION_ORDER);
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHOTO_MIME_TYPES = new Map([
   ['image/jpeg', '.jpg'],
   ['image/png', '.png'],
@@ -83,15 +85,21 @@ export class UsersService {
   }
 
   async create(email: string, passwordHash: string): Promise<UserEntity> {
-    const user = this.userRepo.create({ email, passwordHash });
+    this.validateCredentials(email, passwordHash);
+    const user = this.userRepo.create({
+      email: this.normalizeEmail(email),
+      passwordHash,
+    });
     return this.userRepo.save(user);
   }
 
   async findByEmail(email: string): Promise<UserEntity | null> {
-    return this.userRepo.findOne({ where: { email } });
+    if (typeof email !== 'string') return null;
+    return this.userRepo.findOne({ where: { email: this.normalizeEmail(email) } });
   }
 
   async login(email: string, password: string): Promise<UserEntity | null> {
+    this.validateCredentials(email, password);
     const user = await this.findByEmail(email);
     if (!user || user.passwordHash !== password) return null;
     return user;
@@ -519,12 +527,36 @@ export class UsersService {
       throw new BadRequestException('Invalid experience skill mode');
     }
 
+    this.validatePersonal(dto.personal);
     dto.experience.forEach((experience, index) =>
       this.validateExperience(experience, index),
     );
     dto.education.forEach((education, index) =>
       this.validateEducation(education, index),
     );
+  }
+
+  private validatePersonal(personal: PersonalDataDto): void {
+    const requiredFields: Array<[keyof PersonalDataDto, string]> = [
+      ['fullName', 'Full name'],
+      ['jobTitle', 'Job title'],
+      ['email', 'Email'],
+      ['phone', 'Phone'],
+      ['city', 'City'],
+      ['summary', 'Summary'],
+    ];
+
+    const missingField = requiredFields.find(
+      ([field]) =>
+        typeof personal[field] !== 'string' || !personal[field].trim(),
+    );
+    if (missingField) {
+      throw new BadRequestException(`${missingField[1]} is required`);
+    }
+
+    if (!EMAIL_PATTERN.test(personal.email.trim())) {
+      throw new BadRequestException('Enter a valid email');
+    }
   }
 
   private validateExperience(
@@ -542,8 +574,24 @@ export class UsersService {
       );
     }
     this.parseDate(experience.startDate, `experience[${index}].startDate`);
-    if (!experience.current && experience.endDate) {
+    if (!experience.current) {
+      if (
+        typeof experience.endDate !== 'string' ||
+        !experience.endDate.trim()
+      ) {
+        throw new BadRequestException(
+          `Experience ${index + 1} requires end date`,
+        );
+      }
       this.parseDate(experience.endDate, `experience[${index}].endDate`);
+    }
+    if (
+      typeof experience.description !== 'string' ||
+      !experience.description.trim()
+    ) {
+      throw new BadRequestException(
+        `Experience ${index + 1} requires description`,
+      );
     }
     if (
       experience.skills !== undefined &&
@@ -565,14 +613,29 @@ export class UsersService {
     if (
       typeof education.institution !== 'string' ||
       typeof education.degree !== 'string' ||
+      typeof education.field !== 'string' ||
       !education.institution.trim() ||
-      !education.degree.trim()
+      !education.degree.trim() ||
+      !education.field.trim()
     ) {
       throw new BadRequestException(
-        `Education ${index + 1} requires institution and degree`,
+        `Education ${index + 1} requires all fields`,
       );
     }
     this.parseYear(education.year, index);
+  }
+
+  private validateCredentials(email: string, password: string): void {
+    if (typeof email !== 'string' || !EMAIL_PATTERN.test(email.trim())) {
+      throw new BadRequestException('Enter a valid email');
+    }
+    if (typeof password !== 'string' || password.length < 6) {
+      throw new BadRequestException('Password must be at least 6 characters');
+    }
+  }
+
+  private normalizeEmail(email: string): string {
+    return email.trim().toLocaleLowerCase();
   }
 
   private parseDate(value: string, field: string): Date {

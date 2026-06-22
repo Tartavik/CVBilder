@@ -65,6 +65,10 @@ export interface CvMetadata {
   ownerEmail: string;
 }
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const YEAR_PATTERN = /^\d{4}$/;
+
 const DEFAULT_DATA: CvData = {
   personal: {
     fullName: '',
@@ -155,6 +159,12 @@ export class CvStore {
   }
 
   saveToDB(userId: string, cvId: string, callback?: () => void) {
+    const validationError = this.getValidationError(this.cv());
+    if (validationError) {
+      this.error.set(validationError);
+      return;
+    }
+
     this.loading.set(true);
     this.error.set(null);
     const cvData = this.mapStoreDataToApi(this.cv());
@@ -355,5 +365,67 @@ export class CvStore {
 
   updateTemplate(template: CvTemplate) {
     this.updateState({ ...this.cv(), template });
+  }
+
+  private getValidationError(data: CvData): string | null {
+    const personal = data.personal;
+    const personalFields: Array<[keyof PersonalData, string]> = [
+      ['fullName', 'Full name'],
+      ['jobTitle', 'Job title'],
+      ['email', 'Email'],
+      ['phone', 'Phone'],
+      ['city', 'City'],
+      ['summary', 'Summary'],
+    ];
+    const missingPersonalField = personalFields.find(
+      ([field]) => !personal[field]?.trim(),
+    );
+    if (missingPersonalField) {
+      return `${missingPersonalField[1]} is required`;
+    }
+    if (!EMAIL_PATTERN.test(personal.email.trim())) {
+      return 'Enter a valid email';
+    }
+
+    for (let i = 0; i < data.experience.length; i += 1) {
+      const item = data.experience[i];
+      if (!item.company.trim() || !item.position.trim()) {
+        return `Experience ${i + 1} requires company and position`;
+      }
+      if (!item.startDate.trim()) {
+        return `Experience ${i + 1} requires start date`;
+      }
+      if (!DATE_PATTERN.test(item.startDate)) {
+        return `Experience ${i + 1} start date must use YYYY-MM-DD format`;
+      }
+      if (!item.current) {
+        if (!item.endDate.trim()) {
+          return `Experience ${i + 1} requires end date`;
+        }
+        if (!DATE_PATTERN.test(item.endDate)) {
+          return `Experience ${i + 1} end date must use YYYY-MM-DD format`;
+        }
+      }
+      if (!item.description.trim()) {
+        return `Experience ${i + 1} requires description`;
+      }
+    }
+
+    for (let i = 0; i < data.education.length; i += 1) {
+      const item = data.education[i];
+      if (
+        !item.institution.trim() ||
+        !item.year.trim() ||
+        !item.degree.trim() ||
+        !item.field.trim()
+      ) {
+        return `Education ${i + 1} requires all fields`;
+      }
+      if (!YEAR_PATTERN.test(item.year)) {
+        return `Education ${i + 1} year must be a four-digit year`;
+      }
+    }
+
+    return null;
   }
 }

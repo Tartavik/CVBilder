@@ -46,11 +46,7 @@ export class HomeComponent implements OnInit {
   readonly skillSearch = new FormControl('', { nonNullable: true });
 
   ngOnInit(): void {
-    const userId = this.auth.getCurrentUserId();
-    if (!userId) {
-      this.router.navigate(['/login']);
-      return;
-    }
+    const userId = this.auth.getCurrentUserId() as string;
 
     forkJoin({
       current: this.api.getUserCvs(userId),
@@ -69,8 +65,8 @@ export class HomeComponent implements OnInit {
   }
 
   createCv(): void {
-    const userId = this.auth.getCurrentUserId();
-    if (!userId || this.creating()) return;
+    if (this.creating()) return;
+    const userId = this.auth.getCurrentUserId() as string;
 
     this.creating.set(true);
     this.error.set('');

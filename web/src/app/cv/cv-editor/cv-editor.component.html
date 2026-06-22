@@ -1,146 +1,19 @@
 @if (!ready()) {
   <div class="cv-loading">Loading CV...</div>
 } @else {
-<div class="cv-layout">
-
-  <!-- Classic sidebar: fixed left-column + draggable right-column -->
-  @if (cv().template === 'classic') {
-    <aside class="cv-sidebar">
-      <div class="cv-sidebar__logo">CVBilder</div>
-      <p class="cv-sidebar__hint">Left column</p>
-      <div class="section-list">
-        <button type="button" class="section-item fixed" [class.active]="activeSection() === 'details'" (click)="activeSection.set('details')">
-          <span class="drag-handle">⠿</span> Details
-        </button>
-        <button type="button" class="section-item fixed" [class.active]="activeSection() === 'skills'" (click)="activeSection.set('skills')">
-          <span class="drag-handle">⠿</span> General Skills
-        </button>
-      </div>
-      <p class="cv-sidebar__hint">Right column — drag to reorder</p>
-      <div
-        cdkDropList
-        [cdkDropListData]="classicDraggableSections()"
-        (cdkDropListDropped)="onClassicDrop($event)"
-        class="section-list"
-      >
-        @for (section of classicOrderedSections(); track section.id) {
-          <div
-            cdkDrag
-            class="section-item"
-            role="button"
-            tabindex="0"
-            [class.active]="activeSection() === section.id"
-            (click)="activeSection.set(section.id)"
-            (keydown.enter)="activeSection.set(section.id)"
-            (keydown.space)="activeSection.set(section.id)"
-          >
-            <span class="drag-handle">⠿</span>
-            {{ section.label }}
-          </div>
-        }
-      </div>
-    </aside>
-
-  } @else {
-    <!-- Single sidebar: all sections draggable -->
-    <aside class="cv-sidebar">
-      <div class="cv-sidebar__logo">CVBilder</div>
-      <p class="cv-sidebar__hint">Drag to reorder</p>
-      <div
-        cdkDropList
-        [cdkDropListData]="cv().sectionOrder"
-        (cdkDropListDropped)="onDrop($event)"
-        class="section-list"
-      >
-        @for (section of orderedSections(); track section.id) {
-          <div
-            cdkDrag
-            class="section-item"
-            role="button"
-            tabindex="0"
-            [class.active]="activeSection() === section.id"
-            (click)="activeSection.set(section.id)"
-            (keydown.enter)="activeSection.set(section.id)"
-            (keydown.space)="activeSection.set(section.id)"
-          >
-            <span class="drag-handle">⠿</span>
-            {{ section.label }}
-          </div>
-        }
-      </div>
-    </aside>
-  }
-
-  <!-- Center: editor -->
-  <section class="cv-editor">
-    <div class="editor-card">
-      <h2 class="editor-title">{{ activeLabel() }}</h2>
-      @if (cv().template === 'classic') {
-        @switch (activeSection()) {
-          @case ('personal') { <app-personal-main-section /> }
-          @case ('details')  { <app-personal-details-section /> }
-          @case ('experience') { <app-experience-section /> }
-          @case ('education') { <app-education-section /> }
-          @case ('skills') { <app-general-skills-section /> }
-        }
-      } @else {
-        @switch (activeSection()) {
-          @case ('personal') { <app-personal-section /> }
-          @case ('experience') { <app-experience-section /> }
-          @case ('education') { <app-education-section /> }
-          @case ('skills') { <app-general-skills-section /> }
-        }
-      }
-    </div>
-  </section>
-
-  <!-- Right: live preview -->
-  <aside class="cv-preview-pane">
-    <div class="preview-actions">
-      <div class="template-switcher">
-        <button type="button" class="tpl-btn" [class.active]="cv().template === 'single'" (click)="setTemplate('single')">Single</button>
-        <button type="button" class="tpl-btn" [class.active]="cv().template === 'classic'" (click)="setTemplate('classic')">Classic</button>
-      </div>
-      <div class="action-buttons">
-        <a mat-stroked-button routerLink="/home">
-          <app-icon name="home" />
-          Home
-        </a>
-        <a mat-stroked-button [routerLink]="['/public/cv', cvId]">
-          <app-icon name="visibility" />
-          Public page
-        </a>
-        <button mat-raised-button color="primary" (click)="saveCv()" [disabled]="saving()">
-          @if (saving()) {
-            <app-icon name="hourglass_empty" />
-          } @else {
-            <app-icon name="save" />
-          }
-          Save
-        </button>
-        @if (saveSuccess()) {
-          <span class="save-success">✓ Saved</span>
-        }
-        @if (error()) {
-          <span class="save-error">{{ error() }}</span>
-        }
-        <button mat-raised-button color="primary" (click)="exportPdf()">
-          <app-icon name="picture_as_pdf" />
-          Export PDF
-        </button>
-        <button mat-raised-button color="warn" (click)="logout()">
-          <app-icon name="logout" />
-          Logout
-        </button>
-      </div>
-    </div>
-    <div class="preview-scroll">
-      @if (cv().template === 'classic') {
-        <app-cv-preview-classic />
-      } @else {
-        <app-cv-preview />
-      }
-    </div>
-  </aside>
-</div>
+  <div class="cv-layout">
+    <app-cv-editor-sidebar
+      [activeSection]="activeSection()"
+      (activeSectionChange)="activeSection.set($event)"
+    />
+    <app-cv-editor-form [activeSection]="activeSection()" />
+    <app-cv-editor-preview-pane
+      [cvId]="cvId"
+      [saveSuccess]="saveSuccess()"
+      (templateChange)="setTemplate($event)"
+      (save)="saveCv()"
+      (exportPdf)="exportPdf()"
+      (logout)="logout()"
+    />
+  </div>
 }
