@@ -1,91 +1,50 @@
 <form [formGroup]="form" class="section-form">
-  <!-- Photo upload -->
-  <div class="photo-row">
-    <div class="photo-preview">
-      @if (photo()) {
-        <img [src]="photo()" alt="Profile photo" class="photo-img" />
-      } @else {
-        <app-icon class="photo-placeholder-icon" name="person" />
-      }
-    </div>
-    <div class="photo-actions">
-      <p class="photo-hint">Profile photo</p>
-      <div class="photo-btn-row">
-        <button mat-stroked-button type="button" [disabled]="photoUploading()" (click)="photoInput.click()">
-          {{ photoUploading() ? 'Uploading...' : 'Upload photo' }}
-        </button>
-        @if (photo()) {
-          <button mat-icon-button color="warn" type="button" [disabled]="photoUploading()" (click)="removePhoto()" aria-label="Remove photo">
-            <app-icon name="delete" />
-          </button>
-        }
-        <input #photoInput type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="onPhotoChange($event)" />
-      </div>
-    </div>
-  </div>
+  <app-profile-photo-field
+    [photo]="photo()"
+    [uploading]="photoUploading()"
+    (upload)="onPhotoUpload($event)"
+    (remove)="removePhoto()"
+  />
 
   <div class="field-row">
-    <mat-form-field appearance="outline">
-      <mat-label>Full name</mat-label>
-      <input matInput formControlName="fullName" placeholder="John Doe" />
-      @if (form.controls.fullName.hasError('required')) {
-        <mat-error>Full name is required</mat-error>
-      } @else if (form.controls.fullName.hasError('minlength')) {
-        <mat-error>Use at least 2 characters</mat-error>
-      } @else if (form.controls.fullName.hasError('pattern')) {
-        <mat-error>Use letters, spaces, hyphens, or apostrophes</mat-error>
-      }
-    </mat-form-field>
-    <mat-form-field appearance="outline">
-      <mat-label>Job title</mat-label>
-      <input matInput formControlName="jobTitle" placeholder="Frontend Developer" />
-      @if (form.controls.jobTitle.hasError('required')) {
-        <mat-error>Job title is required</mat-error>
-      } @else if (form.controls.jobTitle.hasError('minlength')) {
-        <mat-error>Use at least 2 characters</mat-error>
-      } @else if (form.controls.jobTitle.hasError('pattern')) {
-        <mat-error>Use letters and common title symbols only</mat-error>
-      }
-    </mat-form-field>
+    <app-form-text-field
+      [control]="form.controls.fullName"
+      label="Full name"
+      placeholder="John Doe"
+    />
+    <app-form-text-field
+      [control]="form.controls.jobTitle"
+      label="Job title"
+      placeholder="Frontend Developer"
+    />
   </div>
   <div class="field-row">
-    <mat-form-field appearance="outline">
-      <mat-label>Email</mat-label>
-      <input matInput type="email" formControlName="email" placeholder="john@example.com" />
-      @if (form.controls.email.hasError('required')) {
-        <mat-error>Email is required</mat-error>
-      } @else if (form.controls.email.hasError('pattern')) {
-        <mat-error>Enter a valid email</mat-error>
-      }
-    </mat-form-field>
-    <mat-form-field appearance="outline">
-      <mat-label>Phone</mat-label>
-      <input matInput type="tel" formControlName="phone" placeholder="+380501234567" />
-      @if (form.controls.phone.hasError('required')) {
-        <mat-error>Phone is required</mat-error>
-      } @else if (form.controls.phone.hasError('pattern')) {
-        <mat-error>Use + and 10-15 digits</mat-error>
-      }
-    </mat-form-field>
+    <app-form-text-field
+      [control]="form.controls.email"
+      label="Email"
+      type="email"
+      placeholder="john@example.com"
+      patternMessage="Enter a valid email"
+    />
+    <app-form-text-field
+      [control]="form.controls.phone"
+      label="Phone"
+      type="tel"
+      placeholder="+380501234567"
+      patternMessage="Use + and 10-15 digits"
+    />
   </div>
-  <mat-form-field appearance="outline" class="full-width">
-    <mat-label>City</mat-label>
-    <input matInput formControlName="city" placeholder="Kyiv, Ukraine" />
-    @if (form.controls.city.hasError('required')) {
-      <mat-error>City is required</mat-error>
-    } @else if (form.controls.city.hasError('minlength')) {
-      <mat-error>Use at least 2 characters</mat-error>
-    } @else if (form.controls.city.hasError('pattern')) {
-      <mat-error>Use letters, spaces, commas, or hyphens</mat-error>
-    }
-  </mat-form-field>
-  <mat-form-field appearance="outline" class="full-width">
-    <mat-label>Summary</mat-label>
-    <textarea matInput formControlName="summary" rows="4" placeholder="Brief professional summary..."></textarea>
-    @if (form.controls.summary.hasError('required')) {
-      <mat-error>Summary is required</mat-error>
-    } @else if (form.controls.summary.hasError('minlength')) {
-      <mat-error>Use at least 2 characters</mat-error>
-    }
-  </mat-form-field>
+  <app-form-text-field
+    class="full-width"
+    [control]="form.controls.city"
+    label="City"
+    placeholder="Kyiv, Ukraine"
+  />
+  <app-form-textarea-field
+    class="full-width"
+    [control]="form.controls.summary"
+    label="Summary"
+    placeholder="Brief professional summary..."
+    [rows]="4"
+  />
 </form>

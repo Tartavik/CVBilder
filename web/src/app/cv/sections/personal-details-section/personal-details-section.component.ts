@@ -1,7 +1,5 @@
 import { Component, DestroyRef, OnInit, effect, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime } from 'rxjs';
 import {
@@ -9,12 +7,16 @@ import {
   SHORT_TEXT_PATTERN,
   STRICT_EMAIL_PATTERN,
 } from '../../../shared/validation-patterns';
+import { FormTextFieldComponent } from '../../../shared/form-text-field/form-text-field.component';
 import { CvStore } from '../../cv.store';
 
 @Component({
   selector: 'app-personal-details-section',
   standalone: true,
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule],
+  imports: [
+    ReactiveFormsModule,
+    FormTextFieldComponent,
+  ],
   templateUrl: './personal-details-section.component.html',
 })
 export class PersonalDetailsSectionComponent implements OnInit {

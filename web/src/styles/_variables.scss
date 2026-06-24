@@ -1,0 +1,123 @@
+// Base palette
+$white: #fff;
+$neutral-50: #f8fafc;
+$neutral-100: #eef2f7;
+$neutral-200: #d7deea;
+$neutral-500: #667085;
+$neutral-800: #1f2937;
+$neutral-900: #111827;
+$neutral-950: #020617;
+$dark-surface: #1f2638;
+$dark-border: #343d58;
+$dark-muted: #cbd5e1;
+$primary: #3147b7;
+$primary-soft: #e8ebff;
+$primary-dark: #1d4ed8;
+$primary-light: #93c5fd;
+$danger: #b42318;
+$danger-light: #f87171;
+$danger-soft: #fff1f2;
+$success: #14532d;
+$success-border: #74c69d;
+$success-soft: #f0fdf4;
+$warning: #f8c954;
+
+// Light application theme
+$color-page-bg: $neutral-100;
+$color-workspace-bg: $neutral-100;
+$color-editor-bg: $neutral-50;
+$color-surface: $white;
+$color-surface-soft: $neutral-50;
+$color-border: $neutral-200;
+$color-border-strong: $neutral-200;
+$color-text: $neutral-800;
+$color-title: $neutral-800;
+$color-muted: $neutral-500;
+$color-primary-soft: $primary-soft;
+$color-danger: $danger;
+$color-danger-border: $danger-light;
+$color-danger-soft: $danger-soft;
+$color-danger-hover: rgba($danger, 12%);
+$color-success: $success;
+$color-success-border: $success-border;
+$color-success-soft: $success-soft;
+$color-warning: $warning;
+
+// Dark application theme
+$color-dark-page-bg: $neutral-900;
+$color-dark-workspace-bg: $neutral-900;
+$color-dark-editor-bg: $neutral-900;
+$color-dark-surface: $dark-surface;
+$color-dark-surface-soft: $dark-surface;
+$color-dark-border: $dark-border;
+$color-dark-border-strong: $dark-border;
+$color-dark-text: $neutral-50;
+$color-dark-title: $white;
+$color-dark-muted: $dark-muted;
+$color-dark-danger: $danger-light;
+$color-dark-danger-hover: rgba($danger-light, 14%);
+
+// Sidebar theme
+$color-sidebar-bg: $neutral-50;
+$color-sidebar-panel: $white;
+$color-sidebar-border: $neutral-200;
+$color-sidebar-text: $neutral-800;
+$color-sidebar-muted: $neutral-500;
+$color-sidebar-accent: $primary;
+$color-sidebar-hover: $primary-soft;
+$color-sidebar-active: $primary-soft;
+$color-sidebar-active-text: $neutral-800;
+$color-dark-sidebar-bg: $neutral-950;
+$color-dark-sidebar-panel: $neutral-900;
+$color-dark-sidebar-border: $dark-border;
+$color-dark-sidebar-text: $white;
+$color-dark-sidebar-muted: $dark-muted;
+$color-dark-sidebar-accent: $primary-light;
+$color-dark-sidebar-hover: $dark-surface;
+$color-dark-sidebar-active: $primary-dark;
+$color-dark-sidebar-active-text: $white;
+
+// CV preview product palette
+$preview-color-paper: $white;
+$preview-color-text: #1a1a1a;
+$preview-color-muted: #555;
+$preview-color-border: #ccc;
+$preview-color-tag: #f0f0f0;
+$preview-classic-panel: #d9e4f0;
+$preview-classic-border: #b8cde0;
+$preview-classic-primary: #1e3a5f;
+$preview-classic-accent: #3a6a9e;
+$preview-classic-muted: #2d4a6a;
+$preview-classic-tag: #e7eef5;
+
+// Shadows
+$shadow-sm: 0 2px 8px rgb(0 0 0 / 8%);
+$shadow-lg: 0 12px 32px rgb(0 0 0 / 18%);
+$preview-shadow: 0 2px 12px rgb(0 0 0 / 15%);
+
+// Radius scale
+$radius-control: 8px;
+$radius-panel: 12px;
+$radius-pill: 999px;
+$preview-radius-tag: 4px;
+
+// Application typography scale
+$font-size-sm: 12px;
+$font-size-md: 14px;
+$font-size-base: 16px;
+$font-size-lg: 18px;
+$font-size-xl: 24px;
+
+// Printed CV typography scale
+$preview-font-sm: 9pt;
+$preview-font-base: 10pt;
+$preview-font-heading: 12pt;
+$preview-font-display: 22pt;
+
+// Stable component dimensions
+$control-height: 40px;
+$icon-size: 20px;
+$skill-icon-size: 32px;
+$photo-size: 80px;
+$sidebar-width: 280px;
+$breakpoint-mobile: 640px;

@@ -1,52 +1,41 @@
 @for (group of groups; track $index; let i = $index) {
   <div [formGroup]="group" class="edu-item">
     <div class="field-row">
-      <mat-form-field appearance="outline">
-        <mat-label>Institution</mat-label>
-        <input matInput formControlName="institution" placeholder="KPI" />
-        @if (hasError(group, 'institution', 'required')) {
-          <mat-error>Institution is required</mat-error>
-        } @else if (hasError(group, 'institution', 'minlength')) {
-          <mat-error>Use at least 2 characters</mat-error>
-        } @else if (hasError(group, 'institution', 'pattern')) {
-          <mat-error>Use letters and common name symbols only</mat-error>
-        }
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Year</mat-label>
-        <input matInput type="number" min="1000" max="9999" formControlName="year" placeholder="2023" />
-        @if (hasError(group, 'year', 'required')) {
-          <mat-error>Year is required</mat-error>
-        } @else if (hasError(group, 'year', 'pattern')) {
-          <mat-error>Use a four-digit year</mat-error>
-        }
-      </mat-form-field>
+      <app-form-text-field
+        [control]="group.get('institution')"
+        label="Institution"
+        placeholder="KPI"
+      />
+      <app-form-text-field
+        [control]="group.get('year')"
+        label="Year"
+        type="number"
+        placeholder="2023"
+        [min]="1000"
+        [max]="9999"
+        patternMessage="Use a four-digit year"
+      />
     </div>
     <div class="field-row">
-      <mat-form-field appearance="outline">
-        <mat-label>Degree</mat-label>
-        <input matInput formControlName="degree" placeholder="Bachelor" />
-        @if (hasError(group, 'degree', 'required')) {
-          <mat-error>Degree is required</mat-error>
-        } @else if (hasError(group, 'degree', 'minlength')) {
-          <mat-error>Use at least 2 characters</mat-error>
-        } @else if (hasError(group, 'degree', 'pattern')) {
-          <mat-error>Use letters and common name symbols only</mat-error>
-        }
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Field of study</mat-label>
-        <input matInput formControlName="field" placeholder="Computer Science" />
-        @if (hasError(group, 'field', 'required')) {
-          <mat-error>Field of study is required</mat-error>
-        } @else if (hasError(group, 'field', 'minlength')) {
-          <mat-error>Use at least 2 characters</mat-error>
-        } @else if (hasError(group, 'field', 'pattern')) {
-          <mat-error>Use letters and common name symbols only</mat-error>
-        }
-      </mat-form-field>
+      <app-form-text-field
+        [control]="group.get('degree')"
+        label="Degree"
+        placeholder="Bachelor"
+      />
+      <app-form-text-field
+        [control]="group.get('field')"
+        label="Field of study"
+        placeholder="Computer Science"
+      />
     </div>
-    <button mat-icon-button color="warn" type="button" (click)="remove(i)" aria-label="Remove">
+    <button
+      mat-icon-button
+      class="danger-icon-button"
+      color="warn"
+      type="button"
+      (click)="remove(i)"
+      aria-label="Remove"
+    >
       <app-icon name="delete" />
     </button>
   </div>

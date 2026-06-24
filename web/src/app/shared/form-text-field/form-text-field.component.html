@@ -1,0 +1,18 @@
+@if (formControl(); as control) {
+  <mat-form-field appearance="outline">
+    <mat-label>{{ label() }}</mat-label>
+    <input
+      matInput
+      [formControl]="control"
+      [type]="type()"
+      [placeholder]="placeholder()"
+      [attr.min]="min()"
+      [attr.max]="max()"
+    />
+    <mat-error
+      appFieldError
+      [control]="control"
+      [patternMessage]="patternMessage()"
+    />
+  </mat-form-field>
+}

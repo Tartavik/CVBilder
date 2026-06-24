@@ -1,3 +1,5 @@
+@use 'variables' as v;
+
 :host {
 	display: block;
 }
@@ -5,26 +7,26 @@
 .app-error-banner {
   position: fixed;
   z-index: 1000;
-  top: 1rem;
+  top: 16px;
   left: 50%;
   display: flex;
-  width: min(720px, calc(100% - 2rem));
+  width: min(720px, calc(100% - 32px));
   justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
-  border: 1px solid #fda29b;
-  border-radius: 10px;
-  background: #fffbfa;
-  color: #912018;
-  box-shadow: 0 8px 24px rgb(16 24 40 / 18%);
+  gap: 16px;
+  padding: 16px 20px;
+  border: 1px solid v.$color-danger-border;
+  border-radius: v.$radius-panel;
+  background: v.$color-danger-soft;
+  color: v.$color-danger;
+  box-shadow: v.$shadow-lg;
   transform: translateX(-50%);
 
   p {
-    margin: 0.25rem 0;
+    margin: 4px 0;
   }
 
   code {
-    color: #b42318;
+    color: v.$color-danger;
     overflow-wrap: anywhere;
   }
 
@@ -33,7 +35,7 @@
     border: 0;
     background: transparent;
     color: inherit;
-    font-size: 1.5rem;
+    font-size: v.$font-size-xl;
     cursor: pointer;
   }
 }

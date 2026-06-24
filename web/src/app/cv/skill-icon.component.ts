@@ -28,16 +28,15 @@ import { getSkillOption } from './skill-catalog';
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 2rem;
-      height: 2rem;
-      border-radius: 0.45rem;
+      width: var(--app-skill-icon-size);
+      height: var(--app-skill-icon-size);
+      border-radius: var(--app-radius-control);
       color: white;
       font-family: Arial, sans-serif;
-      font-size: 0.72rem;
+      font-size: var(--app-font-size-sm);
       font-weight: 800;
       line-height: 1;
-      letter-spacing: -0.03em;
-      box-shadow: inset 0 0 0 1px rgb(255 255 255 / 22%);
+      letter-spacing: 0;
       overflow: hidden;
     }
 

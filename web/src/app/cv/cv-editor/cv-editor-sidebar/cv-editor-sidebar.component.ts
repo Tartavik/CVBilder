@@ -1,8 +1,8 @@
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { AppIconComponent } from '../../shared/app-icon.component';
-import { CvSection, CvStore, CvTemplate } from '../cv.store';
+import { AppIconComponent } from '../../../shared/app-icon.component';
+import { CvSection, CvStore, CvTemplate } from '../../cv.store';
 
 @Component({
   selector: 'app-cv-editor-sidebar',

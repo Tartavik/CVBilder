@@ -26,27 +26,27 @@ export interface SegmentedControlOption {
     .segmented-control {
       display: flex;
       gap: 4px;
-      padding: 3px;
-      border-radius: 6px;
-      background: #d0d0d0;
+      padding: 4px;
+      border-radius: var(--app-radius-control);
+      background: var(--app-border-strong);
     }
 
     .segmented-control__button {
       padding: 4px 12px;
       border: none;
-      border-radius: 4px;
+      border-radius: var(--app-radius-control);
       background: transparent;
-      color: #555;
+      color: var(--app-muted);
       cursor: pointer;
-      font-size: 0.8rem;
+      font-size: var(--app-font-size-sm);
       transition: background 0.15s, color 0.15s;
     }
 
     .segmented-control__button.active {
-      background: white;
-      color: #1e1e2e;
+      background: var(--app-surface);
+      color: var(--app-title);
       font-weight: 600;
-      box-shadow: 0 1px 3px rgb(0 0 0 / 15%);
+      box-shadow: var(--app-shadow);
     }
   `,
 })

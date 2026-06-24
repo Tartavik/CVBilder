@@ -71,6 +71,20 @@ export interface CvSummary {
   updatedAt: string;
 }
 
+export type ThemeMode = 'light' | 'dark';
+
+export interface UserSettings {
+  id?: string;
+  theme: ThemeMode;
+}
+
+export interface UserProfile {
+  id?: string;
+  firstName: string;
+  lastName: string;
+  location: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class UsersApiService {
   private readonly base = '/api/users';
@@ -98,6 +112,31 @@ export class UsersApiService {
 
   getUserSkills(userId: string): Observable<UserSkill[]> {
     return this.http.get<UserSkill[]>(`${this.base}/${userId}/skills`);
+  }
+
+  getProfile(userId: string): Observable<UserProfile | null> {
+    return this.http.get<UserProfile | null>(`${this.base}/${userId}/profile`);
+  }
+
+  updateProfile(
+    userId: string,
+    profile: Omit<UserProfile, 'id'>,
+  ): Observable<UserProfile> {
+    return this.http.patch<UserProfile>(`${this.base}/${userId}/profile`, profile);
+  }
+
+  getSettings(userId: string): Observable<UserSettings | null> {
+    return this.http.get<UserSettings | null>(`${this.base}/${userId}/settings`);
+  }
+
+  updateSettings(
+    userId: string,
+    settings: Pick<UserSettings, 'theme'>,
+  ): Observable<UserSettings> {
+    return this.http.patch<UserSettings>(
+      `${this.base}/${userId}/settings`,
+      settings,
+    );
   }
 
   getAllCvs(skills: string[] = []): Observable<CvSummary[]> {

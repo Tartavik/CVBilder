@@ -3,18 +3,22 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { debounceTime } from 'rxjs';
 import { AppIconComponent } from '../../../shared/app-icon.component';
-import { ConfirmDialogComponent } from '../../../shared/confirm-dialog.component';
+import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';
+import { FormTextFieldComponent } from '../../../shared/form-text-field/form-text-field.component';
 import { SHORT_TEXT_PATTERN } from '../../../shared/validation-patterns';
 import { CvStore, EducationItem } from '../../cv.store';
 
 @Component({
   selector: 'app-education-section',
   standalone: true,
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, AppIconComponent],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    AppIconComponent,
+    FormTextFieldComponent,
+  ],
   templateUrl: './education-section.component.html',
 })
 export class EducationSectionComponent implements OnInit {
@@ -74,10 +78,6 @@ export class EducationSectionComponent implements OnInit {
         Validators.pattern(/^\d{4}$/),
       ]),
     });
-  }
-
-  hasError(group: FormGroup, controlName: string, errorName: string): boolean {
-    return group.get(controlName)?.hasError(errorName) ?? false;
   }
 
   add() {

@@ -1,11 +1,12 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { AuthService } from '../../auth.service';
 import { CvExportService } from '../cv-export.service';
 import { CvSection, CvStore, CvTemplate } from '../cv.store';
-import { AuthService } from '../../auth.service';
-import { CvEditorFormComponent } from './cv-editor-form.component';
-import { CvEditorPreviewPaneComponent } from './cv-editor-preview-pane.component';
-import { CvEditorSidebarComponent } from './cv-editor-sidebar.component';
+import { CvEditorFormComponent } from './cv-editor-form/cv-editor-form.component';
+import { CvEditorPreviewPaneComponent } from './cv-editor-preview-pane/cv-editor-preview-pane.component';
+import { CvEditorSidebarComponent } from './cv-editor-sidebar/cv-editor-sidebar.component';
+import { ThemeService } from '../../shared/theme.service';
 
 type SaveToast = {
   kind: 'success' | 'error';
@@ -28,6 +29,7 @@ export class CvEditorComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly cvExport = inject(CvExportService);
+  private readonly theme = inject(ThemeService);
   private userId = '';
 
   readonly cvId = this.route.snapshot.paramMap.get('cvId') ?? '';
@@ -41,6 +43,9 @@ export class CvEditorComponent implements OnInit {
   ngOnInit(): void {
     const userId = this.auth.getCurrentUserId() as string;
     this.userId = userId;
+    this.theme.load(userId).subscribe({
+      error: () => this.theme.apply('light'),
+    });
     this.store.loadFromDB(userId, this.cvId);
   }
 

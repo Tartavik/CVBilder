@@ -1,0 +1,133 @@
+@use 'variables' as v;
+
+:host {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.theme-toggle,
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--card-border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  box-shadow: v.$shadow-sm;
+}
+
+.theme-toggle {
+  gap: 8px;
+  min-height: v.$control-height;
+  padding: 4px 12px 4px 4px;
+  border-radius: v.$radius-pill;
+  font-weight: 700;
+
+  &.dark {
+    .theme-toggle__track {
+      background: v.$color-dark-page-bg;
+    }
+
+    .theme-toggle__thumb {
+      transform: translateX(24px);
+      background: v.$color-dark-sidebar-accent;
+      color: v.$color-dark-sidebar-bg;
+    }
+  }
+}
+
+.theme-toggle__track {
+  display: flex;
+  width: 56px;
+  height: 32px;
+  align-items: center;
+  padding: 4px;
+  border-radius: v.$radius-pill;
+  background: v.$color-page-bg;
+}
+
+.theme-toggle__thumb {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: v.$color-warning;
+  color: v.$color-text;
+  transition: transform 0.18s ease;
+}
+
+.icon-button {
+  width: v.$control-height;
+  height: v.$control-height;
+  justify-content: center;
+  border-radius: 50%;
+
+  &:hover,
+  &.active {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+}
+
+.settings-shell {
+  position: relative;
+}
+
+.settings-panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 12px);
+  right: 0;
+  width: min(320px, calc(100vw - 32px));
+  padding: 16px;
+  border: 1px solid var(--card-border);
+  border-radius: v.$radius-panel;
+  background: var(--surface);
+  box-shadow: v.$shadow-lg;
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 16px;
+  }
+
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+.settings-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  strong,
+  span {
+    display: block;
+  }
+
+  span {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: v.$font-size-md;
+  }
+
+  app-icon {
+    color: var(--accent);
+    font-size: v.$font-size-xl;
+  }
+}
+
+.settings-message {
+  margin: 0 0 8px;
+  color: v.$color-success;
+  font-size: v.$font-size-md;
+  font-weight: 700;
+}

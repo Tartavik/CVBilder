@@ -1,0 +1,21 @@
+:host {
+  display: block;
+}
+
+h2 {
+  margin: 0;
+}
+
+p {
+  margin: 0;
+  color: var(--app-muted);
+  line-height: 1.45;
+}
+
+mat-dialog-content {
+  padding-top: 4px;
+}
+
+mat-dialog-actions {
+  padding-top: 12px;
+}

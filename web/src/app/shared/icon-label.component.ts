@@ -13,12 +13,12 @@ import { AppIconComponent, AppIconName } from './app-icon.component';
     :host {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 8px;
     }
 
     app-icon {
-      width: 1.2rem;
-      height: 1.2rem;
+      width: var(--app-icon-size);
+      height: var(--app-icon-size);
     }
   `,
 })

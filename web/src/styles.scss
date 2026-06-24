@@ -1,27 +1,182 @@
+@use 'variables' as v;
+@use 'mixins' as m;
 @import '@angular/material/prebuilt-themes/azure-blue.css';
 
 * {
 	box-sizing: border-box;
 }
 
+:root {
+  @include m.app-theme-vars;
+}
+
+body[data-app-theme='dark'] {
+  @include m.app-dark-theme-vars;
+  color-scheme: dark;
+
+  --mdc-outlined-text-field-label-text-color: var(--app-muted);
+  --mdc-outlined-text-field-input-text-color: var(--app-text);
+  --mdc-outlined-text-field-outline-color: var(--app-border-strong);
+  --mdc-outlined-text-field-hover-outline-color: var(--app-muted);
+  --mdc-outlined-text-field-focus-outline-color: var(--app-sidebar-accent);
+  --mdc-outlined-text-field-caret-color: var(--app-sidebar-accent);
+  --mat-select-enabled-trigger-text-color: var(--app-text);
+  --mat-option-label-text-color: var(--app-text);
+  --mat-autocomplete-background-color: var(--app-surface);
+  --mdc-elevated-card-container-color: var(--app-surface);
+}
+
+.mat-mdc-form-field {
+  --mdc-outlined-text-field-input-text-color: var(--app-text);
+  --mdc-outlined-text-field-label-text-color: var(--app-muted);
+  --mdc-outlined-text-field-outline-color: var(--app-border-strong);
+  --mdc-outlined-text-field-hover-outline-color: var(--app-muted);
+  --mdc-outlined-text-field-focus-outline-color: var(--app-sidebar-accent);
+  --mdc-outlined-text-field-caret-color: var(--app-sidebar-accent);
+}
+
+.mat-mdc-form-field .mat-mdc-input-element,
+.mat-mdc-form-field .mdc-text-field__input,
+.mat-mdc-form-field textarea.mat-mdc-input-element,
+.mat-mdc-select-value,
+.mat-mdc-select-arrow {
+  color: var(--app-text) !important;
+  -webkit-text-fill-color: var(--app-text) !important;
+}
+
+.mat-mdc-form-field .mat-mdc-input-element::placeholder,
+.mat-mdc-form-field .mdc-text-field__input::placeholder {
+  color: var(--app-muted) !important;
+  -webkit-text-fill-color: var(--app-muted) !important;
+}
+
+.mat-mdc-form-field .mdc-floating-label,
+.mat-mdc-form-field .mat-mdc-floating-label,
+.mat-mdc-form-field .mat-mdc-form-field-hint {
+  color: var(--app-muted) !important;
+}
+
+.mat-mdc-form-field .mdc-notched-outline__leading,
+.mat-mdc-form-field .mdc-notched-outline__notch,
+.mat-mdc-form-field .mdc-notched-outline__trailing {
+  border-color: var(--app-border-strong) !important;
+}
+
+.mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+.mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+.mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
+  border-color: var(--app-sidebar-accent) !important;
+}
+
+.mat-mdc-form-field .mat-datepicker-toggle,
+.mat-mdc-form-field .mat-datepicker-toggle-default-icon,
+.mat-mdc-form-field .mat-mdc-icon-button {
+  color: var(--app-muted) !important;
+}
+
+.mat-mdc-checkbox .mdc-label {
+  color: var(--app-text) !important;
+}
+
+.mat-mdc-checkbox .mdc-checkbox__background {
+  border-color: var(--app-border-strong) !important;
+}
+
+.mat-mdc-checkbox.mat-mdc-checkbox-checked .mdc-checkbox__background {
+  border-color: var(--app-sidebar-accent) !important;
+  background-color: var(--app-sidebar-accent) !important;
+}
+
+.mat-button-toggle-group {
+  overflow: hidden;
+  border-color: var(--app-border-strong) !important;
+  border-radius: v.$radius-pill !important;
+  background: var(--app-surface);
+}
+
+.mat-button-toggle {
+  border-color: var(--app-border-strong) !important;
+  background: var(--app-surface) !important;
+  color: var(--app-text) !important;
+}
+
+.mat-button-toggle-checked {
+  background: var(--app-sidebar-active) !important;
+  color: var(--app-sidebar-active-text) !important;
+}
+
+.mat-button-toggle-button {
+  color: inherit !important;
+}
+
+.mat-mdc-chip-set {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.mat-mdc-chip-set .mdc-evolution-chip-set__chips {
+  gap: 8px;
+}
+
+.mat-mdc-standard-chip {
+  --mdc-chip-elevated-container-color: var(--app-surface);
+  --mdc-chip-label-text-color: var(--app-text);
+  --mdc-chip-outline-color: transparent;
+
+  border: 0 !important;
+  border-radius: v.$radius-control !important;
+  background: var(--app-surface) !important;
+  color: var(--app-text) !important;
+}
+
+.mat-mdc-standard-chip .mdc-evolution-chip__action--primary::before {
+  border: 0 !important;
+}
+
+.mat-mdc-standard-chip .mdc-evolution-chip__cell,
+.mat-mdc-standard-chip .mdc-evolution-chip__action {
+  color: inherit !important;
+}
+
+.mat-mdc-standard-chip button[matChipRemove] {
+  color: var(--app-muted) !important;
+
+  &:hover {
+    color: var(--app-danger) !important;
+  }
+}
+
+.danger-icon-button,
+.mat-mdc-icon-button.mat-warn {
+  color: var(--app-danger) !important;
+
+  app-icon {
+    color: inherit;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--app-danger-hover);
+  }
+}
+
 /* Photo upload block */
 .photo-row {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-  padding: 1rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fafafa;
-  margin-bottom: 0.5rem;
+  gap: 20px;
+  padding: 16px;
+  border: 1px solid var(--app-border);
+  border-radius: v.$radius-control;
+  background: var(--app-surface-soft);
+  margin-bottom: 8px;
 }
 
 .photo-preview {
   position: relative;
-  width: 80px;
-  height: 80px;
+  width: v.$photo-size;
+  height: v.$photo-size;
   border-radius: 50%;
-  background: #e5e7eb;
+  background: var(--app-border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -30,8 +185,8 @@
 }
 
 .photo-img {
-  width: 80px;
-  height: 80px;
+  width: v.$photo-size;
+  height: v.$photo-size;
   border-radius: 50%;
   object-fit: cover;
   display: block;
@@ -40,40 +195,42 @@
 .photo-placeholder-icon {
   width: 40px;
   height: 40px;
-  color: #9ca3af;
+  color: var(--app-muted);
 }
 
 .photo-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .photo-btn-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .photo-hint {
   margin: 0;
-  font-size: 0.8rem;
-  color: #6b7280;
+  font-size: v.$font-size-sm;
+  color: var(--app-muted);
 }
 
 /* CV section form spacing */
 .section-form {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .field-row {
   display: flex;
-  gap: 1rem;
+  gap: 16px;
   align-items: flex-start;
 
-  mat-form-field {
+  mat-form-field,
+  app-form-text-field,
+  app-form-textarea-field {
     flex: 1;
     min-width: 0;
   }
@@ -82,8 +239,9 @@
 .section-form mat-form-field,
 .exp-item mat-form-field,
 .edu-item mat-form-field,
-.add-row mat-form-field {
-  min-height: 86px;
+.add-row mat-form-field,
+.skill-selector-row mat-form-field {
+  min-height: 85px;
 }
 
 .section-form textarea,
@@ -95,12 +253,12 @@
 .edu-item {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 1rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  background: #fafafa;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid var(--app-border);
+  border-radius: v.$radius-control;
+  margin-bottom: 16px;
+  background: var(--app-surface-soft);
 }
 
 .full-width {
@@ -110,8 +268,8 @@
 .add-row {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-top: 0.5rem;
+  gap: 16px;
+  margin-top: 8px;
 
   mat-form-field {
     flex: 1;
@@ -119,22 +277,22 @@
 }
 
 .section-hint {
-  margin: 0 0 1rem;
-  color: #667085;
-  font-size: 0.875rem;
+  margin: 0 0 16px;
+  color: var(--app-muted);
+  font-size: v.$font-size-md;
 }
 
 .experience-skills-editor {
-  padding-top: 0.5rem;
-  border-top: 1px solid #e5e7eb;
+  padding-top: 8px;
+  border-top: 1px solid var(--app-border);
 }
 
 .skills-editor-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
+  gap: 16px;
+  margin-bottom: 12px;
 
   .field-label {
     margin-bottom: 0;
@@ -144,14 +302,14 @@
 .skill-composer {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 0.75rem;
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .skill-selector-row {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  align-items: flex-start;
+  gap: 16px;
 
   mat-form-field {
     flex: 1;
@@ -159,21 +317,25 @@
   }
 
   button[matSuffix] {
-    color: #667085;
+    color: var(--app-danger);
+  }
+
+  > button {
+    margin-top: 8px;
   }
 }
 
 .skill-option-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .skill-image-field {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0 0.25rem;
+  gap: 12px;
+  padding: 0 4px;
   background: transparent;
 }
 
@@ -183,25 +345,25 @@
   flex: 1;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 12px;
 
   span {
-    color: #475467;
-    font-size: 0.85rem;
+    color: var(--app-muted);
+    font-size: v.$font-size-md;
     font-weight: 600;
   }
 }
 
 .field-label {
   display: block;
-  margin-bottom: 0.5rem;
-  color: #475467;
-  font-size: 0.85rem;
+  margin-bottom: 8px;
+  color: var(--app-muted);
+  font-size: v.$font-size-md;
   font-weight: 600;
 }
 
 .experience-skill-add {
-  margin-top: 0.75rem;
+  margin-top: 12px;
 }
 
 html,
@@ -209,6 +371,6 @@ body {
 	margin: 0;
 	padding: 0;
 	font-family: Roboto, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-	color: #1f2937;
-	background: #eef2f7;
+	color: var(--app-text);
+	background: var(--app-page-bg);
 }

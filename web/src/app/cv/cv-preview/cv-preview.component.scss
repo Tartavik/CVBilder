@@ -1,13 +1,16 @@
+@use 'variables' as v;
+
 .preview-page {
   width: 100%;
-  min-height: min(297mm, calc(100vh - 9rem));
-  background: white;
-  padding: clamp(2rem, 5vw, 16mm) clamp(1.5rem, 4vw, 14mm);
+  min-height: min(297mm, calc(100vh - 144px));
+  background: v.$preview-color-paper;
+  padding: clamp(32px, 5vw, 16mm) clamp(24px, 4vw, 14mm);
   font-family: 'Georgia', serif;
-  font-size: 11pt;
-  color: #1a1a1a;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  font-size: v.$preview-font-base;
+  color: v.$preview-color-text;
+  box-shadow: v.$preview-shadow;
   box-sizing: border-box;
+  color-scheme: light;
 }
 
 @media print {
@@ -22,10 +25,10 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  border-bottom: 2px solid #1a1a1a;
-  padding-bottom: 0.75rem;
-  margin-bottom: 1rem;
-  gap: 1rem;
+  border-bottom: 2px solid v.$preview-color-text;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  gap: 16px;
 }
 
 .header-text {
@@ -34,32 +37,32 @@
 }
 
 .header-photo {
-  width: 80px;
-  height: 80px;
+  width: v.$photo-size;
+  height: v.$photo-size;
   object-fit: cover;
   border-radius: 50%;
-  border: 2px solid #ccc;
+  border: 2px solid v.$preview-color-border;
   flex-shrink: 0;
 }
 
 .preview-header h1 {
-  font-size: 22pt;
-  margin: 0 0 0.2rem;
+  font-size: v.$preview-font-display;
+  margin: 0 0 4px;
   overflow-wrap: anywhere;
 }
 
 .job-title {
-  font-size: 12pt;
-  color: #555;
-  margin: 0 0 0.5rem;
+  font-size: v.$preview-font-heading;
+  color: v.$preview-color-muted;
+  margin: 0 0 8px;
 }
 
 .contacts {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1.5rem;
-  font-size: 9pt;
-  color: #444;
+  gap: 8px 24px;
+  font-size: v.$preview-font-sm;
+  color: v.$preview-color-muted;
 
   span {
     overflow-wrap: anywhere;
@@ -67,22 +70,28 @@
 }
 
 .preview-section {
-  margin-bottom: 1.25rem;
+  margin-bottom: 20px;
 }
 
 .preview-section h2 {
-  font-size: 12pt;
+  font-size: v.$preview-font-heading;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  border-bottom: 1px solid #ccc;
-  padding-bottom: 3px;
-  margin: 0 0 0.6rem;
+  letter-spacing: 1px;
+  border-bottom: 1px solid v.$preview-color-border;
+  padding-bottom: 4px;
+  margin: 0 0 8px;
 }
 
 .summary { margin: 0; line-height: 1.5; }
 
-.exp-item, .edu-item {
-  margin-bottom: 0.75rem;
+.preview-page .exp-item,
+.preview-page .edu-item {
+  margin-bottom: 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: v.$preview-color-text;
 }
 
 .exp-header, .edu-header {
@@ -91,38 +100,38 @@
   align-items: baseline;
 }
 
-.dates { font-size: 9pt; color: #666; }
-.company, .edu-degree { font-size: 9.5pt; color: #444; margin-top: 1px; }
+.dates { font-size: v.$preview-font-sm; color: v.$preview-color-muted; }
+.company, .edu-degree { font-size: v.$preview-font-base; color: v.$preview-color-muted; margin-top: 1px; }
 .desc {
     white-space: pre-wrap;
     overflow-wrap: break-word;
     margin: 4px 0 0;
-    font-size: 9.5pt;
+    font-size: v.$preview-font-base;
     line-height: 1.4;
-    color: #333;
+    color: v.$preview-color-muted;
 }
 
 .skills-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem;
-  margin-top: 0.45rem;
+  gap: 4px;
+  margin-top: 8px;
 }
 
 .skill-tag {
-  background: #f0f0f0;
-  border-radius: 3px;
+  background: v.$preview-color-tag;
+  border-radius: v.$preview-radius-tag;
   padding: 2px 8px;
-  font-size: 9pt;
+  font-size: v.$preview-font-sm;
 }
 
 .experience-skill-icons {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-top: 0.5rem;
+  gap: 8px;
+  margin-top: 8px;
 
   app-skill-icon {
-    font-size: 0.85rem;
+    font-size: var(--app-font-size-md);
   }
 }

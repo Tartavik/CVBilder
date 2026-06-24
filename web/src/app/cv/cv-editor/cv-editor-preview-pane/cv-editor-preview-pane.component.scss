@@ -1,3 +1,5 @@
+@use 'variables' as v;
+
 :host {
   display: block;
   height: 100%;
@@ -12,9 +14,9 @@
   height: 100%;
   min-height: 0;
   min-width: 0;
-  padding: 1rem;
+  padding: 16px;
   overflow: auto;
-  background: #e8e8e8;
+  background: var(--app-workspace-bg);
 }
 
 .preview-scroll {

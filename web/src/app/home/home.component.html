@@ -1,11 +1,22 @@
-<div class="dashboard">
+<div class="dashboard" [class.dark]="theme() === 'dark'">
   <header class="dashboard-header">
     <div>
       <p class="eyebrow">CVBilder</p>
       <h1>Your CV workspace</h1>
       <p class="subtitle">Create, edit and share CVs with a public link.</p>
     </div>
-    <button mat-stroked-button type="button" (click)="logout()">Logout</button>
+    <div class="dashboard-tools">
+      <app-dashboard-settings
+        [theme]="theme()"
+        [themeSaving]="themeSaving()"
+        [profileForm]="profileForm"
+        [profileSaving]="profileSaving()"
+        [profileMessage]="profileMessage()"
+        (themeToggle)="toggleTheme()"
+        (profileSave)="saveProfile()"
+      />
+      <button mat-stroked-button type="button" (click)="logout()">Logout</button>
+    </div>
   </header>
 
   <section class="create-panel">

@@ -1,11 +1,11 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { CvSection, CvStore } from '../cv.store';
-import { EducationSectionComponent } from '../sections/education-section/education-section.component';
-import { ExperienceSectionComponent } from '../sections/experience-section/experience-section.component';
-import { GeneralSkillsSectionComponent } from '../sections/general-skills-section/general-skills-section.component';
-import { PersonalDetailsSectionComponent } from '../sections/personal-details-section/personal-details-section.component';
-import { PersonalMainSectionComponent } from '../sections/personal-main-section/personal-main-section.component';
-import { PersonalSectionComponent } from '../sections/personal-section/personal-section.component';
+import { CvSection, CvStore } from '../../cv.store';
+import { EducationSectionComponent } from '../../sections/education-section/education-section.component';
+import { ExperienceSectionComponent } from '../../sections/experience-section/experience-section.component';
+import { GeneralSkillsSectionComponent } from '../../sections/general-skills-section/general-skills-section.component';
+import { PersonalDetailsSectionComponent } from '../../sections/personal-details-section/personal-details-section.component';
+import { PersonalMainSectionComponent } from '../../sections/personal-main-section/personal-main-section.component';
+import { PersonalSectionComponent } from '../../sections/personal-section/personal-section.component';
 
 @Component({
   selector: 'app-cv-editor-form',

@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
-import { CvStore } from '../cv.store';
-import { CvPreviewClassicComponent } from '../cv-preview-classic/cv-preview-classic.component';
-import { CvPreviewComponent } from '../cv-preview/cv-preview.component';
+import { CvPreviewClassicComponent } from '../../cv-preview-classic/cv-preview-classic.component';
+import { CvPreviewComponent } from '../../cv-preview/cv-preview.component';
+import { CvStore } from '../../cv.store';
 
 @Component({
   selector: 'app-cv-editor-preview-pane',

@@ -1,0 +1,42 @@
+<div class="photo-row">
+  <div class="photo-preview">
+    @if (photo()) {
+      <img [src]="photo()" alt="Profile photo" class="photo-img" />
+    } @else {
+      <app-icon class="photo-placeholder-icon" name="person" />
+    }
+  </div>
+  <div class="photo-actions">
+    <p class="photo-hint">Profile photo</p>
+    <div class="photo-btn-row">
+      <button
+        mat-stroked-button
+        type="button"
+        [disabled]="uploading()"
+        (click)="photoInput.click()"
+      >
+        {{ uploading() ? 'Uploading...' : 'Upload photo' }}
+      </button>
+      @if (photo()) {
+        <button
+          mat-icon-button
+          class="danger-icon-button"
+          color="warn"
+          type="button"
+          [disabled]="uploading()"
+          (click)="remove.emit()"
+          aria-label="Remove photo"
+        >
+          <app-icon name="delete" />
+        </button>
+      }
+      <input
+        #photoInput
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        hidden
+        (change)="onPhotoChange($event)"
+      />
+    </div>
+  </div>
+</div>

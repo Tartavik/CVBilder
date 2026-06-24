@@ -1,0 +1,38 @@
+@use 'variables' as v;
+
+:host {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.cv-editor {
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  padding: 32px;
+  overflow-y: auto;
+  background: var(--app-editor-bg);
+}
+
+.editor-card {
+  width: 100%;
+  max-width: 700px;
+  min-height: calc(100vh - 64px);
+  margin: 0 auto;
+  padding: 24px;
+  border-radius: v.$radius-control;
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow);
+}
+
+.editor-title {
+  margin: 0 0 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--app-border);
+  color: var(--app-title);
+  font-size: v.$font-size-lg;
+  font-weight: 600;
+}

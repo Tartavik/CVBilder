@@ -1,33 +1,66 @@
+@use 'variables' as v;
+@use 'mixins' as m;
+
 .dashboard {
-  width: min(1180px, calc(100% - 2rem));
+  --text: var(--app-text);
+  --muted: var(--app-muted);
+  --accent: var(--app-sidebar-accent);
+  --accent-soft: #{v.$color-primary-soft};
+  --surface: var(--app-surface);
+  --surface-soft: #{v.$color-surface-soft};
+  --panel: linear-gradient(135deg, #{v.$color-primary-soft}, #{v.$color-surface-soft});
+  --border: #{v.$color-border};
+  --card-border: var(--app-border);
+  --shadow: #{v.$shadow-sm};
+  --empty: var(--app-surface);
+
+  width: min(1200px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 2rem 0 4rem;
+  padding: 32px 0 64px;
+  color: var(--text);
+
+  &.dark {
+    --text: var(--app-text);
+    --muted: var(--app-muted);
+    --accent: var(--app-sidebar-accent);
+    --accent-soft: #{v.$color-dark-border};
+    --surface: var(--app-surface);
+    --surface-soft: var(--app-surface);
+    --panel: #{v.$color-dark-surface-soft};
+    --border: var(--app-border-strong);
+    --card-border: var(--app-border);
+    --shadow: #{v.$shadow-lg};
+    --empty: #{v.$color-dark-page-bg};
+  }
 }
 
 .dashboard-header,
 .create-panel,
 .section-heading,
 mat-card-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  @include m.flex-between;
 }
 
 .dashboard-header {
-  margin-bottom: 2rem;
+  margin-bottom: 32px;
 
   h1 {
-    margin: 0.2rem 0;
-    font-size: clamp(2rem, 4vw, 3rem);
+    margin: 4px 0;
+    font-size: v.$font-size-xl;
   }
+}
+
+.dashboard-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .eyebrow {
   margin: 0;
-  color: #4355b9;
+  color: var(--accent);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 1px;
   text-transform: uppercase;
 }
 
@@ -35,14 +68,14 @@ mat-card-actions {
 .create-panel p,
 .section-heading p,
 .cv-card p {
-  color: #667085;
+  color: var(--muted);
 }
 
 .create-panel {
-  padding: 1.5rem;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #e8ebff, #f8f9ff);
-  border: 1px solid #d7dcff;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: v.$radius-panel;
+  background: var(--panel);
 
   h2,
   p {
@@ -50,16 +83,16 @@ mat-card-actions {
   }
 
   p {
-    margin-top: 0.35rem;
+    margin-top: 8px;
   }
 }
 
 .cv-section {
-  margin-top: 2.25rem;
+  margin-top: 32px;
 }
 
 .section-heading {
-  margin-bottom: 1rem;
+  margin-bottom: 16px;
 
   h2,
   p {
@@ -67,97 +100,103 @@ mat-card-actions {
   }
 
   p {
-    margin-top: 0.25rem;
+    margin-top: 4px;
   }
 }
 
 .count {
-  min-width: 2rem;
-  padding: 0.25rem 0.65rem;
-  border-radius: 999px;
-  background: #e8ebff;
-  color: #3343a0;
+  min-width: 32px;
+  padding: 4px 12px;
+  border-radius: v.$radius-pill;
+  background: var(--accent-soft);
+  color: var(--accent);
   text-align: center;
   font-weight: 700;
 }
 
 .cv-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
 }
 
 .skill-search {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  gap: 12px;
+  margin-bottom: 16px;
 
   mat-form-field {
     flex: 1;
   }
 
   button {
-    margin-top: 0.25rem;
+    margin-top: 4px;
   }
 
   app-icon {
-    margin-right: 0.35rem;
+    margin-right: 8px;
   }
 }
 
 .cv-card {
-  border: 1px solid #e1e5ee;
-  box-shadow: 0 8px 22px rgba(24, 32, 56, 0.06);
+  border: 1px solid var(--card-border);
+  background: var(--surface);
+  box-shadow: var(--shadow);
 
   h3 {
-    margin: 0 0 0.6rem;
+    margin: 0 0 8px;
   }
 
   p {
-    margin: 0.25rem 0;
+    margin: 4px 0;
   }
 
   code {
     display: block;
-    margin-top: 0.8rem;
+    margin-top: 12px;
     overflow: hidden;
-    color: #475467;
-    font-size: 0.75rem;
+    color: var(--muted);
+    font-size: v.$font-size-sm;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   app-icon {
-    margin-right: 0.35rem;
+    margin-right: 8px;
   }
 }
 
 .public-card {
-  background: #fbfcff;
+  background: var(--surface-soft);
 }
 
 .empty-state,
 .loading {
   display: grid;
-  min-height: 130px;
+  min-height: 128px;
   place-items: center;
-  border: 1px dashed #c8cfdd;
-  border-radius: 12px;
-  color: #667085;
-  background: #fff;
+  border: 1px dashed var(--card-border);
+  border-radius: v.$radius-panel;
+  background: var(--empty);
+  color: var(--muted);
 }
 
 .error {
-  margin: 1rem 0 0;
-  color: #b3261e;
+  margin: 16px 0 0;
+  color: v.$color-danger;
 }
 
-@media (max-width: 640px) {
+@media (max-width: v.$breakpoint-mobile) {
   .dashboard-header,
   .create-panel {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .dashboard-tools {
+    width: 100%;
+    flex-wrap: wrap;
   }
 
   .skill-search {

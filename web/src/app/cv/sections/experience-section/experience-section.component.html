@@ -1,28 +1,16 @@
 @for (group of groups; track $index; let i = $index) {
   <div [formGroup]="group" class="exp-item">
     <div class="field-row">
-      <mat-form-field appearance="outline">
-        <mat-label>Company</mat-label>
-        <input matInput formControlName="company" placeholder="Google" />
-        @if (hasError(group, 'company', 'required')) {
-          <mat-error>Company is required</mat-error>
-        } @else if (hasError(group, 'company', 'minlength')) {
-          <mat-error>Use at least 2 characters</mat-error>
-        } @else if (hasError(group, 'company', 'pattern')) {
-          <mat-error>Use letters and common name symbols only</mat-error>
-        }
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Position</mat-label>
-        <input matInput formControlName="position" placeholder="Software Engineer" />
-        @if (hasError(group, 'position', 'required')) {
-          <mat-error>Position is required</mat-error>
-        } @else if (hasError(group, 'position', 'minlength')) {
-          <mat-error>Use at least 2 characters</mat-error>
-        } @else if (hasError(group, 'position', 'pattern')) {
-          <mat-error>Use letters and common title symbols only</mat-error>
-        }
-      </mat-form-field>
+      <app-form-text-field
+        [control]="group.get('company')"
+        label="Company"
+        placeholder="Google"
+      />
+      <app-form-text-field
+        [control]="group.get('position')"
+        label="Position"
+        placeholder="Software Engineer"
+      />
     </div>
     <div class="field-row">
       <mat-form-field appearance="outline">
@@ -30,34 +18,24 @@
         <input matInput [matDatepicker]="startPicker" formControlName="startDate" />
         <mat-datepicker-toggle matIconSuffix [for]="startPicker" />
         <mat-datepicker #startPicker />
-        @if (hasError(group, 'startDate', 'required')) {
-          <mat-error>Start date is required</mat-error>
-        } @else if (hasError(group, 'startDate', 'startDateInFuture')) {
-          <mat-error>Start date cannot be in the future</mat-error>
-        }
+        <mat-error appFieldError [control]="group.get('startDate')" />
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>End date</mat-label>
         <input matInput [matDatepicker]="endPicker" formControlName="endDate" />
         <mat-datepicker-toggle matIconSuffix [for]="endPicker" />
         <mat-datepicker #endPicker />
-        @if (hasError(group, 'endDate', 'required')) {
-          <mat-error>End date is required</mat-error>
-        } @else if (hasError(group, 'endDate', 'endDateBeforeStart')) {
-          <mat-error>End date cannot be before start date</mat-error>
-        }
+        <mat-error appFieldError [control]="group.get('endDate')" />
       </mat-form-field>
       <mat-checkbox formControlName="current">Current</mat-checkbox>
     </div>
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Description</mat-label>
-      <textarea matInput formControlName="description" rows="3" placeholder="What you did..."></textarea>
-      @if (hasError(group, 'description', 'required')) {
-        <mat-error>Description is required</mat-error>
-      } @else if (hasError(group, 'description', 'minlength')) {
-        <mat-error>Use at least 2 characters</mat-error>
-      }
-    </mat-form-field>
+    <app-form-textarea-field
+      class="full-width"
+      [control]="group.get('description')"
+      label="Description"
+      placeholder="What you did..."
+      [rows]="3"
+    />
 
     <div class="experience-skills-editor">
       <div class="skills-editor-header">
@@ -71,95 +49,25 @@
           <mat-button-toggle value="icons">Icons</mat-button-toggle>
         </mat-button-toggle-group>
       </div>
-      <mat-chip-set>
-        @for (skill of skillsAt(i); track skill.name) {
-          <mat-chip draggable="false" (removed)="removeSkill(i, skill)">
-            @if (skillMode() === 'icons') {
-              <app-skill-icon [name]="skill.name" [icon]="skill.icon" />
-            } @else {
-              {{ skill.name }}
-            }
-            <button matChipRemove [attr.aria-label]="'Remove ' + skill.name">
-              <app-icon name="cancel" />
-            </button>
-          </mat-chip>
-        }
-      </mat-chip-set>
-
-      <div class="skill-composer">
-        <div class="skill-selector-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Find or add skill</mat-label>
-            <input
-              matInput
-              [formControl]="skillInputs.at(i)"
-              [matAutocomplete]="skillAuto"
-              placeholder="e.g. Angular"
-              (keydown.enter)="addSkill(i)"
-            />
-            @if (hasSkillDraft(i)) {
-              <button
-                mat-icon-button
-                matSuffix
-                type="button"
-                aria-label="Clear skill"
-                (click)="clearSkillDraft(i)"
-              >
-                <app-icon name="delete" />
-              </button>
-            }
-            <mat-autocomplete
-              #skillAuto="matAutocomplete"
-              (optionSelected)="selectSkill(i, $event.option.value)"
-            >
-              @for (option of filteredSkillOptions(i); track option.name) {
-                <mat-option [value]="option.name">
-                  <div class="skill-option-row">
-                    <app-skill-icon [name]="option.name" [icon]="option.icon" />
-                    <span>{{ option.name }}</span>
-                  </div>
-                </mat-option>
-              }
-            </mat-autocomplete>
-          </mat-form-field>
-          <button mat-stroked-button type="button" (click)="addSkill(i)">
-            <app-icon name="add" />
-            Add skill
-          </button>
-        </div>
-
-        @if (skillMode() === 'icons') {
-          <div class="skill-image-field">
-            @if (hasSkillDraft(i)) {
-              <app-skill-icon
-                [name]="selectedSkillPreview(i).name"
-                [icon]="selectedSkillPreview(i).icon"
-              />
-            }
-            <div class="skill-image-actions">
-              <span>Skill image</span>
-              <div>
-                <button mat-stroked-button type="button" (click)="skillImageInput.click()">
-                  Upload image
-                </button>
-                @if (skillIconInputs.at(i).value) {
-                  <button mat-button type="button" (click)="clearSkillImage(i)">Clear</button>
-                }
-              </div>
-            </div>
-            <input
-              #skillImageInput
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/svg+xml"
-              hidden
-              (change)="onSkillImageChange(i, $event)"
-            />
-          </div>
-        }
-      </div>
+      <app-skill-selector
+        [selectedSkills]="skillsAt(i)"
+        [showIcons]="skillMode() === 'icons'"
+        [allowImageUpload]="skillMode() === 'icons'"
+        inputLabel="Find or add skill"
+        placeholder="e.g. Angular"
+        addButtonLabel="Add skill"
+        (selectedSkillsChange)="updateSkills(i, $event)"
+      />
     </div>
 
-    <button mat-icon-button color="warn" type="button" (click)="remove(i)" aria-label="Remove">
+    <button
+      mat-icon-button
+      class="danger-icon-button"
+      color="warn"
+      type="button"
+      (click)="remove(i)"
+      aria-label="Remove"
+    >
       <app-icon name="delete" />
     </button>
   </div>

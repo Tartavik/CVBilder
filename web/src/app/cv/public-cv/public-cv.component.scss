@@ -1,15 +1,15 @@
+@use 'variables' as v;
+@use 'mixins' as m;
+
 .public-page {
-  width: min(1000px, calc(100% - 2rem));
+  width: min(1000px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 1.5rem 0 4rem;
+  padding: 24px 0 64px;
 }
 
 .public-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  @include m.flex-between;
+  margin-bottom: 24px;
 
   h1,
   p {
@@ -17,15 +17,15 @@
   }
 
   app-icon {
-    margin-right: 0.4rem;
+    margin-right: 8px;
   }
 }
 
 .eyebrow {
-  color: #4355b9;
-  font-size: 0.8rem;
+  color: var(--app-sidebar-accent);
+  font-size: v.$font-size-sm;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 1px;
   text-transform: uppercase;
 }
 
@@ -38,16 +38,16 @@
   display: grid;
   min-height: 280px;
   place-items: center;
-  border-radius: 12px;
-  background: #fff;
-  color: #667085;
+  border-radius: v.$radius-panel;
+  background: var(--app-surface);
+  color: var(--app-muted);
 }
 
 .error {
-  color: #b3261e;
+  color: v.$color-danger;
 }
 
-@media (max-width: 640px) {
+@media (max-width: v.$breakpoint-mobile) {
   .public-header {
     align-items: flex-start;
     flex-direction: column;

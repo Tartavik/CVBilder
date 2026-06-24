@@ -1,0 +1,88 @@
+<mat-chip-set>
+  @for (skill of selectedSkills(); track skill.name) {
+    <mat-chip draggable="false" (removed)="removeSkill(skill)">
+      @if (showIcons()) {
+        <app-skill-icon [name]="skill.name" [icon]="skill.icon" />
+      } @else {
+        {{ skill.name }}
+      }
+      <button matChipRemove [attr.aria-label]="'Remove ' + skill.name">
+        <app-icon name="cancel" />
+      </button>
+    </mat-chip>
+  }
+</mat-chip-set>
+
+<div class="skill-composer">
+  <div class="skill-selector-row">
+    <mat-form-field appearance="outline">
+      <input
+        matInput
+        [attr.aria-label]="inputLabel()"
+        [formControl]="skillInput"
+        [matAutocomplete]="skillAuto"
+        [placeholder]="inputLabel()"
+        (input)="onDraftInput()"
+        (keydown.enter)="addSkill()"
+      />
+      @if (hasSkillDraft()) {
+        <button
+          mat-icon-button
+          matSuffix
+          class="danger-icon-button"
+          type="button"
+          aria-label="Clear skill"
+          (click)="clearSkillDraft()"
+        >
+          <app-icon name="delete" />
+        </button>
+      }
+      <mat-autocomplete
+        #skillAuto="matAutocomplete"
+        (optionSelected)="selectSkill($event.option.value)"
+      >
+        @for (option of filteredSkillOptions(); track option.name) {
+          <mat-option [value]="option.name">
+            <div class="skill-option-row">
+              <app-skill-icon [name]="option.name" [icon]="option.icon" />
+              <span>{{ option.name }}</span>
+            </div>
+          </mat-option>
+        }
+      </mat-autocomplete>
+    </mat-form-field>
+    <button mat-stroked-button type="button" (click)="addSkill()">
+      <app-icon name="add" />
+      {{ addButtonLabel() }}
+    </button>
+  </div>
+
+  @if (allowImageUpload()) {
+    <div class="skill-image-field">
+      @if (hasSkillDraft()) {
+        <app-skill-icon
+          [name]="selectedSkillPreview().name"
+          [icon]="selectedSkillPreview().icon"
+        />
+      }
+      <div class="skill-image-actions">
+        <span>Skill image</span>
+        <div>
+          <button mat-stroked-button type="button" (click)="skillImageInput.click()">
+            Upload image
+          </button>
+          @if (hasSkillImageDraft()) {
+            <button mat-button type="button" (click)="clearSkillImage()">Clear</button>
+          }
+        </div>
+      </div>
+      <input
+        #skillImageInput
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/svg+xml"
+        hidden
+        (change)="onSkillImageChange($event)"
+      />
+    </div>
+  }
+</div>

@@ -1,11 +1,10 @@
-import { Component, DestroyRef, OnInit, computed, effect, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, effect, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { debounceTime } from 'rxjs';
-import { AppIconComponent } from '../../../shared/app-icon.component';
+import { FormTextFieldComponent } from '../../../shared/form-text-field/form-text-field.component';
+import { FormTextareaFieldComponent } from '../../../shared/form-textarea-field/form-textarea-field.component';
+import { ProfilePhotoFieldComponent } from '../../../shared/profile-photo-field/profile-photo-field.component';
 import {
   PHONE_PATTERN,
   SHORT_TEXT_PATTERN,
@@ -16,7 +15,12 @@ import { CvStore } from '../../cv.store';
 @Component({
   selector: 'app-personal-section',
   standalone: true,
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, AppIconComponent],
+  imports: [
+    ReactiveFormsModule,
+    FormTextFieldComponent,
+    FormTextareaFieldComponent,
+    ProfilePhotoFieldComponent,
+  ],
   templateUrl: './personal-section.component.html',
 })
 export class PersonalSectionComponent implements OnInit {
@@ -82,11 +86,8 @@ export class PersonalSectionComponent implements OnInit {
       );
   }
 
-  onPhotoChange(event: Event) {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
+  onPhotoUpload(file: File) {
     this.store.uploadProfilePhoto(file);
-    (event.target as HTMLInputElement).value = '';
   }
 
   removePhoto() {

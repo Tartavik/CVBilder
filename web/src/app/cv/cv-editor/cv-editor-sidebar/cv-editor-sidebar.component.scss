@@ -1,0 +1,231 @@
+@use 'variables' as v;
+
+:host {
+  display: block;
+  height: 100vh;
+  background: var(--app-sidebar-bg);
+}
+
+.cv-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  width: v.$sidebar-width;
+  min-width: v.$sidebar-width;
+  padding: 20px 12px;
+  background: var(--app-sidebar-bg);
+  color: var(--app-sidebar-text);
+  overflow-y: auto;
+}
+
+.cv-sidebar__logo {
+  padding: 0 8px;
+  color: var(--app-sidebar-accent);
+  font-size: v.$font-size-lg;
+  font-weight: 700;
+}
+
+.cv-sidebar__hint {
+  margin: 0;
+  padding: 0 8px;
+  color: var(--app-sidebar-muted);
+  font-size: v.$font-size-sm;
+}
+
+.sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--app-sidebar-border);
+  border-radius: v.$radius-control;
+  background: var(--app-sidebar-panel);
+
+  &.closed {
+    gap: 0;
+  }
+}
+
+.sidebar-group__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  border-radius: v.$radius-control;
+  background: transparent;
+  color: var(--app-sidebar-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: v.$font-size-sm;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: uppercase;
+
+  &:hover {
+    background: var(--app-sidebar-hover);
+  }
+}
+
+.sidebar-chevron {
+  color: var(--app-sidebar-accent);
+  font-size: v.$font-size-base;
+  line-height: 1;
+}
+
+.section-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.section-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: v.$radius-control;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-size: v.$font-size-md;
+  text-align: left;
+  transition: background 0.15s;
+  user-select: none;
+
+  &:hover {
+    background: var(--app-sidebar-hover);
+  }
+
+  &.active {
+    background: var(--app-sidebar-active);
+    color: var(--app-sidebar-active-text);
+  }
+
+  &.invalid {
+    border: 1px solid rgba(v.$color-danger, 55%);
+    background: rgba(v.$color-danger, 12%);
+    color: v.$color-danger;
+
+    .drag-handle {
+      color: v.$color-danger;
+    }
+  }
+
+  &.invalid.active {
+    border-color: v.$color-danger;
+    background: rgba(v.$color-danger, 22%);
+    color: v.$color-danger;
+  }
+
+  &.fixed {
+    cursor: default;
+    opacity: 0.8;
+
+    .drag-handle {
+      visibility: hidden;
+    }
+
+    &.invalid {
+      opacity: 1;
+    }
+  }
+}
+
+.template-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.sidebar-chip,
+.sidebar-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: v.$control-height;
+  padding: 8px 12px;
+  border: 1px solid var(--app-sidebar-border);
+  border-radius: v.$radius-control;
+  background: var(--app-sidebar-panel);
+  color: var(--app-sidebar-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: v.$font-size-md;
+  text-align: left;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+  &:hover:not(:disabled) {
+    border-color: var(--app-sidebar-muted);
+    background: var(--app-sidebar-hover);
+    color: var(--app-sidebar-text);
+  }
+
+  &.active {
+    border-color: var(--app-sidebar-accent);
+    background: var(--app-sidebar-active);
+    color: var(--app-sidebar-active-text);
+    font-weight: 700;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: wait;
+  }
+}
+
+.sidebar-chip {
+  justify-content: center;
+}
+
+.sidebar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-action {
+  width: 100%;
+
+  app-icon {
+    color: var(--app-sidebar-accent);
+  }
+
+  &.warn app-icon {
+    color: v.$color-danger;
+  }
+}
+
+.drag-handle {
+  color: var(--app-sidebar-muted);
+  cursor: grab;
+  font-size: v.$font-size-base;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.cdk-drag-preview {
+  padding: 8px 12px;
+  border-radius: v.$radius-control;
+  background: var(--app-sidebar-hover);
+  box-shadow: v.$shadow-lg;
+  color: var(--app-sidebar-text);
+  font-size: v.$font-size-md;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+
+.cdk-drag-animating {
+  transition: transform 200ms ease;
+}

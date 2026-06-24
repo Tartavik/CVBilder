@@ -20,6 +20,9 @@
             "input": "web/public"
           }
         ],
+        "stylePreprocessorOptions": {
+          "includePaths": ["web/src/styles"]
+        },
         "styles": ["web/src/styles.scss"]
       },
       "configurations": {

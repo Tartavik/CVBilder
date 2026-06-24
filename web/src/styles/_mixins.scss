@@ -1,0 +1,67 @@
+@use 'variables' as v;
+
+@mixin flex-between($gap: 16px) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $gap;
+}
+
+@mixin app-theme-vars {
+  --app-page-bg: #{v.$color-page-bg};
+  --app-workspace-bg: #{v.$color-workspace-bg};
+  --app-editor-bg: #{v.$color-editor-bg};
+  --app-surface: #{v.$color-surface};
+  --app-surface-soft: #{v.$color-surface-soft};
+  --app-border: #{v.$color-border};
+  --app-border-strong: #{v.$color-border-strong};
+  --app-text: #{v.$color-text};
+  --app-title: #{v.$color-title};
+  --app-muted: #{v.$color-muted};
+  --app-sidebar-bg: #{v.$color-sidebar-bg};
+  --app-sidebar-panel: #{v.$color-sidebar-panel};
+  --app-sidebar-border: #{v.$color-sidebar-border};
+  --app-sidebar-text: #{v.$color-sidebar-text};
+  --app-sidebar-muted: #{v.$color-sidebar-muted};
+  --app-sidebar-accent: #{v.$color-sidebar-accent};
+  --app-sidebar-hover: #{v.$color-sidebar-hover};
+  --app-sidebar-active: #{v.$color-sidebar-active};
+  --app-sidebar-active-text: #{v.$color-sidebar-active-text};
+  --app-danger: #{v.$color-danger};
+  --app-danger-hover: #{v.$color-danger-hover};
+  --app-shadow: #{v.$shadow-sm};
+  --app-font-size-sm: #{v.$font-size-sm};
+  --app-font-size-md: #{v.$font-size-md};
+  --app-font-size-base: #{v.$font-size-base};
+  --app-font-size-lg: #{v.$font-size-lg};
+  --app-font-size-xl: #{v.$font-size-xl};
+  --app-radius-control: #{v.$radius-control};
+  --app-radius-pill: #{v.$radius-pill};
+  --app-icon-size: #{v.$icon-size};
+  --app-skill-icon-size: #{v.$skill-icon-size};
+}
+
+@mixin app-dark-theme-vars {
+  --app-page-bg: #{v.$color-dark-page-bg};
+  --app-workspace-bg: #{v.$color-dark-workspace-bg};
+  --app-editor-bg: #{v.$color-dark-editor-bg};
+  --app-surface: #{v.$color-dark-surface};
+  --app-surface-soft: #{v.$color-dark-surface-soft};
+  --app-border: #{v.$color-dark-border};
+  --app-border-strong: #{v.$color-dark-border-strong};
+  --app-text: #{v.$color-dark-text};
+  --app-title: #{v.$color-dark-title};
+  --app-muted: #{v.$color-dark-muted};
+  --app-sidebar-bg: #{v.$color-dark-sidebar-bg};
+  --app-sidebar-panel: #{v.$color-dark-sidebar-panel};
+  --app-sidebar-border: #{v.$color-dark-sidebar-border};
+  --app-sidebar-text: #{v.$color-dark-sidebar-text};
+  --app-sidebar-muted: #{v.$color-dark-sidebar-muted};
+  --app-sidebar-accent: #{v.$color-dark-sidebar-accent};
+  --app-sidebar-hover: #{v.$color-dark-sidebar-hover};
+  --app-sidebar-active: #{v.$color-dark-sidebar-active};
+  --app-sidebar-active-text: #{v.$color-dark-sidebar-active-text};
+  --app-danger: #{v.$color-dark-danger};
+  --app-danger-hover: #{v.$color-dark-danger-hover};
+  --app-shadow: #{v.$shadow-lg};
+}
