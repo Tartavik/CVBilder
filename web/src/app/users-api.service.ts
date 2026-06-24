@@ -24,6 +24,11 @@ export interface ExperienceSkill {
   icon?: string | null;
 }
 
+export interface UserSkill {
+  name: string;
+  icon: string | null;
+}
+
 export interface ExperienceItem {
   id?: string;
   company: string;
@@ -89,6 +94,10 @@ export class UsersApiService {
 
   getUserCvs(userId: string): Observable<CvSummary[]> {
     return this.http.get<CvSummary[]>(`${this.base}/${userId}/cvs`);
+  }
+
+  getUserSkills(userId: string): Observable<UserSkill[]> {
+    return this.http.get<UserSkill[]>(`${this.base}/${userId}/skills`);
   }
 
   getAllCvs(skills: string[] = []): Observable<CvSummary[]> {

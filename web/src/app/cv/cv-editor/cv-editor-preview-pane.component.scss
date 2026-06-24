@@ -1,59 +1,23 @@
-.save-error {
-  color: #b3261e;
-  font-size: 0.85rem;
+:host {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
 }
 
 .cv-preview-pane {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  gap: 0.75rem;
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
   padding: 1rem;
-  overflow-y: auto;
+  overflow: auto;
   background: #e8e8e8;
-}
-
-.preview-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.action-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-
-  button,
-  a {
-    display: flex;
-    align-items: center;
-    font-size: 0.875rem;
-  }
-}
-
-.save-success {
-  color: #10b981;
-  font-size: 0.875rem;
-  font-weight: 600;
-  animation: fadeInOut 2s ease-in-out;
-}
-
-@keyframes fadeInOut {
-  0%,
-  100% {
-    opacity: 0;
-  }
-
-  10%,
-  90% {
-    opacity: 1;
-  }
 }
 
 .preview-scroll {
   width: 100%;
+  min-width: 0;
 }

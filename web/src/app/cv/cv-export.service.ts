@@ -45,16 +45,25 @@ export class CvExportService {
 <body>${previewElement.outerHTML}</body>
 </html>`);
       printWindow.document.close();
-      printWindow.focus();
 
-      printWindow.setTimeout(() => {
+      let printStarted = false;
+      const startPrint = () => {
+        if (printStarted) return;
+        printStarted = true;
         try {
+          printWindow.focus();
           printWindow.print();
-          printWindow.close();
         } catch (error: unknown) {
           this.reportExportError(error);
         }
-      }, 500);
+      };
+
+      printWindow.addEventListener(
+        'load',
+        () => printWindow.setTimeout(startPrint, 250),
+        { once: true },
+      );
+      printWindow.setTimeout(startPrint, 1000);
     } catch (error: unknown) {
       this.reportExportError(error);
     }

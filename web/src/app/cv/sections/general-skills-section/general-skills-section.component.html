@@ -15,8 +15,38 @@
 
 <div class="add-row">
   <mat-form-field appearance="outline">
-    <mat-label>New general skill</mat-label>
-    <input matInput [formControl]="newSkill" placeholder="e.g. TypeScript" (keydown.enter)="add()" />
+    <mat-label>Find or add general skill</mat-label>
+    <input
+      matInput
+      [formControl]="newSkill"
+      [matAutocomplete]="generalSkillAuto"
+      placeholder="e.g. TypeScript"
+      (keydown.enter)="add()"
+    />
+    @if (hasSkillDraft()) {
+      <button
+        mat-icon-button
+        matSuffix
+        type="button"
+        aria-label="Clear skill"
+        (click)="clearSkillDraft()"
+      >
+        <app-icon name="delete" />
+      </button>
+    }
+    <mat-autocomplete
+      #generalSkillAuto="matAutocomplete"
+      (optionSelected)="selectSkill($event.option.value)"
+    >
+      @for (option of filteredSkillOptions(); track option.name) {
+        <mat-option [value]="option.name">
+          <div class="skill-option-row">
+            <app-skill-icon [name]="option.name" [icon]="option.icon" />
+            <span>{{ option.name }}</span>
+          </div>
+        </mat-option>
+      }
+    </mat-autocomplete>
   </mat-form-field>
   <button mat-raised-button color="primary" type="button" (click)="add()">
     <app-icon name="add" /> Add

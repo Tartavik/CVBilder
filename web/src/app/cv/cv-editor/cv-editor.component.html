@@ -2,18 +2,27 @@
   <div class="cv-loading">Loading CV...</div>
 } @else {
   <div class="cv-layout">
+    @if (saveToast(); as toast) {
+      <div
+        class="save-toast"
+        [class.error]="toast.kind === 'error'"
+        [class.success]="toast.kind === 'success'"
+      >
+        <span>{{ toast.message }}</span>
+        <span class="save-toast__progress"></span>
+      </div>
+    }
+
     <app-cv-editor-sidebar
+      [cvId]="cvId"
       [activeSection]="activeSection()"
       (activeSectionChange)="activeSection.set($event)"
-    />
-    <app-cv-editor-form [activeSection]="activeSection()" />
-    <app-cv-editor-preview-pane
-      [cvId]="cvId"
-      [saveSuccess]="saveSuccess()"
       (templateChange)="setTemplate($event)"
       (save)="saveCv()"
       (exportPdf)="exportPdf()"
       (logout)="logout()"
     />
+    <app-cv-editor-form [activeSection]="activeSection()" />
+    <app-cv-editor-preview-pane />
   </div>
 }

@@ -71,10 +71,24 @@
 .field-row {
   display: flex;
   gap: 1rem;
+  align-items: flex-start;
 
   mat-form-field {
     flex: 1;
+    min-width: 0;
   }
+}
+
+.section-form mat-form-field,
+.exp-item mat-form-field,
+.edu-item mat-form-field,
+.add-row mat-form-field {
+  min-height: 86px;
+}
+
+.section-form textarea,
+.exp-item textarea {
+  min-height: 96px;
 }
 
 .exp-item,
@@ -115,59 +129,66 @@
   border-top: 1px solid #e5e7eb;
 }
 
-.experience-skill-mode {
+.skills-editor-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1rem;
-  border: 1px solid #d0d5dd;
-  border-radius: 8px;
-  background: #f8fafc;
+  margin-bottom: 0.75rem;
 
-  .field-label,
-  .section-hint {
+  .field-label {
     margin-bottom: 0;
   }
 }
 
-.skill-icon-picker {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
-  gap: 0.5rem;
+.skill-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   margin-top: 0.75rem;
 }
 
-.skill-icon-option {
+.skill-selector-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  mat-form-field {
+    flex: 1;
+    min-width: 0;
+  }
+
+  button[matSuffix] {
+    color: #667085;
+  }
+}
+
+.skill-option-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.skill-image-field {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 0.25rem;
+  background: transparent;
+}
+
+.skill-image-actions {
+  display: flex;
   min-width: 0;
-  padding: 0.5rem;
-  border: 1px solid #d0d5dd;
-  border-radius: 7px;
-  background: white;
-  color: #344054;
-  cursor: pointer;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
 
   span {
-    overflow: hidden;
-    font-size: 0.78rem;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &:hover:not(:disabled) {
-    border-color: #2563eb;
-  }
-
-  &.selected,
-  &:disabled {
-    border-color: #98a2b3;
-    background: #f2f4f7;
-    opacity: 0.65;
-    cursor: default;
+    color: #475467;
+    font-size: 0.85rem;
+    font-weight: 600;
   }
 }
 

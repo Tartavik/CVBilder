@@ -10,7 +10,7 @@
           <input matInput type="email" formControlName="email" placeholder="user@example.com" />
           @if (form.controls.email.hasError('required')) {
             <mat-error>Email is required</mat-error>
-          } @else if (form.controls.email.hasError('email')) {
+          } @else if (form.controls.email.hasError('pattern')) {
             <mat-error>Enter a valid email</mat-error>
           }
         </mat-form-field>

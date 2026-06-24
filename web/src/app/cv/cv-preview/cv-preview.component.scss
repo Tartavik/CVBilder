@@ -1,13 +1,21 @@
 .preview-page {
   width: 100%;
-  min-height: 297mm;
+  min-height: min(297mm, calc(100vh - 9rem));
   background: white;
-  padding: 16mm 14mm;
+  padding: clamp(2rem, 5vw, 16mm) clamp(1.5rem, 4vw, 14mm);
   font-family: 'Georgia', serif;
   font-size: 11pt;
   color: #1a1a1a;
   box-shadow: 0 2px 12px rgba(0,0,0,0.15);
   box-sizing: border-box;
+}
+
+@media print {
+  .preview-page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 16mm 14mm;
+  }
 }
 
 .preview-header {
@@ -22,6 +30,7 @@
 
 .header-text {
   flex: 1;
+  min-width: 0;
 }
 
 .header-photo {
@@ -36,6 +45,7 @@
 .preview-header h1 {
   font-size: 22pt;
   margin: 0 0 0.2rem;
+  overflow-wrap: anywhere;
 }
 
 .job-title {
@@ -50,6 +60,10 @@
   gap: 0.5rem 1.5rem;
   font-size: 9pt;
   color: #444;
+
+  span {
+    overflow-wrap: anywhere;
+  }
 }
 
 .preview-section {

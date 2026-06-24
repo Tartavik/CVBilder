@@ -1,7 +1,7 @@
 .classic-page {
   display: flex;
   width: 100%;
-  min-height: 297mm;
+  min-height: min(297mm, calc(100vh - 9rem));
   background: white;
   font-family: 'Georgia', serif;
   font-size: 10pt;
@@ -56,6 +56,11 @@
   color: #2d4a6a;
   margin-bottom: 0.4rem;
   line-height: 1.4;
+
+  span:last-child {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
 }
 
 .detail-icon {
@@ -84,7 +89,8 @@
 /* ── Right column ── */
 .classic-right {
   flex: 1;
-  padding: 1.75rem 1.5rem;
+  min-width: 0;
+  padding: clamp(1.25rem, 4vw, 1.75rem) clamp(1rem, 3vw, 1.5rem);
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -103,6 +109,7 @@
   margin: 0 0 0.2rem;
   text-transform: uppercase;
   letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
 }
 
 .classic-job-title {
@@ -172,6 +179,13 @@
     position: absolute;
     left: 0;
     color: #3a6a9e;
+  }
+}
+
+@media print {
+  .classic-page {
+    width: 210mm;
+    min-height: 297mm;
   }
 }
 

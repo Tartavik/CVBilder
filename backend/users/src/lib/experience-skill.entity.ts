@@ -20,7 +20,7 @@ export class ExperienceSkillEntity {
   @Column()
   name!: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   icon!: string | null;
 
   @CreateDateColumn({ name: 'created_at' })

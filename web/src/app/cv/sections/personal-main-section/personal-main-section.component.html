@@ -30,6 +30,10 @@
       <input matInput formControlName="fullName" placeholder="John Doe" />
       @if (form.controls.fullName.hasError('required')) {
         <mat-error>Full name is required</mat-error>
+      } @else if (form.controls.fullName.hasError('minlength')) {
+        <mat-error>Use at least 2 characters</mat-error>
+      } @else if (form.controls.fullName.hasError('pattern')) {
+        <mat-error>Use letters, spaces, hyphens, or apostrophes</mat-error>
       }
     </mat-form-field>
     <mat-form-field appearance="outline">
@@ -37,6 +41,10 @@
       <input matInput formControlName="jobTitle" placeholder="Frontend Developer" />
       @if (form.controls.jobTitle.hasError('required')) {
         <mat-error>Job title is required</mat-error>
+      } @else if (form.controls.jobTitle.hasError('minlength')) {
+        <mat-error>Use at least 2 characters</mat-error>
+      } @else if (form.controls.jobTitle.hasError('pattern')) {
+        <mat-error>Use letters and common title symbols only</mat-error>
       }
     </mat-form-field>
   </div>
@@ -45,6 +53,8 @@
     <textarea matInput formControlName="summary" rows="4" placeholder="Brief professional summary..."></textarea>
     @if (form.controls.summary.hasError('required')) {
       <mat-error>Summary is required</mat-error>
+    } @else if (form.controls.summary.hasError('minlength')) {
+      <mat-error>Use at least 2 characters</mat-error>
     }
   </mat-form-field>
 </form>

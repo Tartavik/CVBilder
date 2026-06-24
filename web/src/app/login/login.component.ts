@@ -10,6 +10,7 @@ import { UsersApiService } from '../users-api.service';
 import { AuthService } from '../auth.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ErrorService } from '../shared/errors/error.service';
+import { STRICT_EMAIL_PATTERN } from '../shared/validation-patterns';
 
 @Component({
   selector: 'app-login',
@@ -32,7 +33,10 @@ export class LoginComponent {
   private readonly errors = inject(ErrorService);
 
   form = new FormGroup({
-    email: new FormControl('', [Validators.required, Validators.email]),
+    email: new FormControl('', [
+      Validators.required,
+      Validators.pattern(STRICT_EMAIL_PATTERN),
+    ]),
     password: new FormControl('', [Validators.required, Validators.minLength(6)]),
   });
 

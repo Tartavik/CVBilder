@@ -57,6 +57,11 @@ export class UsersController {
     return this.usersService.getSettings(id);
   }
 
+  @Get(':id/skills')
+  getSkills(@Param('id') id: string) {
+    return this.usersService.getUserSkills(id);
+  }
+
   @Get(':id/cvs')
   getCvs(@Param('id') id: string) {
     return this.usersService.getUserCvs(id);

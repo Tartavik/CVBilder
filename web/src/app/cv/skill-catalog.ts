@@ -1,6 +1,6 @@
 export interface SkillOption {
   name: string;
-  icon: string;
+  icon: string | null;
   label: string;
   color: string;
 }
@@ -33,13 +33,24 @@ const OPTIONS_BY_NAME = new Map(
   SKILL_OPTIONS.map((option) => [option.name.toLocaleLowerCase(), option]),
 );
 
-export function getSkillOption(icon: string | null | undefined): SkillOption {
+export function getSkillOption(
+  icon: string | null | undefined,
+  name = 'Technology',
+): SkillOption {
+  if (icon?.startsWith('data:image/')) {
+    return {
+      name,
+      icon,
+      label: getSkillInitials(name),
+      color: getSkillColor(name),
+    };
+  }
   return (
     (icon ? OPTIONS_BY_ICON.get(icon) : undefined) ?? {
-      name: 'Technology',
-      icon: 'technology',
-      label: '</>',
-      color: '#475467',
+      name,
+      icon: null,
+      label: getSkillInitials(name),
+      color: getSkillColor(name),
     }
   );
 }
@@ -48,4 +59,25 @@ export function findSkillOptionByName(
   name: string,
 ): SkillOption | undefined {
   return OPTIONS_BY_NAME.get(name.trim().toLocaleLowerCase());
+}
+
+export function getSkillInitials(name: string): string {
+  return name.trim().slice(0, 2).toLocaleUpperCase() || '?';
+}
+
+export function getSkillColor(name: string): string {
+  const colors = [
+    '#2563eb',
+    '#7c3aed',
+    '#db2777',
+    '#dc2626',
+    '#ea580c',
+    '#16a34a',
+    '#0891b2',
+  ];
+  const hash = [...name].reduce(
+    (value, char) => value + char.charCodeAt(0),
+    0,
+  );
+  return colors[hash % colors.length];
 }

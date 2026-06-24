@@ -1,75 +1,166 @@
-@if (cv().template === 'classic') {
-  <aside class="cv-sidebar">
-    <div class="cv-sidebar__logo">CVBilder</div>
-    <p class="cv-sidebar__hint">Left column</p>
-    <div class="section-list">
-      <button
-        type="button"
-        class="section-item fixed"
-        [class.active]="activeSection() === 'details'"
-        (click)="setActive('details')"
-      >
-        <span class="drag-handle">⠿</span> Details
-      </button>
-      <button
-        type="button"
-        class="section-item fixed"
-        [class.active]="activeSection() === 'skills'"
-        (click)="setActive('skills')"
-      >
-        <span class="drag-handle">⠿</span> General Skills
-      </button>
-    </div>
+<aside class="cv-sidebar">
+  <div class="cv-sidebar__logo">CVBilder</div>
 
-    <p class="cv-sidebar__hint">Right column — drag to reorder</p>
-    <div
-      cdkDropList
-      [cdkDropListData]="classicDraggableSections()"
-      (cdkDropListDropped)="onClassicDrop($event)"
-      class="section-list"
+  <section class="sidebar-group" [class.closed]="!sectionsOpen()">
+    <button
+      type="button"
+      class="sidebar-group__toggle"
+      (click)="sectionsOpen.set(!sectionsOpen())"
+      [attr.aria-expanded]="sectionsOpen()"
     >
-      @for (section of classicOrderedSections(); track section.id) {
+      <span>Sections</span>
+      <span class="sidebar-chevron">{{ sectionsOpen() ? '−' : '+' }}</span>
+    </button>
+
+    @if (sectionsOpen()) {
+      @if (cv().template === 'classic') {
+        <p class="cv-sidebar__hint">Left column</p>
+        <div class="section-list">
+          <button
+            type="button"
+            class="section-item fixed"
+            [class.active]="activeSection() === 'details'"
+            [class.invalid]="isInvalid('details')"
+            (click)="setActive('details')"
+          >
+            <span class="drag-handle">⠿</span> Details
+          </button>
+          <button
+            type="button"
+            class="section-item fixed"
+            [class.active]="activeSection() === 'skills'"
+            [class.invalid]="isInvalid('skills')"
+            (click)="setActive('skills')"
+          >
+            <span class="drag-handle">⠿</span> General Skills
+          </button>
+        </div>
+
+        <p class="cv-sidebar__hint">Right column</p>
         <div
-          cdkDrag
-          class="section-item"
-          role="button"
-          tabindex="0"
-          [class.active]="activeSection() === section.id"
-          (click)="setActive(section.id)"
-          (keydown.enter)="setActive(section.id)"
-          (keydown.space)="setActive(section.id)"
+          cdkDropList
+          [cdkDropListData]="classicDraggableSections()"
+          (cdkDropListDropped)="onClassicDrop($event)"
+          class="section-list"
         >
-          <span class="drag-handle">⠿</span>
-          {{ section.label }}
+          @for (section of classicOrderedSections(); track section.id) {
+            <div
+              cdkDrag
+              class="section-item"
+              role="button"
+              tabindex="0"
+              [class.active]="activeSection() === section.id"
+              [class.invalid]="isInvalid(section.id)"
+              (click)="setActive(section.id)"
+              (keydown.enter)="setActive(section.id)"
+              (keydown.space)="setActive(section.id)"
+            >
+              <span class="drag-handle">⠿</span>
+              {{ section.label }}
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="cv-sidebar__hint">Drag to reorder</p>
+        <div
+          cdkDropList
+          [cdkDropListData]="cv().sectionOrder"
+          (cdkDropListDropped)="onDrop($event)"
+          class="section-list"
+        >
+          @for (section of orderedSections(); track section.id) {
+            <div
+              cdkDrag
+              class="section-item"
+              role="button"
+              tabindex="0"
+              [class.active]="activeSection() === section.id"
+              [class.invalid]="isInvalid(section.id)"
+              (click)="setActive(section.id)"
+              (keydown.enter)="setActive(section.id)"
+              (keydown.space)="setActive(section.id)"
+            >
+              <span class="drag-handle">⠿</span>
+              {{ section.label }}
+            </div>
+          }
         </div>
       }
-    </div>
-  </aside>
-} @else {
-  <aside class="cv-sidebar">
-    <div class="cv-sidebar__logo">CVBilder</div>
-    <p class="cv-sidebar__hint">Drag to reorder</p>
-    <div
-      cdkDropList
-      [cdkDropListData]="cv().sectionOrder"
-      (cdkDropListDropped)="onDrop($event)"
-      class="section-list"
+    }
+  </section>
+
+  <section class="sidebar-group" [class.closed]="!templateOpen()">
+    <button
+      type="button"
+      class="sidebar-group__toggle"
+      (click)="templateOpen.set(!templateOpen())"
+      [attr.aria-expanded]="templateOpen()"
     >
-      @for (section of orderedSections(); track section.id) {
-        <div
-          cdkDrag
-          class="section-item"
-          role="button"
-          tabindex="0"
-          [class.active]="activeSection() === section.id"
-          (click)="setActive(section.id)"
-          (keydown.enter)="setActive(section.id)"
-          (keydown.space)="setActive(section.id)"
+      <span>Template</span>
+      <span class="sidebar-chevron">{{ templateOpen() ? '−' : '+' }}</span>
+    </button>
+
+    @if (templateOpen()) {
+      <div class="template-switch">
+        <button
+          type="button"
+          class="sidebar-chip"
+          [class.active]="cv().template === 'single'"
+          (click)="selectTemplate('single')"
         >
-          <span class="drag-handle">⠿</span>
-          {{ section.label }}
-        </div>
-      }
-    </div>
-  </aside>
-}
+          Single
+        </button>
+        <button
+          type="button"
+          class="sidebar-chip"
+          [class.active]="cv().template === 'classic'"
+          (click)="selectTemplate('classic')"
+        >
+          Classic
+        </button>
+      </div>
+    }
+  </section>
+
+  <section class="sidebar-group" [class.closed]="!actionsOpen()">
+    <button
+      type="button"
+      class="sidebar-group__toggle"
+      (click)="actionsOpen.set(!actionsOpen())"
+      [attr.aria-expanded]="actionsOpen()"
+    >
+      <span>Actions</span>
+      <span class="sidebar-chevron">{{ actionsOpen() ? '−' : '+' }}</span>
+    </button>
+
+    @if (actionsOpen()) {
+      <div class="sidebar-actions">
+        <a class="sidebar-action" routerLink="/home">
+          <app-icon name="home" />
+          <span>Home</span>
+        </a>
+        <a class="sidebar-action" [routerLink]="['/public/cv', cvId()]">
+          <app-icon name="visibility" />
+          <span>Public page</span>
+        </a>
+        <button
+          class="sidebar-action"
+          type="button"
+          [disabled]="saving()"
+          (click)="save.emit()"
+        >
+          <app-icon [name]="saving() ? 'hourglass_empty' : 'save'" />
+          <span>Save</span>
+        </button>
+        <button class="sidebar-action" type="button" (click)="exportPdf.emit()">
+          <app-icon name="picture_as_pdf" />
+          <span>Export PDF</span>
+        </button>
+        <button class="sidebar-action warn" type="button" (click)="logout.emit()">
+          <app-icon name="logout" />
+          <span>Logout</span>
+        </button>
+      </div>
+    }
+  </section>
+</aside>

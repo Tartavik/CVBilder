@@ -5,6 +5,7 @@ export class PersonalDataDto {
   phone!: string;
   city!: string;
   summary!: string;
+  photo?: string;
 }
 
 export class ExperienceSkillDto {

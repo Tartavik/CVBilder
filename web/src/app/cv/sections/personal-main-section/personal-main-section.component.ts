@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, computed, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, effect, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,6 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { debounceTime } from 'rxjs';
 import { AppIconComponent } from '../../../shared/app-icon.component';
+import { SHORT_TEXT_PATTERN } from '../../../shared/validation-patterns';
 import { CvStore } from '../../cv.store';
 
 @Component({
@@ -20,11 +21,30 @@ export class PersonalMainSectionComponent implements OnInit {
 
   readonly photo = computed(() => this.store.cv().personal.photo);
   readonly photoUploading = this.store.photoUploading;
+  private readonly showValidationErrors = effect(() => {
+    if (this.store.validationAttempt() > 0) {
+      queueMicrotask(() => {
+        this.form.markAllAsTouched();
+        this.form.updateValueAndValidity({ emitEvent: false });
+      });
+    }
+  });
 
   readonly form = new FormGroup({
-    fullName: new FormControl('', Validators.required),
-    jobTitle: new FormControl('', Validators.required),
-    summary:  new FormControl('', Validators.required),
+    fullName: new FormControl('', [
+      Validators.required,
+      Validators.minLength(2),
+      Validators.pattern(SHORT_TEXT_PATTERN),
+    ]),
+    jobTitle: new FormControl('', [
+      Validators.required,
+      Validators.minLength(2),
+      Validators.pattern(SHORT_TEXT_PATTERN),
+    ]),
+    summary:  new FormControl('', [
+      Validators.required,
+      Validators.minLength(2),
+    ]),
   });
 
   ngOnInit() {

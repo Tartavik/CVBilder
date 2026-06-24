@@ -9,12 +9,13 @@ import { CvEntity } from './cv.entity';
 import { ExperienceEntity } from './experience.entity';
 import { GeneralSkillEntity } from './general-skill.entity';
 import { ExperienceSkillEntity } from './experience-skill.entity';
+import { UserSkillEntity } from './user-skill.entity';
 import { PersonalDetailEntity } from './personalDetail.entity';
 import { EducationEntity } from './education.entity';
 import { CvsController } from './cvs.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserEntity, ProfileEntity, SettingsEntity, CvEntity, ExperienceEntity, ExperienceSkillEntity, PersonalDetailEntity, GeneralSkillEntity, EducationEntity])],
+  imports: [TypeOrmModule.forFeature([UserEntity, ProfileEntity, SettingsEntity, CvEntity, ExperienceEntity, ExperienceSkillEntity, UserSkillEntity, PersonalDetailEntity, GeneralSkillEntity, EducationEntity])],
   controllers: [UsersController, CvsController],
   providers: [UsersService],
   exports: [UsersService, TypeOrmModule],

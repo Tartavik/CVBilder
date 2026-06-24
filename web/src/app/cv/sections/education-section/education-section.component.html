@@ -6,6 +6,10 @@
         <input matInput formControlName="institution" placeholder="KPI" />
         @if (hasError(group, 'institution', 'required')) {
           <mat-error>Institution is required</mat-error>
+        } @else if (hasError(group, 'institution', 'minlength')) {
+          <mat-error>Use at least 2 characters</mat-error>
+        } @else if (hasError(group, 'institution', 'pattern')) {
+          <mat-error>Use letters and common name symbols only</mat-error>
         }
       </mat-form-field>
       <mat-form-field appearance="outline">
@@ -24,6 +28,10 @@
         <input matInput formControlName="degree" placeholder="Bachelor" />
         @if (hasError(group, 'degree', 'required')) {
           <mat-error>Degree is required</mat-error>
+        } @else if (hasError(group, 'degree', 'minlength')) {
+          <mat-error>Use at least 2 characters</mat-error>
+        } @else if (hasError(group, 'degree', 'pattern')) {
+          <mat-error>Use letters and common name symbols only</mat-error>
         }
       </mat-form-field>
       <mat-form-field appearance="outline">
@@ -31,6 +39,10 @@
         <input matInput formControlName="field" placeholder="Computer Science" />
         @if (hasError(group, 'field', 'required')) {
           <mat-error>Field of study is required</mat-error>
+        } @else if (hasError(group, 'field', 'minlength')) {
+          <mat-error>Use at least 2 characters</mat-error>
+        } @else if (hasError(group, 'field', 'pattern')) {
+          <mat-error>Use letters and common name symbols only</mat-error>
         }
       </mat-form-field>
     </div>

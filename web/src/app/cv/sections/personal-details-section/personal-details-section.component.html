@@ -4,16 +4,18 @@
     <input matInput formControlName="email" type="email" />
     @if (form.controls.email.hasError('required')) {
       <mat-error>Email is required</mat-error>
-    } @else if (form.controls.email.hasError('email')) {
+    } @else if (form.controls.email.hasError('pattern')) {
       <mat-error>Enter a valid email</mat-error>
     }
   </mat-form-field>
   <div class="field-row">
     <mat-form-field appearance="outline">
       <mat-label>Phone</mat-label>
-      <input matInput formControlName="phone" type="tel" />
+      <input matInput formControlName="phone" type="tel" placeholder="+380501234567" />
       @if (form.controls.phone.hasError('required')) {
         <mat-error>Phone is required</mat-error>
+      } @else if (form.controls.phone.hasError('pattern')) {
+        <mat-error>Use + and 10-15 digits</mat-error>
       }
     </mat-form-field>
     <mat-form-field appearance="outline">
@@ -21,6 +23,10 @@
       <input matInput formControlName="city" />
       @if (form.controls.city.hasError('required')) {
         <mat-error>City is required</mat-error>
+      } @else if (form.controls.city.hasError('minlength')) {
+        <mat-error>Use at least 2 characters</mat-error>
+      } @else if (form.controls.city.hasError('pattern')) {
+        <mat-error>Use letters, spaces, commas, or hyphens</mat-error>
       }
     </mat-form-field>
   </div>

@@ -12,6 +12,7 @@ import { ExperienceEntity } from './experience.entity';
 import { EducationEntity } from './education.entity';
 import { GeneralSkillEntity } from './general-skill.entity';
 import { ExperienceSkillEntity } from './experience-skill.entity';
+import { UserSkillEntity } from './user-skill.entity';
 import { PersonalDetailEntity } from './personalDetail.entity';
 import {
   EducationItemDto,
@@ -29,7 +30,9 @@ const DEFAULT_SECTION_ORDER = [
   'details',
 ];
 const VALID_SECTION_IDS = new Set(DEFAULT_SECTION_ORDER);
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const PHONE_PATTERN = /^\+[1-9]\d{9,14}$/;
+const SHORT_TEXT_PATTERN = /^[\p{L}][\p{L} .,'+#&-]*$/u;
 const PHOTO_MIME_TYPES = new Map([
   ['image/jpeg', '.jpg'],
   ['image/png', '.png'],
@@ -69,6 +72,9 @@ export class UsersService {
 
     @InjectRepository(ExperienceSkillEntity)
     private readonly experienceSkillRepo: Repository<ExperienceSkillEntity>,
+
+    @InjectRepository(UserSkillEntity)
+    private readonly userSkillRepo: Repository<UserSkillEntity>,
 
     @InjectRepository(PersonalDetailEntity)
     private readonly personalDetailRepo: Repository<PersonalDetailEntity>,
@@ -165,6 +171,20 @@ export class UsersService {
     return this.toCvSummary(cv, user);
   }
 
+  async getUserSkills(userId: string): Promise<Array<{ name: string; icon: string | null }>> {
+    const user = await this.findById(userId);
+    try {
+      const skills = await this.userSkillRepo.find({
+        where: { user: { id: user.id } },
+        order: { name: 'ASC' },
+      });
+      return skills.map((skill) => ({ name: skill.name, icon: skill.icon }));
+    } catch (error) {
+      if (this.isMissingUserSkillsTable(error)) return [];
+      throw error;
+    }
+  }
+
   async getUserCvs(userId: string) {
     await this.findById(userId);
     const cvs = await this.cvRepo.find({
@@ -228,13 +248,15 @@ export class UsersService {
     this.validateCv(dto);
     const sectionOrder = this.normalizeSectionOrder(dto.sectionOrder);
     const template = dto.template ?? 'single';
+    let obsoletePhotoUrl: string | null = null;
 
-    return this.cvRepo.manager.transaction(async (manager) => {
+    const result = await this.cvRepo.manager.transaction(async (manager) => {
       const userRepo = manager.getRepository(UserEntity);
       const cvRepo = manager.getRepository(CvEntity);
       const personalDetailRepo = manager.getRepository(PersonalDetailEntity);
       const experienceRepo = manager.getRepository(ExperienceEntity);
       const experienceSkillRepo = manager.getRepository(ExperienceSkillEntity);
+      const userSkillRepo = manager.getRepository(UserSkillEntity);
       const educationRepo = manager.getRepository(EducationEntity);
       const generalSkillRepo = manager.getRepository(GeneralSkillEntity);
 
@@ -256,6 +278,14 @@ export class UsersService {
       let personalDetail = await personalDetailRepo.findOne({
         where: { cv: { id: cv.id } },
       });
+      const hasPhotoDraft = Object.prototype.hasOwnProperty.call(personal, 'photo');
+      const currentPhotoUrl = personalDetail?.photoUrl ?? null;
+      const nextPhotoUrl = hasPhotoDraft
+        ? this.normalizeCvPhotoUrl(personal.photo)
+        : currentPhotoUrl;
+      if (currentPhotoUrl && currentPhotoUrl !== nextPhotoUrl) {
+        obsoletePhotoUrl = currentPhotoUrl;
+      }
       const personalValues = {
         fullName: personal.fullName,
         jobTitle: personal.jobTitle,
@@ -263,6 +293,7 @@ export class UsersService {
         phoneNumber: personal.phone,
         address: personal.city,
         summary: personal.summary,
+        photoUrl: nextPhotoUrl,
       };
 
       if (personalDetail) {
@@ -328,8 +359,18 @@ export class UsersService {
       ).map((name) => generalSkillRepo.create({ cv, name }));
       if (generalSkills.length) await generalSkillRepo.save(generalSkills);
 
+      await this.upsertUserSkills(
+        userSkillRepo,
+        user,
+        dto.generalSkills ?? [],
+        dto.experience.flatMap((experience) => experience.skills ?? []),
+      );
+
       return { success: true, cvId: cv.id };
     });
+
+    await this.removePhotoFile(obsoletePhotoUrl);
+    return result;
   }
 
   private async getCvData(cv: CvEntity) {
@@ -430,39 +471,13 @@ export class UsersService {
     });
     if (!cv) throw new NotFoundException(`CV ${cvId} not found`);
 
-    let personalDetail = await this.personalDetailRepo.findOne({
-      where: { cv: { id: cvId } },
-    });
-    if (!personalDetail) {
-      personalDetail = this.personalDetailRepo.create({
-        cv,
-        fullName: '',
-        email: null,
-        phoneNumber: null,
-        address: null,
-        jobTitle: null,
-        summary: null,
-        photoUrl: null,
-      });
-    }
-
     const photoDirectory = this.getPhotoDirectory();
     await mkdir(photoDirectory, { recursive: true });
     const fileName = `${randomUUID()}${extension}`;
     const filePath = join(photoDirectory, fileName);
-    const previousPhotoUrl = personalDetail.photoUrl;
 
     await writeFile(filePath, file.buffer);
-    try {
-      personalDetail.photoUrl = `/api/uploads/profile-photos/${fileName}`;
-      await this.personalDetailRepo.save(personalDetail);
-    } catch (error) {
-      await this.removePhotoFile(`/api/uploads/profile-photos/${fileName}`);
-      throw error;
-    }
-
-    await this.removePhotoFile(previousPhotoUrl);
-    return { photoUrl: personalDetail.photoUrl };
+    return { photoUrl: `/api/uploads/profile-photos/${fileName}` };
   }
 
   async deleteCvPhoto(
@@ -537,25 +552,26 @@ export class UsersService {
   }
 
   private validatePersonal(personal: PersonalDataDto): void {
-    const requiredFields: Array<[keyof PersonalDataDto, string]> = [
+    const requiredFields: Array<[keyof PersonalDataDto, string, boolean?]> = [
       ['fullName', 'Full name'],
       ['jobTitle', 'Job title'],
-      ['email', 'Email'],
-      ['phone', 'Phone'],
+      ['email', 'Email', false],
+      ['phone', 'Phone', false],
       ['city', 'City'],
-      ['summary', 'Summary'],
+      ['summary', 'Summary', false],
     ];
 
-    const missingField = requiredFields.find(
-      ([field]) =>
-        typeof personal[field] !== 'string' || !personal[field].trim(),
-    );
-    if (missingField) {
-      throw new BadRequestException(`${missingField[1]} is required`);
+    for (const [field, label, validateText = true] of requiredFields) {
+      this.validateRequiredString(personal[field], label, { validateText });
     }
 
     if (!EMAIL_PATTERN.test(personal.email.trim())) {
       throw new BadRequestException('Enter a valid email');
+    }
+    if (!PHONE_PATTERN.test(personal.phone.trim())) {
+      throw new BadRequestException(
+        'Phone must start with + and contain 10-15 digits',
+      );
     }
   }
 
@@ -564,16 +580,24 @@ export class UsersService {
     index: number,
   ): void {
     if (
-      typeof experience.company !== 'string' ||
-      typeof experience.position !== 'string' ||
-      !experience.company.trim() ||
-      !experience.position.trim()
+      !this.isValidShortText(experience.company) ||
+      !this.isValidShortText(experience.position)
     ) {
       throw new BadRequestException(
         `Experience ${index + 1} requires company and position`,
       );
     }
-    this.parseDate(experience.startDate, `experience[${index}].startDate`);
+    const startDate = this.parseDate(
+      experience.startDate,
+      `experience[${index}].startDate`,
+    );
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    if (startDate > today) {
+      throw new BadRequestException(
+        `Experience ${index + 1} start date cannot be in the future`,
+      );
+    }
     if (!experience.current) {
       if (
         typeof experience.endDate !== 'string' ||
@@ -583,14 +607,22 @@ export class UsersService {
           `Experience ${index + 1} requires end date`,
         );
       }
-      this.parseDate(experience.endDate, `experience[${index}].endDate`);
+      const endDate = this.parseDate(
+        experience.endDate,
+        `experience[${index}].endDate`,
+      );
+      if (endDate < startDate) {
+        throw new BadRequestException(
+          `Experience ${index + 1} end date cannot be before start date`,
+        );
+      }
     }
     if (
       typeof experience.description !== 'string' ||
-      !experience.description.trim()
+      experience.description.trim().length < 2
     ) {
       throw new BadRequestException(
-        `Experience ${index + 1} requires description`,
+        `Experience ${index + 1} description must be at least 2 characters`,
       );
     }
     if (
@@ -611,12 +643,9 @@ export class UsersService {
 
   private validateEducation(education: EducationItemDto, index: number): void {
     if (
-      typeof education.institution !== 'string' ||
-      typeof education.degree !== 'string' ||
-      typeof education.field !== 'string' ||
-      !education.institution.trim() ||
-      !education.degree.trim() ||
-      !education.field.trim()
+      !this.isValidShortText(education.institution) ||
+      !this.isValidShortText(education.degree) ||
+      !this.isValidShortText(education.field)
     ) {
       throw new BadRequestException(
         `Education ${index + 1} requires all fields`,
@@ -636,6 +665,30 @@ export class UsersService {
 
   private normalizeEmail(email: string): string {
     return email.trim().toLocaleLowerCase();
+  }
+
+  private validateRequiredString(
+    value: string,
+    label: string,
+    options: { validateText?: boolean } = {},
+  ): void {
+    if (typeof value !== 'string' || !value.trim()) {
+      throw new BadRequestException(`${label} is required`);
+    }
+    if (value.trim().length < 2) {
+      throw new BadRequestException(`${label} must be at least 2 characters`);
+    }
+    if (options.validateText !== false && !SHORT_TEXT_PATTERN.test(value.trim())) {
+      throw new BadRequestException(`${label} contains unsupported characters`);
+    }
+  }
+
+  private isValidShortText(value: string): boolean {
+    return (
+      typeof value === 'string' &&
+      value.trim().length >= 2 &&
+      SHORT_TEXT_PATTERN.test(value.trim())
+    );
   }
 
   private parseDate(value: string, field: string): Date {
@@ -700,12 +753,89 @@ export class UsersService {
     return [...uniqueSkills.values()];
   }
 
+  private async upsertUserSkills(
+    userSkillRepo: Repository<UserSkillEntity>,
+    user: UserEntity,
+    generalSkills: string[],
+    experienceSkills: ExperienceSkillDto[],
+  ): Promise<void> {
+    const skills = new Map<string, { name: string; icon: string | null }>();
+
+    generalSkills.forEach((skill) => {
+      const name = skill.trim();
+      if (name) skills.set(name.toLocaleLowerCase(), { name, icon: null });
+    });
+    experienceSkills.forEach((skill) => {
+      const name = skill.name?.trim();
+      if (!name) return;
+      const existing = skills.get(name.toLocaleLowerCase());
+      skills.set(name.toLocaleLowerCase(), {
+        name,
+        icon: skill.icon?.trim() || existing?.icon || null,
+      });
+    });
+
+    if (!skills.size) return;
+
+    let existingSkills: UserSkillEntity[] = [];
+    try {
+      existingSkills = await userSkillRepo.find({
+        where: { user: { id: user.id } },
+      });
+    } catch (error) {
+      if (this.isMissingUserSkillsTable(error)) return;
+      throw error;
+    }
+    const existingByName = new Map(
+      existingSkills.map((skill) => [skill.name.toLocaleLowerCase(), skill]),
+    );
+
+    const entities = [...skills.values()].map((skill) => {
+      const existing = existingByName.get(skill.name.toLocaleLowerCase());
+      if (existing) {
+        existing.name = skill.name;
+        existing.icon = skill.icon || existing.icon;
+        return existing;
+      }
+      return userSkillRepo.create({ user, name: skill.name, icon: skill.icon });
+    });
+
+    try {
+      await userSkillRepo.save(entities);
+    } catch (error) {
+      if (this.isMissingUserSkillsTable(error)) return;
+      throw error;
+    }
+  }
+
+  private isMissingUserSkillsTable(error: unknown): boolean {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code?: string }).code === '42P01'
+    );
+  }
+
   private getPhotoDirectory(): string {
     return join(
       process.cwd(),
       process.env.UPLOAD_DIR || 'uploads',
       'profile-photos',
     );
+  }
+
+  private normalizeCvPhotoUrl(photoUrl: string | undefined): string | null {
+    const normalized = photoUrl?.trim();
+    if (!normalized) return null;
+    if (!normalized.startsWith('/api/uploads/profile-photos/')) {
+      throw new BadRequestException('Invalid CV photo');
+    }
+    const fileName = normalized.slice('/api/uploads/profile-photos/'.length);
+    if (!fileName || fileName !== fileName.split(/[\\/]/).pop()) {
+      throw new BadRequestException('Invalid CV photo');
+    }
+    return normalized;
   }
 
   private async removePhotoFile(photoUrl: string | null): Promise<void> {

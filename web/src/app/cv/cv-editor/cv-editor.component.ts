@@ -7,6 +7,11 @@ import { CvEditorFormComponent } from './cv-editor-form.component';
 import { CvEditorPreviewPaneComponent } from './cv-editor-preview-pane.component';
 import { CvEditorSidebarComponent } from './cv-editor-sidebar.component';
 
+type SaveToast = {
+  kind: 'success' | 'error';
+  message: string;
+};
+
 @Component({
   selector: 'app-cv-editor',
   standalone: true,
@@ -30,7 +35,8 @@ export class CvEditorComponent implements OnInit {
   readonly cv = this.store.cv;
   readonly ready = this.store.ready;
   readonly activeSection = signal<CvSection['id']>('personal');
-  readonly saveSuccess = signal(false);
+  readonly saveToast = signal<SaveToast | null>(null);
+  private saveToastTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
     const userId = this.auth.getCurrentUserId() as string;
@@ -46,11 +52,15 @@ export class CvEditorComponent implements OnInit {
   }
 
   saveCv(): void {
-    this.saveSuccess.set(false);
-    this.store.saveToDB(this.userId, this.cvId, () => {
-      this.saveSuccess.set(true);
-      setTimeout(() => this.saveSuccess.set(false), 2000);
-    });
+    const saveStarted = this.store.saveToDB(
+      this.userId,
+      this.cvId,
+      () => this.showToast('success', 'CV saved'),
+      () => this.showToast('error', 'Could not save CV'),
+    );
+    if (!saveStarted) {
+      this.showToast('error', 'Could not save CV');
+    }
   }
 
   logout(): void {
@@ -59,5 +69,16 @@ export class CvEditorComponent implements OnInit {
 
   exportPdf(): void {
     this.cvExport.exportPdf(this.cv().template);
+  }
+
+  private showToast(kind: SaveToast['kind'], message: string): void {
+    if (this.saveToastTimer) {
+      clearTimeout(this.saveToastTimer);
+    }
+    this.saveToast.set({ kind, message });
+    this.saveToastTimer = setTimeout(() => {
+      this.saveToast.set(null);
+      this.saveToastTimer = null;
+    }, 2000);
   }
 }

@@ -1,9 +1,14 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, effect, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime } from 'rxjs';
+import {
+  PHONE_PATTERN,
+  SHORT_TEXT_PATTERN,
+  STRICT_EMAIL_PATTERN,
+} from '../../../shared/validation-patterns';
 import { CvStore } from '../../cv.store';
 
 @Component({
@@ -15,11 +20,29 @@ import { CvStore } from '../../cv.store';
 export class PersonalDetailsSectionComponent implements OnInit {
   private readonly store = inject(CvStore);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly showValidationErrors = effect(() => {
+    if (this.store.validationAttempt() > 0) {
+      queueMicrotask(() => {
+        this.form.markAllAsTouched();
+        this.form.updateValueAndValidity({ emitEvent: false });
+      });
+    }
+  });
 
   readonly form = new FormGroup({
-    email: new FormControl('', [Validators.required, Validators.email]),
-    phone: new FormControl('', Validators.required),
-    city: new FormControl('', Validators.required),
+    email: new FormControl('', [
+      Validators.required,
+      Validators.pattern(STRICT_EMAIL_PATTERN),
+    ]),
+    phone: new FormControl('', [
+      Validators.required,
+      Validators.pattern(PHONE_PATTERN),
+    ]),
+    city: new FormControl('', [
+      Validators.required,
+      Validators.minLength(2),
+      Validators.pattern(SHORT_TEXT_PATTERN),
+    ]),
   });
 
   ngOnInit() {

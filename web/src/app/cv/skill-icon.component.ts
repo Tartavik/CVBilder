@@ -12,7 +12,11 @@ import { getSkillOption } from './skill-catalog';
       [attr.aria-label]="name()"
       role="img"
     >
-      {{ option().label }}
+      @if (imageSrc()) {
+        <img [src]="imageSrc()" [alt]="name()" />
+      } @else {
+        {{ option().label }}
+      }
     </span>
   `,
   styles: `
@@ -34,11 +38,21 @@ import { getSkillOption } from './skill-catalog';
       line-height: 1;
       letter-spacing: -0.03em;
       box-shadow: inset 0 0 0 1px rgb(255 255 255 / 22%);
+      overflow: hidden;
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
   `,
 })
 export class SkillIconComponent {
   readonly name = input.required<string>();
   readonly icon = input<string | null>();
-  readonly option = computed(() => getSkillOption(this.icon()));
+  readonly option = computed(() => getSkillOption(this.icon(), this.name()));
+  readonly imageSrc = computed(() =>
+    this.icon()?.startsWith('data:image/') ? this.icon() : null,
+  );
 }
