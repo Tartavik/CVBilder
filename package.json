@@ -1,6 +1,7 @@
 {
   "name": "@cvbilder/source",
   "version": "0.0.0",
+  "packageManager": "npm@11.9.0",
   "license": "MIT",
   "scripts": {
     "start:web": "nx serve web",
