@@ -409,11 +409,13 @@ export class CvStore {
 
     if (
       !this.isValidShortText(personal.fullName) ||
-      !this.isValidShortText(personal.jobTitle) ||
-      !personal.summary.trim() ||
-      personal.summary.trim().length < 2
+      !this.isValidShortText(personal.jobTitle)
     ) {
       invalidSections.add('personal');
+    }
+
+    if (!personal.summary.trim() || personal.summary.trim().length < 2) {
+      invalidSections.add(data.template === 'classic' ? 'details' : 'personal');
     }
 
     if (

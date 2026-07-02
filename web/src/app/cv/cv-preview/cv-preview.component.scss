@@ -1,8 +1,14 @@
 @use 'variables' as v;
 
+:host {
+  display: block;
+  width: 100%;
+  min-height: 100%;
+}
+
 .preview-page {
   width: 100%;
-  min-height: min(297mm, calc(100vh - 144px));
+  min-height: 100%;
   background: v.$preview-color-paper;
   padding: clamp(32px, 5vw, 16mm) clamp(24px, 4vw, 14mm);
   font-family: 'Georgia', serif;

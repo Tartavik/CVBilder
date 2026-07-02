@@ -1,5 +1,7 @@
 # CVBilder
 
+[![CI](https://github.com/Tartavik/CVBilder/actions/workflows/ci.yml/badge.svg?branch=staging)](https://github.com/Tartavik/CVBilder/actions/workflows/ci.yml)
+
 Starter modular monolith workspace for CV builder:
 
 - Frontend: Angular (`web`), Angular Material, NgRx, Reactive Forms
@@ -65,6 +67,12 @@ npm run start:all
 ```bash
 npm run build
 ```
+
+## Continuous integration
+
+GitHub Actions runs linting, production builds, and all database migrations on a
+clean PostgreSQL 16 instance for every push and pull request targeting
+`staging`. The workflow can also be started manually from the **Actions** tab.
 
 ## Notes
 

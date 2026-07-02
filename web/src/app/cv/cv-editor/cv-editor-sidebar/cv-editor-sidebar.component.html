@@ -40,10 +40,10 @@
         <div
           cdkDropList
           [cdkDropListData]="classicDraggableSections()"
-          (cdkDropListDropped)="onClassicDrop($event)"
+          (cdkDropListDropped)="onDropSections($event)"
           class="section-list"
         >
-          @for (section of classicOrderedSections(); track section.id) {
+          @for (section of orderedSections(); track section.id) {
             <div
               cdkDrag
               class="section-item"
@@ -64,8 +64,8 @@
         <p class="cv-sidebar__hint">Drag to reorder</p>
         <div
           cdkDropList
-          [cdkDropListData]="cv().sectionOrder"
-          (cdkDropListDropped)="onDrop($event)"
+          [cdkDropListData]="singleDraggableSections()"
+          (cdkDropListDropped)="onDropSections($event)"
           class="section-list"
         >
           @for (section of orderedSections(); track section.id) {
@@ -89,18 +89,18 @@
     }
   </section>
 
-  <section class="sidebar-group" [class.closed]="!templateOpen()">
+  <section class="sidebar-group" [class.closed]="!isTemplateSectionOpen()">
     <button
       type="button"
       class="sidebar-group__toggle"
-      (click)="templateOpen.set(!templateOpen())"
-      [attr.aria-expanded]="templateOpen()"
+      (click)="isTemplateSectionOpen.set(!isTemplateSectionOpen())"
+      [attr.aria-expanded]="isTemplateSectionOpen()"
     >
       <span>Template</span>
-      <span class="sidebar-chevron">{{ templateOpen() ? '−' : '+' }}</span>
+      <span class="sidebar-chevron">{{ isTemplateSectionOpen() ? '−' : '+' }}</span>
     </button>
 
-    @if (templateOpen()) {
+    @if (isTemplateSectionOpen()) {
       <div class="template-switch">
         <button
           type="button"

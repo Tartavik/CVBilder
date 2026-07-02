@@ -1,9 +1,15 @@
 @use 'variables' as v;
 
+:host {
+  display: block;
+  width: 100%;
+  min-height: 100%;
+}
+
 .classic-page {
   display: flex;
   width: 100%;
-  min-height: min(297mm, calc(100vh - 144px));
+  min-height: 100%;
   background: v.$preview-color-paper;
   font-family: 'Georgia', serif;
   font-size: v.$preview-font-base;
@@ -70,6 +76,14 @@
   font-size: v.$preview-font-base;
   color: v.$preview-classic-accent;
   margin-top: 1px;
+}
+
+.classic-detail-summary {
+  margin: 12px 0 0;
+  color: v.$preview-classic-muted;
+  font-size: v.$preview-font-sm;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .classic-bullet {

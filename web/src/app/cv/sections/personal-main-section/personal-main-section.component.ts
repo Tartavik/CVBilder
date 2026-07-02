@@ -3,7 +3,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { debounceTime } from 'rxjs';
 import { FormTextFieldComponent } from '../../../shared/form-text-field/form-text-field.component';
-import { FormTextareaFieldComponent } from '../../../shared/form-textarea-field/form-textarea-field.component';
 import { ProfilePhotoFieldComponent } from '../../../shared/profile-photo-field/profile-photo-field.component';
 import { SHORT_TEXT_PATTERN } from '../../../shared/validation-patterns';
 import { CvStore } from '../../cv.store';
@@ -14,7 +13,6 @@ import { CvStore } from '../../cv.store';
   imports: [
     ReactiveFormsModule,
     FormTextFieldComponent,
-    FormTextareaFieldComponent,
     ProfilePhotoFieldComponent,
   ],
   templateUrl: './personal-main-section.component.html',
@@ -45,15 +43,11 @@ export class PersonalMainSectionComponent implements OnInit {
       Validators.minLength(2),
       Validators.pattern(SHORT_TEXT_PATTERN),
     ]),
-    summary:  new FormControl('', [
-      Validators.required,
-      Validators.minLength(2),
-    ]),
   });
 
   ngOnInit() {
     const p = this.store.cv().personal;
-    this.form.patchValue({ fullName: p.fullName, jobTitle: p.jobTitle, summary: p.summary }, { emitEvent: false });
+    this.form.patchValue({ fullName: p.fullName, jobTitle: p.jobTitle }, { emitEvent: false });
     this.form.valueChanges
       .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
       .subscribe((v) => {
@@ -62,7 +56,6 @@ export class PersonalMainSectionComponent implements OnInit {
           ...current,
           fullName: v.fullName ?? '',
           jobTitle: v.jobTitle ?? '',
-          summary:  v.summary  ?? '',
           photo: current.photo,
         });
       });

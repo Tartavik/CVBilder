@@ -6,7 +6,7 @@
       <div class="classic-photo-placeholder"></div>
     }
 
-    @if (cv().personal.email || cv().personal.phone || cv().personal.city) {
+    @if (cv().personal.email || cv().personal.phone || cv().personal.city || cv().personal.summary) {
       <div class="classic-block">
         <h3 class="classic-block-title">DETAILS</h3>
         @if (cv().personal.email) {
@@ -26,6 +26,9 @@
             <span class="detail-icon">✆</span>
             <span>{{ cv().personal.phone }}</span>
           </div>
+        }
+        @if (cv().personal.summary) {
+          <p class="classic-detail-summary">{{ cv().personal.summary }}</p>
         }
       </div>
     }
@@ -53,14 +56,6 @@
 
     @for (sectionId of cv().sectionOrder; track sectionId) {
       @switch (sectionId) {
-        @case ('personal') {
-          @if (cv().personal.summary) {
-            <div class="classic-section">
-              <h2 class="classic-section-title">Summary</h2>
-              <p class="classic-summary">{{ cv().personal.summary }}</p>
-            </div>
-          }
-        }
         @case ('experience') {
           @if (cv().experience.length) {
             <div class="classic-section">

@@ -17,7 +17,7 @@ export class CvEditorSidebarComponent {
   readonly activeSection = input.required<CvSection['id']>();
   readonly cvId = input.required<string>();
   readonly activeSectionChange = output<CvSection['id']>();
-  readonly templateChange = output<CvTemplate>();
+  readonly activeTemplate = output<CvTemplate>();
   readonly save = output<void>();
   readonly exportPdf = output<void>();
   readonly logout = output<void>();
@@ -27,50 +27,67 @@ export class CvEditorSidebarComponent {
   readonly invalidSections = this.store.invalidSections;
 
   readonly sectionsOpen = signal(true);
-  readonly templateOpen = signal(true);
+  readonly isTemplateSectionOpen = signal(true);
   readonly actionsOpen = signal(true);
 
-  readonly orderedSections = computed(() =>
-    this.getSections(this.cv().sectionOrder),
+  readonly singleDraggableSections = computed<CvSection['id'][]>(() =>
+    this.cv().sectionOrder.filter((id) => id !== 'details'),
   );
 
   readonly classicDraggableSections = computed<CvSection['id'][]>(() =>
-    this.cv().sectionOrder.filter((id) => id !== 'skills'),
+    this.cv().sectionOrder.filter((id) => id !== 'details' && id !== 'skills'),
   );
 
-  readonly classicOrderedSections = computed(() =>
-    this.getSections(this.classicDraggableSections()),
+  readonly orderedSections = computed(() =>
+    this.getSections(
+      this.cv().template === 'classic'
+        ? this.classicDraggableSections()
+        : this.singleDraggableSections(),
+    ),
   );
+
+  private getSections(ids: CvSection['id'][]): CvSection[] {
+  return ids
+    .map((id) =>
+      this.store.sections.find((section) => section.id === id),
+    )
+    .filter((section): section is CvSection => Boolean(section));
+}
 
   setActive(sectionId: CvSection['id']): void {
     this.activeSectionChange.emit(sectionId);
   }
 
-  selectTemplate(template: CvTemplate): void {
-    this.templateChange.emit(template);
+  selectTemplate(template: CvTemplate): void {    
+    this.activeTemplate.emit(template);
   }
 
   isInvalid(sectionId: CvSection['id']): boolean {
     return this.invalidSections().has(sectionId);
   }
 
-  onDrop(event: CdkDragDrop<CvSection['id'][]>): void {
-    const order = [...this.cv().sectionOrder];
+  onDropSections(event: CdkDragDrop<CvSection['id'][]>): void {
+    let order: CvSection['id'][] = [];
+    const nonDraggableSections: CvSection['id'][] = ['details'];
+
+    if (this.store.cv().template === 'single') {
+      order = [...this.singleDraggableSections()];
+    } else {
+      order = [...this.classicDraggableSections()];
+      nonDraggableSections.push('skills');
+    }
+
     moveItemInArray(order, event.previousIndex, event.currentIndex);
-    this.store.updateSectionOrder(order);
+    this.store.updateSectionOrder(this.withNonDraggableSections(order, nonDraggableSections));
   }
 
-  onClassicDrop(event: CdkDragDrop<CvSection['id'][]>): void {
-    const order = [...this.classicDraggableSections()];
-    moveItemInArray(order, event.previousIndex, event.currentIndex);
-    this.store.updateSectionOrder([...order, 'skills']);
-  }
-
-  private getSections(ids: CvSection['id'][]): CvSection[] {
-    return ids
-      .map((id) =>
-        this.store.sections.find((section) => section.id === id),
-      )
-      .filter((section): section is CvSection => Boolean(section));
+  private withNonDraggableSections(
+    visibleOrder: CvSection['id'][],
+    hiddenSections: CvSection['id'][],
+  ): CvSection['id'][] {
+    return [
+      ...visibleOrder,
+      ...hiddenSections.filter((id) => !visibleOrder.includes(id)),
+    ];
   }
 }

@@ -8,6 +8,7 @@ import {
   STRICT_EMAIL_PATTERN,
 } from '../../../shared/validation-patterns';
 import { FormTextFieldComponent } from '../../../shared/form-text-field/form-text-field.component';
+import { FormTextareaFieldComponent } from '../../../shared/form-textarea-field/form-textarea-field.component';
 import { CvStore } from '../../cv.store';
 
 @Component({
@@ -16,6 +17,7 @@ import { CvStore } from '../../cv.store';
   imports: [
     ReactiveFormsModule,
     FormTextFieldComponent,
+    FormTextareaFieldComponent,
   ],
   templateUrl: './personal-details-section.component.html',
 })
@@ -45,11 +47,18 @@ export class PersonalDetailsSectionComponent implements OnInit {
       Validators.minLength(2),
       Validators.pattern(SHORT_TEXT_PATTERN),
     ]),
+    summary: new FormControl('', [
+      Validators.required,
+      Validators.minLength(2),
+    ]),
   });
 
   ngOnInit() {
     const p = this.store.cv().personal;
-    this.form.patchValue({ email: p.email, phone: p.phone, city: p.city }, { emitEvent: false });
+    this.form.patchValue(
+      { email: p.email, phone: p.phone, city: p.city, summary: p.summary },
+      { emitEvent: false },
+    );
 
     this.form.valueChanges
       .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
@@ -60,6 +69,7 @@ export class PersonalDetailsSectionComponent implements OnInit {
           email: v.email ?? '',
           phone: v.phone ?? '',
           city: v.city ?? '',
+          summary: v.summary ?? '',
         });
       });
   }

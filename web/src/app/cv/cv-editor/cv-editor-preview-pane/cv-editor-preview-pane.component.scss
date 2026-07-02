@@ -14,12 +14,22 @@
   height: 100%;
   min-height: 0;
   min-width: 0;
-  padding: 16px;
+  padding: 32px;
   overflow: auto;
   background: var(--app-workspace-bg);
 }
 
 .preview-scroll {
+  display: flex;
+  flex: 1;
   width: 100%;
   min-width: 0;
+  min-height: 100%;
+}
+
+.preview-scroll app-cv-preview,
+.preview-scroll app-cv-preview-classic {
+  display: block;
+  width: 100%;
+  min-height: 100%;
 }

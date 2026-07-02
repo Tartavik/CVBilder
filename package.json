@@ -6,6 +6,7 @@
     "start:web": "nx serve web",
     "start:api": "nx serve api",
     "start:all": "nx run-many -t serve -p web,api --parallel=2",
+    "lint": "nx run-many -t lint",
     "build": "nx run-many -t build -p web,api",
     "typeorm": "ts-node --transpile-only --project api/tsconfig.app.json -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d api/src/db/data-source.ts",
     "migration:generate": "npm run typeorm -- migration:generate api/src/db/migrations/AutoMigration",
