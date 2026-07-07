@@ -96,6 +96,15 @@ export class UsersController {
     return this.usersService.saveCv(id, cvId, dto);
   }
 
+  @Post(':id/cvs/:cvId/skills/icon/generate')
+  generateSkillIcon(
+    @Param('id') id: string,
+    @Param('cvId') cvId: string,
+    @Body() body: { skillName?: string },
+  ) {
+    return this.usersService.generateSkillIcon(id, cvId, body?.skillName);
+  }
+
   @Post(':id/cvs/:cvId/photo')
   @UseInterceptors(
     FileInterceptor('photo', {

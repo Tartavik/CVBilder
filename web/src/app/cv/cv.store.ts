@@ -1,8 +1,10 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
 import {
   UsersApiService,
   CvData as ApiCvData,
+  SkillIconGenerationResult,
 } from '../users-api.service';
 import { ErrorService } from '../shared/errors/error.service';
 import {
@@ -360,6 +362,13 @@ export class CvStore {
       icon: skill.icon || existing?.icon || null,
     });
     this.userSkills.set([...skills.values()].sort((a, b) => a.name.localeCompare(b.name)));
+  }
+
+  generateSkillIcon(skillName: string): Observable<SkillIconGenerationResult> {
+    if (!this.activeUserId || !this.activeCvId) {
+      return throwError(() => new Error('Active CV is not loaded'));
+    }
+    return this.api.generateSkillIcon(this.activeUserId, this.activeCvId, skillName);
   }
 
   uploadProfilePhoto(file: File): void {

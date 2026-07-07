@@ -113,7 +113,7 @@
 }
 
 .classic-name-block {
-  border-bottom: 2px solid v.$preview-classic-primary;
+  border-bottom: 2px solid v.$preview-color-border;
   padding-bottom: 12px;
   margin-bottom: 4px;
 }
@@ -145,7 +145,7 @@
   font-size: v.$preview-font-base;
   font-weight: 700;
   letter-spacing: 1px;
-  color: v.$preview-classic-primary;
+  color: v.$preview-color-text;
   margin: 0 0 8px;
   text-transform: uppercase;
   border-bottom: 1px solid v.$preview-classic-border;

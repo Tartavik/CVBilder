@@ -10,10 +10,10 @@ $neutral-950: #020617;
 $dark-surface: #1f2638;
 $dark-border: #343d58;
 $dark-muted: #cbd5e1;
-$primary: #3147b7;
-$primary-soft: #e8ebff;
-$primary-dark: #1d4ed8;
-$primary-light: #93c5fd;
+$primary: #4361ee;
+$primary-soft: #e8edff;
+$primary-dark: #2563eb;
+$primary-light: #8dd3ff;
 $danger: #b42318;
 $danger-light: #f87171;
 $danger-soft: #fff1f2;
@@ -23,17 +23,17 @@ $success-soft: #f0fdf4;
 $warning: #f8c954;
 
 // Light application theme
-$color-page-bg: $neutral-100;
-$color-workspace-bg: $neutral-100;
-$color-editor-bg: $neutral-50;
+$color-page-bg: #eef9ff;
+$color-workspace-bg: #f7fbff;
+$color-editor-bg: #f8fbff;
 $color-surface: $white;
-$color-surface-soft: $neutral-50;
-$color-border: $neutral-200;
-$color-border-strong: $neutral-200;
+$color-surface-soft: #f9fcff;
+$color-border: #dbe8ff;
+$color-border-strong: #c5d8f2;
 $color-text: $neutral-800;
 $color-title: $neutral-800;
 $color-muted: $neutral-500;
-$color-primary-soft: $primary-soft;
+$color-primary-soft: #d8ecff;
 $color-danger: $danger;
 $color-danger-border: $danger-light;
 $color-danger-soft: $danger-soft;
@@ -91,8 +91,8 @@ $preview-classic-muted: #2d4a6a;
 $preview-classic-tag: #e7eef5;
 
 // Shadows
-$shadow-sm: 0 2px 8px rgb(0 0 0 / 8%);
-$shadow-lg: 0 12px 32px rgb(0 0 0 / 18%);
+$shadow-sm: 0 10px 24px rgb(67 97 238 / 12%);
+$shadow-lg: 0 18px 48px rgb(15 23 42 / 18%);
 $preview-shadow: 0 2px 12px rgb(0 0 0 / 15%);
 
 // Radius scale

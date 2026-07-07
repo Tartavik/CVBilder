@@ -29,6 +29,11 @@ export interface UserSkill {
   icon: string | null;
 }
 
+export interface SkillIconGenerationResult {
+  icon: string;
+  source: 'generated' | 'found';
+}
+
 export interface ExperienceItem {
   id?: string;
   company: string;
@@ -175,6 +180,17 @@ export class UsersApiService {
     return this.http.post<{ photoUrl: string }>(
       `${this.base}/${userId}/cvs/${cvId}/photo`,
       body,
+    );
+  }
+
+  generateSkillIcon(
+    userId: string,
+    cvId: string,
+    skillName: string,
+  ): Observable<SkillIconGenerationResult> {
+    return this.http.post<SkillIconGenerationResult>(
+      `${this.base}/${userId}/cvs/${cvId}/skills/icon/generate`,
+      { skillName },
     );
   }
 

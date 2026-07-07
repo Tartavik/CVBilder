@@ -13,11 +13,12 @@ import { UserSkillEntity } from './user-skill.entity';
 import { PersonalDetailEntity } from './personalDetail.entity';
 import { EducationEntity } from './education.entity';
 import { CvsController } from './cvs.controller';
+import { AiIconService } from './ai-icon.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([UserEntity, ProfileEntity, SettingsEntity, CvEntity, ExperienceEntity, ExperienceSkillEntity, UserSkillEntity, PersonalDetailEntity, GeneralSkillEntity, EducationEntity])],
   controllers: [UsersController, CvsController],
-  providers: [UsersService],
+  providers: [UsersService, AiIconService],
   exports: [UsersService, TypeOrmModule],
 })
 export class UsersModule {}

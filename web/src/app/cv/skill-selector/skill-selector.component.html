@@ -68,14 +68,29 @@
       <div class="skill-image-actions">
         <span>Skill image</span>
         <div>
+          <button
+            mat-stroked-button
+            color="primary"
+            type="button"
+            (click)="generateSkillIcon()"
+            [disabled]="generationState() === 'generating' || !skillInput.value.trim()"
+          >
+            {{ generationState() === 'generating' ? 'Generating...' : 'Generate AI icon' }}
+          </button>
           <button mat-stroked-button type="button" (click)="skillImageInput.click()">
             Upload image
           </button>
-          @if (hasSkillImageDraft()) {
+          @if (hasSkillImageDraft() || generationState() !== 'idle') {
             <button mat-button type="button" (click)="clearSkillImage()">Clear</button>
+          }
+          @if (generationState() !== 'idle' && generationState() !== 'generating') {
+            <button mat-button type="button" (click)="restartSkillImage()">Restart</button>
           }
         </div>
       </div>
+      @if (generationMessage()) {
+        <div class="skill-image-status">{{ generationMessage() }}</div>
+      }
       <input
         #skillImageInput
         type="file"

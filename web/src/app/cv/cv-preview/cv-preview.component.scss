@@ -31,7 +31,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  border-bottom: 2px solid v.$preview-color-text;
+  border-bottom: 2px solid v.$preview-color-border;
   padding-bottom: 12px;
   margin-bottom: 16px;
   gap: 16px;
@@ -86,6 +86,7 @@
   border-bottom: 1px solid v.$preview-color-border;
   padding-bottom: 4px;
   margin: 0 0 8px;
+  color: v.$preview-color-text;
 }
 
 .summary { margin: 0; line-height: 1.5; }

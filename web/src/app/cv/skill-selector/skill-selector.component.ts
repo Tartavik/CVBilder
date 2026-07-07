@@ -43,6 +43,8 @@ export class SkillSelectorComponent {
   readonly skillInput = new FormControl('', { nonNullable: true });
   readonly draftIcon = signal<string | null>(null);
   readonly draftRevision = signal(0);
+  readonly generationState = signal<'idle' | 'generating' | 'generated' | 'found' | 'error'>('idle');
+  readonly generationMessage = signal<string | null>(null);
   readonly skillOptions = computed<SkillOption[]>(() => {
     const skills = new Map<string, SkillOption>();
     SKILL_OPTIONS.forEach((option) =>
@@ -123,15 +125,56 @@ export class SkillSelectorComponent {
   clearSkillDraft(): void {
     this.skillInput.reset();
     this.draftIcon.set(null);
+    this.generationState.set('idle');
+    this.generationMessage.set(null);
     this.refreshDraft();
   }
 
   clearSkillImage(): void {
     this.draftIcon.set(null);
+    this.generationState.set('idle');
+    this.generationMessage.set(null);
+    this.refreshDraft();
+  }
+
+  generateSkillIcon(): void {
+    const draftName = this.skillInput.value.trim();
+    if (!draftName) return;
+
+    this.generationState.set('generating');
+    this.generationMessage.set('Generating icon...');
+
+    this.store.generateSkillIcon(draftName).subscribe({
+      next: ({ icon, source }) => {
+        this.draftIcon.set(icon);
+        this.applySkillImageDraft(icon);
+        this.refreshDraft();
+        this.generationState.set(source === 'found' ? 'found' : 'generated');
+        this.generationMessage.set(
+          source === 'found'
+            ? 'Found an existing icon for this skill.'
+            : 'Generated a new icon for this skill.',
+        );
+      },
+      error: () => {
+        this.generationState.set('error');
+        this.generationMessage.set('Could not generate an icon right now. Please try again.');
+      },
+    });
+  }
+
+  restartSkillImage(): void {
+    this.draftIcon.set(null);
+    this.generationState.set('idle');
+    this.generationMessage.set(null);
     this.refreshDraft();
   }
 
   onDraftInput(): void {
+    if (this.generationState() !== 'idle' && this.generationState() !== 'generating') {
+      this.generationState.set('idle');
+      this.generationMessage.set(null);
+    }
     this.refreshDraft();
   }
 

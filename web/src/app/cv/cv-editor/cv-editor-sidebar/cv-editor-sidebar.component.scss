@@ -14,14 +14,15 @@
   width: v.$sidebar-width;
   min-width: v.$sidebar-width;
   padding: 20px 12px;
-  background: var(--app-sidebar-bg);
+  background: linear-gradient(180deg, rgba(232, 255, 240, 0.92), rgba(255, 255, 255, 0.95));
   color: var(--app-sidebar-text);
   overflow-y: auto;
+  border-right: 1px solid rgba(56, 184, 120, 0.18);
 }
 
 .cv-sidebar__logo {
   padding: 0 8px;
-  color: var(--app-sidebar-accent);
+  color: #2f6c44;
   font-size: v.$font-size-lg;
   font-weight: 700;
 }

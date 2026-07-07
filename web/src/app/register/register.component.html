@@ -1,48 +1,98 @@
 <div class="page">
-  <mat-card class="card">
-    <mat-card-header>
-      <mat-card-title>Register</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <form [formGroup]="form" (ngSubmit)="submit()">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Email</mat-label>
-          <input matInput type="email" formControlName="email" placeholder="user@example.com" />
-          @if (form.controls.email.hasError('required')) {
-            <mat-error>Email is required</mat-error>
-          } @else if (form.controls.email.hasError('pattern')) {
-            <mat-error>Enter a valid email</mat-error>
-          }
-        </mat-form-field>
+  <div class="auth-grid">
+    <div class="auth-content">
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Password</mat-label>
-          <input matInput type="password" formControlName="password" placeholder="••••••••" />
-          @if (form.controls.password.hasError('required')) {
-            <mat-error>Password is required</mat-error>
-          } @else if (form.controls.password.hasError('minlength')) {
-            <mat-error>At least 6 characters</mat-error>
-          }
-        </mat-form-field>
+      <mat-card class="card auth-card no-hover-shift">
+        <mat-card-header class="auth-card-header">
+          <div class="auth-card-brand">
+            <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" class="auth-logo__svg" aria-hidden="true">
+              <defs>
+                <linearGradient id="g2" x1="0" x2="1">
+                  <stop offset="0%" stop-color="#4361ee" />
+                  <stop offset="100%" stop-color="#38b87d" />
+                </linearGradient>
+              </defs>
+              <rect width="44" height="44" rx="10" fill="url(#g2)" />
+              <path d="M14 29V15h6l6 7v7" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <div class="auth-card-brand__text">
+              <div class="auth-logo__name">Bilder</div>
+              <div class="auth-tag">Start your professional resume journey</div>
+            </div>
+          </div>
+          <div class="auth-card-header-right">
+            <mat-card-title>Register</mat-card-title>
+            <p class="auth-card-title-sub">Create your first CV and get started.</p>
+          </div>
+        </mat-card-header>
+        <mat-card-content>
+          <form [formGroup]="form" (ngSubmit)="submit()">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Email</mat-label>
+              <input matInput type="email" formControlName="email" placeholder="user@example.com" />
+              @if (form.controls.email.hasError('required')) {
+                <mat-error>Email is required</mat-error>
+              } @else if (form.controls.email.hasError('pattern')) {
+                <mat-error>Enter a valid email</mat-error>
+              }
+            </mat-form-field>
 
-        @if (error) {
-          <p class="error">{{ error }}</p>
-        }
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Password</mat-label>
+              <input matInput type="password" formControlName="password" placeholder="••••••••" />
+              @if (form.controls.password.hasError('required')) {
+                <mat-error>Password is required</mat-error>
+              } @else if (form.controls.password.hasError('minlength')) {
+                <mat-error>At least 6 characters</mat-error>
+              }
+            </mat-form-field>
 
-        <button
-          mat-raised-button
-          color="primary"
-          type="submit"
-          class="full-width"
-          [disabled]="form.invalid || loading"
-        >
-          @if (loading) {
-            <mat-spinner diameter="20" />
-          } @else {
-            Create account
-          }
-        </button>
-      </form>
-    </mat-card-content>
-  </mat-card>
+            @if (error) {
+              <p class="error">{{ error }}</p>
+            }
+
+            <button
+              mat-raised-button
+              color="primary"
+              type="submit"
+              class="full-width"
+              [disabled]="form.invalid || loading"
+            >
+              @if (loading) {
+                <mat-spinner diameter="20" />
+              } @else {
+                Create account
+              }
+            </button>
+          </form>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <aside class="auth-side" aria-hidden="true">
+      <div class="auth-hero">
+        <svg viewBox="0 0 680 520" xmlns="http://www.w3.org/2000/svg" class="auth-illustration">
+          <defs>
+            <linearGradient id="hero-gradient-2" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#7ab9ff" />
+              <stop offset="100%" stop-color="#d8ecff" />
+            </linearGradient>
+          </defs>
+          <rect x="48" y="72" width="584" height="376" rx="46" fill="#f7fbff" stroke="#d7e7ff" stroke-width="8" />
+          <rect x="104" y="132" width="472" height="52" rx="18" fill="#ffffff" />
+          <rect x="104" y="216" width="408" height="18" rx="9" fill="#dbe8ff" />
+          <rect x="104" y="250" width="456" height="18" rx="9" fill="#dbe8ff" />
+          <rect x="104" y="290" width="320" height="18" rx="9" fill="#dbe8ff" />
+          <circle cx="190" cy="352" r="46" fill="#7ab9ff" />
+          <circle cx="190" cy="352" r="26" fill="#ffffff" />
+          <rect x="260" y="316" width="240" height="14" rx="7" fill="#7ab9ff" />
+          <rect x="260" y="344" width="170" height="14" rx="7" fill="#7ab9ff" />
+          <path d="M380 178c0 30-22 54-50 54s-50-24-50-54 22-54 50-54 50 24 50 54z" fill="#ffffff" stroke="#d7e8ff" stroke-width="8" />
+          <path d="M341 162h98v20h-98z" fill="#d7e8ff" />
+          <path d="M341 202h98v20h-98z" fill="#d7e8ff" />
+          <path d="M341 242h62v20h-62z" fill="#d7e8ff" />
+        </svg>
+      </div>
+    </aside>
+  </div>
 </div>

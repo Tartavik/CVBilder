@@ -14,6 +14,7 @@ import { GeneralSkillEntity } from './general-skill.entity';
 import { ExperienceSkillEntity } from './experience-skill.entity';
 import { UserSkillEntity } from './user-skill.entity';
 import { PersonalDetailEntity } from './personalDetail.entity';
+import { AiIconService } from './ai-icon.service';
 import {
   EducationItemDto,
   ExperienceItemDto,
@@ -78,6 +79,8 @@ export class UsersService {
 
     @InjectRepository(PersonalDetailEntity)
     private readonly personalDetailRepo: Repository<PersonalDetailEntity>,
+
+    private readonly aiIconService: AiIconService,
   ) {}
 
   async findById(id: string): Promise<UserEntity> {
@@ -449,6 +452,38 @@ export class UsersService {
       sectionOrder: cv.sectionOrder,
       template: cv.template,
     };
+  }
+
+  async generateSkillIcon(
+    userId: string,
+    cvId: string,
+    skillName?: string,
+  ): Promise<{ icon: string; source: 'generated' | 'found' }> {
+    const trimmedName = skillName?.trim();
+    if (!trimmedName) {
+      throw new BadRequestException('Skill name is required');
+    }
+
+    const cv = await this.cvRepo.findOne({
+      where: { id: cvId, user: { id: userId } },
+    });
+    if (!cv) throw new NotFoundException(`CV ${cvId} not found`);
+
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException(`User ${userId} not found`);
+
+    const existingSkill = await this.userSkillRepo.findOne({
+      where: { user: { id: userId }, name: trimmedName },
+    });
+    if (existingSkill?.icon) {
+      return { icon: existingSkill.icon, source: 'found' };
+    }
+
+    const { icon, source } = await this.aiIconService.findOrGenerateIcon(userId, trimmedName);
+    await this.upsertUserSkills(this.userSkillRepo, user, [], [
+      { name: trimmedName, icon },
+    ]);
+    return { icon, source };
   }
 
   async uploadCvPhoto(
