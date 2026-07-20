@@ -62,6 +62,19 @@ Run both in parallel:
 npm run start:all
 ```
 
+## Deploy a temporary preview
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Tartavik/CVBilder/tree/staging)
+
+The Render Blueprint creates one public web service and one PostgreSQL database.
+During setup, provide `OPENAI_API_KEY` in Render's secret prompt. The application
+runs database migrations automatically before each start.
+
+The free tier is intended for demos: the web service sleeps after inactivity,
+the PostgreSQL database expires after 30 days, and uploaded files can disappear
+when the service restarts. Database-backed CV data remains available until the
+preview database expires.
+
 ## Build
 
 ```bash
@@ -77,5 +90,7 @@ clean PostgreSQL 16 instance for every push and pull request targeting
 ## Notes
 
 - `api` reads DB settings from `.env` using `@nestjs/config`.
+- Production deployments can provide `DATABASE_URL` instead of separate DB
+  settings.
 - TypeORM is configured with `autoLoadEntities: true` and `synchronize: false`.
 - This is a starter setup only (no CV builder business modules yet).

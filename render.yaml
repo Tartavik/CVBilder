@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: cvbilder-preview
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: staging
+    autoDeployTrigger: checksPass
+    buildCommand: npm ci && npm run build
+    startCommand: npm run migration:run && node dist/api/main.js
+    healthCheckPath: /api
+    envVars:
+      - key: NODE_VERSION
+        value: 24.14.0
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cvbilder-db
+          property: connectionString
+      - key: OPENAI_API_KEY
+        sync: false
+
+databases:
+  - name: cvbilder-db
+    plan: free
+    region: frankfurt
+    postgresMajorVersion: "16"
+    databaseName: cvbilder
+    user: cvbilder
+    ipAllowList: []

@@ -14,16 +14,30 @@ import { AppService } from './app.service';
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get<string>('DB_HOST', 'localhost'),
-        port: Number(configService.get<string>('DB_PORT', '5432')),
-        username: configService.get<string>('DB_USERNAME', 'postgres'),
-        password: configService.get<string>('DB_PASSWORD', 'postgres'),
-        database: configService.get<string>('DB_NAME', 'cvbilder'),
-        autoLoadEntities: true,
-        synchronize: false,
-      }),
+      useFactory: (configService: ConfigService) => {
+        const databaseUrl = configService.get<string>('DATABASE_URL');
+
+        return {
+          type: 'postgres' as const,
+          ...(databaseUrl
+            ? { url: databaseUrl }
+            : {
+                host: configService.get<string>('DB_HOST', 'localhost'),
+                port: Number(configService.get<string>('DB_PORT', '5432')),
+                username: configService.get<string>(
+                  'DB_USERNAME',
+                  'postgres',
+                ),
+                password: configService.get<string>(
+                  'DB_PASSWORD',
+                  'postgres',
+                ),
+                database: configService.get<string>('DB_NAME', 'cvbilder'),
+              }),
+          autoLoadEntities: true,
+          synchronize: false,
+        };
+      },
     }),
     CoreModule,
     UsersModule,
