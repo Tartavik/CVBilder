@@ -10,6 +10,14 @@
       />
     </a>
 
-    <a class="login-button" routerLink="/login">Log In</a>
+    <nav class="account-navigation" aria-label="Account navigation">
+      @if (isLoggedIn()) {
+        <a class="profile-button" routerLink="/home" aria-label="Open your dashboard">
+          <app-icon name="person" />
+        </a>
+      } @else {
+        <a class="login-button" routerLink="/login">Log In</a>
+      }
+    </nav>
   </div>
 </header>

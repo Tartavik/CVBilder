@@ -1,7 +1,7 @@
 @use 'variables' as v;
 
 .page {
-  min-height: calc(100dvh - 100px);
+  min-height: calc(100dvh - 84px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9,6 +9,12 @@
   background:
     radial-gradient(circle at top right, rgb(67 97 238 / 14%), transparent 28%),
     linear-gradient(135deg, rgba(230, 255, 245, 0.85), var(--app-editor-bg) 100%);
+}
+
+@media (max-width: 640px) {
+  .page {
+    min-height: calc(100dvh - 72px);
+  }
 }
 
 .auth-grid {
