@@ -73,31 +73,6 @@ mat-card-actions {
   gap: 12px;
 }
 
-.dashboard-logo {
-  display: inline-flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.dashboard-logo__mark {
-  width: 44px;
-  height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16px;
-  background: linear-gradient(135deg, var(--accent), #7db8ff);
-  color: #fff;
-  font-weight: 800;
-  box-shadow: 0 18px 40px rgb(67 97 238 / 18%);
-}
-
-.dashboard-logo__sub {
-  margin: 0;
-  color: var(--muted);
-  font-size: v.$font-size-md;
-}
-
 .dashboard-header h1 {
   margin: 0;
   font-size: 2rem;

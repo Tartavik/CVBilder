@@ -18,6 +18,11 @@
           {
             "glob": "**/*",
             "input": "web/public"
+          },
+          {
+            "glob": "**/*",
+            "input": "web/src/app/shared/image",
+            "output": "images"
           }
         ],
         "stylePreprocessorOptions": {

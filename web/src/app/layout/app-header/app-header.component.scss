@@ -1,0 +1,97 @@
+:host {
+  position: relative;
+  z-index: 100;
+  display: block;
+}
+
+.site-header {
+  height: 100px;
+  border-bottom: 1px solid #edf0f5;
+  background: #fff;
+}
+
+.site-header__inner {
+  display: flex;
+  width: min(1800px, 100%);
+  height: 100%;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 auto;
+  padding: 0 44px;
+}
+
+.brand-logo {
+  display: block;
+  width: 190px;
+  height: 96px;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+.brand-logo__image {
+  display: block;
+  width: 190px;
+  height: auto;
+  transform: translateY(-15px);
+}
+
+.login-button {
+  display: inline-flex;
+  min-width: 112px;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 24px;
+  border: 2px solid #2463eb;
+  border-radius: 8px;
+  background: #2463eb;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 10px 22px rgb(36 99 235 / 20%);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.login-button:hover {
+  border-color: #164fcd;
+  background: #164fcd;
+  box-shadow: 0 12px 26px rgb(36 99 235 / 28%);
+  transform: translateY(-1px);
+}
+
+.login-button:focus-visible,
+.brand-logo:focus-visible {
+  outline: 3px solid rgb(36 99 235 / 32%);
+  outline-offset: 4px;
+}
+
+@media (max-width: 640px) {
+  .site-header {
+    height: 80px;
+  }
+
+  .site-header__inner {
+    padding: 0 20px;
+  }
+
+  .brand-logo {
+    width: 145px;
+    height: 76px;
+  }
+
+  .brand-logo__image {
+    width: 145px;
+    transform: translateY(-11px);
+  }
+
+  .login-button {
+    min-width: 94px;
+    min-height: 42px;
+    padding: 8px 18px;
+  }
+}

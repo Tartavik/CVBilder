@@ -2,18 +2,42 @@ import { Route } from '@angular/router';
 import { authGuard, guestGuard } from './auth.guard';
 
 export const appRoutes: Route[] = [
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
   {
-    path: 'login',
-    canActivate: [guestGuard],
+    path: '',
     loadComponent: () =>
-      import('./login/login.component').then((m) => m.LoginComponent),
-  },
-  {
-    path: 'home',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./home/home.component').then((m) => m.HomeComponent),
+      import('./layout/app-shell/app-shell.component').then(
+        (m) => m.AppShellComponent,
+      ),
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        loadComponent: () =>
+          import('./landing/landing.component').then(
+            (m) => m.LandingComponent,
+          ),
+      },
+      {
+        path: 'login',
+        canActivate: [guestGuard],
+        loadComponent: () =>
+          import('./login/login.component').then((m) => m.LoginComponent),
+      },
+      {
+        path: 'register',
+        canActivate: [guestGuard],
+        loadComponent: () =>
+          import('./register/register.component').then(
+            (m) => m.RegisterComponent,
+          ),
+      },
+      {
+        path: 'home',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./home/home.component').then((m) => m.HomeComponent),
+      },
+    ],
   },
   {
     path: 'cv/:cvId/edit',
@@ -25,12 +49,6 @@ export const appRoutes: Route[] = [
     path: 'public/cv/:cvId',
     loadComponent: () =>
       import('./cv/public-cv/public-cv.component').then((m) => m.PublicCvComponent),
-  },
-  {
-    path: 'register',
-    canActivate: [guestGuard],
-    loadComponent: () =>
-      import('./register/register.component').then((m) => m.RegisterComponent),
   },
   {
     path: 'users',
