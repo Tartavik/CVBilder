@@ -43,11 +43,12 @@ export class LoginComponent {
 
   readonly loading = signal(false);
   readonly error = signal('');
+  private errorTimer: ReturnType<typeof setTimeout> | null = null;
 
   submit() {
     if (this.form.invalid) return;
     this.loading.set(true);
-    this.error.set('');
+    this.clearError();
     const email = this.form.value.email ?? '';
     const password = this.form.value.password ?? '';
     this.api
@@ -65,19 +66,36 @@ export class LoginComponent {
         },
         error: (err: unknown) => {
           if (err instanceof TimeoutError) {
-            this.error.set('Login took too long. Please try again.');
+            this.showError('Login took too long. Please try again.');
             return;
           }
           if (err instanceof HttpErrorResponse && err.status === 401) {
-            this.error.set('Invalid email or password');
+            this.showError('Invalid email or password');
             return;
           }
-          this.error.set(this.errors.getMessage(err, 'Could not log in'));
+          this.showError(this.errors.getMessage(err, 'Could not log in'));
         },
       });
   }
 
   goToRegister() {
     this.router.navigate(['/register']);
+  }
+
+  private showError(message: string): void {
+    this.clearError();
+    this.error.set(message);
+    this.errorTimer = setTimeout(() => {
+      this.error.set('');
+      this.errorTimer = null;
+    }, 2000);
+  }
+
+  private clearError(): void {
+    if (this.errorTimer) {
+      clearTimeout(this.errorTimer);
+      this.errorTimer = null;
+    }
+    this.error.set('');
   }
 }

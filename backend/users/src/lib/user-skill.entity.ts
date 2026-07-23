@@ -26,6 +26,9 @@ export class UserSkillEntity {
   @Column({ type: 'text', nullable: true })
   icon!: string | null;
 
+  @Column({ default: false })
+  hidden!: boolean;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

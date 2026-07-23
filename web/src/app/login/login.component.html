@@ -1,4 +1,11 @@
 <div class="page">
+  @if (error()) {
+    <div class="login-toast" role="alert">
+      <span>{{ error() }}</span>
+      <span class="login-toast__progress"></span>
+    </div>
+  }
+
   <div class="auth-grid">
     <div class="auth-content">
       <mat-card class="card auth-card no-hover-shift">
@@ -29,10 +36,6 @@
                 <mat-error>At least 6 characters</mat-error>
               }
             </mat-form-field>
-
-            @if (error()) {
-              <p class="error" role="alert">{{ error() }}</p>
-            }
 
             <button
               mat-raised-button

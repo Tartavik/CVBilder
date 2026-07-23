@@ -13,7 +13,7 @@
   }
 </mat-chip-set>
 
-<div class="skill-composer">
+<div class="skill-composer" (focusout)="onComposerFocusOut($event)">
   <div class="skill-selector-row">
     <div class="skill-input-shell">
       <mat-form-field appearance="outline">
@@ -31,12 +31,15 @@
           <button
             mat-icon-button
             matSuffix
-            class="danger-icon-button"
+            class="skill-delete-button"
             type="button"
-            aria-label="Clear skill"
-            (click)="clearSkillDraft()"
+            [attr.aria-label]="
+              'Delete ' + skillInput.value.trim() + ' from skill list'
+            "
+            (mousedown)="$event.preventDefault()"
+            (click)="deleteSkillDraft()"
           >
-            <app-icon name="delete" />
+            <app-icon name="close" />
           </button>
         }
         <mat-error>Use no more than {{ skillNameLimit }} characters</mat-error>
@@ -58,45 +61,83 @@
         {{ skillInput.value.length }} of {{ skillNameLimit }}
       </span>
     </div>
-    <button mat-stroked-button type="button" (click)="addSkill()">
-      <app-icon name="add" />
-      {{ addButtonLabel() }}
-    </button>
   </div>
 
   @if (allowImageUpload()) {
     <div class="skill-image-field">
-      @if (hasSkillDraft()) {
-        <app-skill-icon
-          [name]="selectedSkillPreview().name"
-          [icon]="selectedSkillPreview().icon"
-        />
-      }
-      <div class="skill-image-actions">
-        <span>Skill image</span>
+      <div class="skill-image-heading">
         <div>
-          <button
-            mat-stroked-button
-            color="primary"
-            type="button"
-            (click)="generateSkillIcon()"
-            [disabled]="generationState() === 'generating' || !skillInput.value.trim()"
-          >
-            {{ generationState() === 'generating' ? 'Generating...' : 'Generate AI icon' }}
-          </button>
-          <button mat-stroked-button type="button" (click)="skillImageInput.click()">
-            Upload image
-          </button>
-          @if (hasSkillImageDraft() || generationState() !== 'idle') {
-            <button mat-button type="button" (click)="clearSkillImage()">Clear</button>
-          }
-          @if (generationState() !== 'idle' && generationState() !== 'generating') {
-            <button mat-button type="button" (click)="restartSkillImage()">Restart</button>
-          }
+          <span class="field-label">Customize skill icon</span>
+          <p>
+            Generate an icon with AI or upload your own image for the skill
+            entered above. Uploaded images are optimized automatically (max
+            2 MB).
+          </p>
         </div>
+        @if (hasSkillDraft()) {
+          <app-skill-icon
+            [name]="selectedSkillPreview().name"
+            [icon]="selectedSkillPreview().icon"
+          />
+        }
+      </div>
+      <div class="skill-image-actions">
+        <button
+          mat-stroked-button
+          color="primary"
+          type="button"
+          (mousedown)="$event.preventDefault()"
+          (click)="generateSkillIcon()"
+          [disabled]="
+            generationState() === 'generating' || !skillInput.value.trim()
+          "
+        >
+          {{
+            generationState() === 'generating'
+              ? 'Generating...'
+              : 'Generate AI icon'
+          }}
+        </button>
+        <button
+          mat-stroked-button
+          type="button"
+          (mousedown)="$event.preventDefault()"
+          (click)="skillImageInput.click()"
+        >
+          Upload image
+        </button>
+        @if (hasSkillImageDraft() || generationState() !== 'idle') {
+          <button
+            mat-button
+            type="button"
+            (mousedown)="$event.preventDefault()"
+            (click)="clearSkillImage()"
+          >
+            Clear
+          </button>
+        }
+        @if (
+          generationState() !== 'idle' &&
+          generationState() !== 'generating'
+        ) {
+          <button
+            mat-button
+            type="button"
+            (mousedown)="$event.preventDefault()"
+            (click)="restartSkillImage()"
+          >
+            Restart
+          </button>
+        }
       </div>
       @if (generationMessage()) {
-        <div class="skill-image-status">{{ generationMessage() }}</div>
+        <div
+          class="skill-image-status"
+          [class.error]="generationState() === 'error'"
+          [attr.role]="generationState() === 'error' ? 'alert' : 'status'"
+        >
+          {{ generationMessage() }}
+        </div>
       }
       <input
         #skillImageInput

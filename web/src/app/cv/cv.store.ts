@@ -6,6 +6,7 @@ import {
   CvData as ApiCvData,
   CvSectionLibrary,
   SkillIconGenerationResult,
+  UserSkill,
 } from '../users-api.service';
 import { ErrorService } from '../shared/errors/error.service';
 import {
@@ -134,6 +135,7 @@ export class CvStore {
   readonly invalidSections = signal<Set<CvValidationSection>>(new Set());
   readonly metadata = signal<CvMetadata | null>(null);
   readonly userSkills = signal<ExperienceSkill[]>([]);
+  readonly hiddenUserSkills = signal<Set<string>>(new Set());
   readonly reusableExperiences = signal<ExperienceItem[]>([]);
   readonly reusableEducation = signal<EducationItem[]>([]);
   readonly photoUploading = signal(false);
@@ -156,11 +158,13 @@ export class CvStore {
     this.cv.set(data);
     if (this.validationAttempt() > 0) {
       this.invalidSections.set(this.getInvalidSections(data));
+      this.error.set(this.getValidationError(data));
     }
   }
 
   loadFromDB(userId: string, cvId: string) {
     this.releasePendingPhoto();
+    this.resetValidationState();
     this.activeUserId = userId;
     this.activeCvId = cvId;
     this.isDraft.set(false);
@@ -168,6 +172,7 @@ export class CvStore {
     this.ready.set(false);
     this.error.set(null);
     this.userSkills.set([]);
+    this.hiddenUserSkills.set(new Set());
     this.reusableExperiences.set([]);
     this.reusableEducation.set([]);
     this.api.getCv(userId, cvId).subscribe({
@@ -197,9 +202,9 @@ export class CvStore {
     this.loading.set(true);
     this.ready.set(false);
     this.error.set(null);
-    this.validationAttempt.set(0);
-    this.invalidSections.set(new Set());
+    this.resetValidationState();
     this.userSkills.set([]);
+    this.hiddenUserSkills.set(new Set());
     this.reusableExperiences.set([]);
     this.reusableEducation.set([]);
 
@@ -236,12 +241,7 @@ export class CvStore {
         title: 'Untitled CV',
         ownerEmail: '',
       });
-      this.userSkills.set(
-        skills.map((skill) => ({
-          name: skill.name,
-          icon: skill.icon ?? null,
-        })),
-      );
+      this.setUserSkills(skills);
       this.setCvSectionLibrary(library);
       this.loading.set(false);
       this.ready.set(true);
@@ -250,6 +250,7 @@ export class CvStore {
 
   loadPublic(cvId: string) {
     this.releasePendingPhoto();
+    this.resetValidationState();
     this.activeUserId = '';
     this.activeCvId = '';
     this.isDraft.set(false);
@@ -277,7 +278,7 @@ export class CvStore {
     userId: string,
     cvId: string,
     callback?: (savedCvId: string) => void,
-    errorCallback?: () => void,
+    errorCallback?: (message: string) => void,
   ): boolean {
     const validationError = this.getValidationError(this.cv());
     if (validationError) {
@@ -306,9 +307,11 @@ export class CvStore {
         this.completeSave(savedCvId, callback);
       },
       error: (err: HttpErrorResponse) => {
-        this.error.set(this.getErrorMessage(err, 'Failed to save CV'));
+        const message = this.getSaveErrorMessage(err, cvData);
+        this.error.set(message);
+        this.applyServerInvalidSections(err, message, cvData);
         this.loading.set(false);
-        errorCallback?.();
+        errorCallback?.(message);
       },
     });
     return true;
@@ -365,6 +368,78 @@ export class CvStore {
 
   private getErrorMessage(error: HttpErrorResponse, fallback: string): string {
     return this.errors.getMessage(error, fallback);
+  }
+
+  private getSaveErrorMessage(
+    error: HttpErrorResponse,
+    data: ApiCvData,
+  ): string {
+    if (
+      error.status === 413 &&
+      data.experience.some((item) =>
+        item.skills?.some(
+          (skill) =>
+            typeof skill !== 'string' &&
+            Boolean(skill.icon?.startsWith('data:image/')),
+        ),
+      )
+    ) {
+      return 'A skill icon is too large. Upload a smaller image and try again.';
+    }
+    return this.getErrorMessage(error, 'Failed to save CV');
+  }
+
+  private applyServerInvalidSections(
+    error: HttpErrorResponse,
+    message: string,
+    data: ApiCvData,
+  ): void {
+    const invalidSections = this.getInvalidSections(this.cv());
+    const normalizedMessage = message.toLocaleLowerCase();
+    const hasInlineSkillIcon = data.experience.some((item) =>
+      item.skills?.some(
+        (skill) =>
+          typeof skill !== 'string' &&
+          Boolean(skill.icon?.startsWith('data:image/')),
+      ),
+    );
+
+    if (
+      [
+        'full name',
+        'job title',
+        'email',
+        'phone',
+        'city',
+        'summary',
+        'personal',
+      ].some((field) => normalizedMessage.includes(field))
+    ) {
+      invalidSections.add(
+        this.cv().template === 'classic' ? 'details' : 'personal',
+      );
+    }
+    if (normalizedMessage.includes('education')) {
+      invalidSections.add('education');
+    }
+    if (normalizedMessage.includes('additional')) {
+      invalidSections.add('additional');
+    }
+    if (normalizedMessage.includes('general skill')) {
+      invalidSections.add('skills');
+    }
+    if (
+      normalizedMessage.includes('experience') ||
+      normalizedMessage.includes('skill icon') ||
+      ((error.status === 400 || error.status === 413) && hasInlineSkillIcon)
+    ) {
+      invalidSections.add('experience');
+    }
+
+    this.invalidSections.set(invalidSections);
+    if (invalidSections.size) {
+      this.validationAttempt.update((attempt) => attempt + 1);
+    }
   }
 
   private updateMetadata(apiData: ApiCvData): void {
@@ -504,6 +579,39 @@ export class CvStore {
       icon: skill.icon || existing?.icon || null,
     });
     this.userSkills.set([...skills.values()].sort((a, b) => a.name.localeCompare(b.name)));
+    this.hiddenUserSkills.update((hiddenSkills) => {
+      const nextHiddenSkills = new Set(hiddenSkills);
+      nextHiddenSkills.delete(name.toLocaleLowerCase());
+      return nextHiddenSkills;
+    });
+  }
+
+  deleteUserSkill(skillName: string): void {
+    const name = skillName.trim();
+    if (!name || !this.activeUserId) return;
+
+    const normalizedName = name.toLocaleLowerCase();
+    const previousSkills = this.userSkills();
+    const previousHiddenSkills = this.hiddenUserSkills();
+
+    this.userSkills.set(
+      previousSkills.filter(
+        (skill) => skill.name.toLocaleLowerCase() !== normalizedName,
+      ),
+    );
+    this.hiddenUserSkills.set(
+      new Set([...previousHiddenSkills, normalizedName]),
+    );
+
+    this.api.deleteUserSkill(this.activeUserId, name).subscribe({
+      error: (error: HttpErrorResponse) => {
+        this.userSkills.set(previousSkills);
+        this.hiddenUserSkills.set(previousHiddenSkills);
+        this.error.set(
+          this.getErrorMessage(error, 'Could not remove skill from the list'),
+        );
+      },
+    });
   }
 
   generateSkillIcon(skillName: string): Observable<SkillIconGenerationResult> {
@@ -569,12 +677,27 @@ export class CvStore {
 
   private loadUserSkills(userId: string): void {
     this.api.getUserSkills(userId).subscribe({
-      next: (skills) =>
-        this.userSkills.set(
-          skills.map((skill) => ({ name: skill.name, icon: skill.icon ?? null })),
-        ),
-      error: () => this.userSkills.set([]),
+      next: (skills) => this.setUserSkills(skills),
+      error: () => {
+        this.userSkills.set([]);
+        this.hiddenUserSkills.set(new Set());
+      },
     });
+  }
+
+  private setUserSkills(skills: UserSkill[]): void {
+    this.hiddenUserSkills.set(
+      new Set(
+        skills
+          .filter((skill) => skill.hidden)
+          .map((skill) => skill.name.toLocaleLowerCase()),
+      ),
+    );
+    this.userSkills.set(
+      skills
+        .filter((skill) => !skill.hidden)
+        .map((skill) => ({ name: skill.name, icon: skill.icon ?? null })),
+    );
   }
 
   private loadCvSectionLibrary(userId: string, cvId?: string): void {
@@ -619,7 +742,7 @@ export class CvStore {
     userId: string,
     cvId: string,
     callback?: (savedCvId: string) => void,
-    errorCallback?: () => void,
+    errorCallback?: (message: string) => void,
   ): void {
     const photoFile = this.pendingPhotoFile;
     if (!photoFile) {
@@ -640,18 +763,21 @@ export class CvStore {
           error: (error: HttpErrorResponse) => {
             this.photoUploading.set(false);
             this.loading.set(false);
-            this.error.set(
-              this.getErrorMessage(error, 'Failed to save uploaded photo'),
+            const message = this.getErrorMessage(
+              error,
+              'Failed to save uploaded photo',
             );
-            errorCallback?.();
+            this.error.set(message);
+            errorCallback?.(message);
           },
         });
       },
       error: (error: HttpErrorResponse) => {
         this.photoUploading.set(false);
         this.loading.set(false);
-        this.error.set(this.getErrorMessage(error, 'Failed to upload photo'));
-        errorCallback?.();
+        const message = this.getErrorMessage(error, 'Failed to upload photo');
+        this.error.set(message);
+        errorCallback?.(message);
       },
     });
   }
@@ -685,6 +811,11 @@ export class CvStore {
       sectionOrder: [...DEFAULT_DATA.sectionOrder],
       template,
     };
+  }
+
+  private resetValidationState(): void {
+    this.validationAttempt.set(0);
+    this.invalidSections.set(new Set());
   }
 
   private releasePendingPhoto(): void {

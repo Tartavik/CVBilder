@@ -28,6 +28,12 @@ export class CvEditorFormComponent {
 
   readonly activeSection = input.required<CvSection['id']>();
   readonly cv = this.store.cv;
+  readonly activeError = computed(() => {
+    const error = this.store.error();
+    return error && this.store.invalidSections().has(this.activeSection())
+      ? error
+      : null;
+  });
 
   readonly activeLabel = computed(
     () =>

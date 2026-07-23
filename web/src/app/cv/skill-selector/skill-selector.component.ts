@@ -15,6 +15,15 @@ import {
 } from '../skill-catalog';
 import { SkillIconComponent } from '../skill-icon.component';
 
+const MAX_SKILL_IMAGE_SIZE = 2 * 1024 * 1024;
+const SKILL_ICON_SIZE = 128;
+const SUPPORTED_SKILL_IMAGE_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/svg+xml',
+]);
+
 @Component({
   selector: 'app-skill-selector',
   standalone: true,
@@ -38,8 +47,8 @@ export class SkillSelectorComponent {
   readonly allowImageUpload = input(false);
   readonly inputLabel = input('Find or add skill');
   readonly placeholder = input('e.g. Angular');
-  readonly addButtonLabel = input('Add skill');
   readonly selectedSkillsChange = output<ExperienceSkill[]>();
+  private blurAddTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly skillNameLimit = CV_FIELD_LIMITS.skill;
   readonly skillInput = new FormControl('', {
@@ -48,14 +57,21 @@ export class SkillSelectorComponent {
   });
   readonly draftIcon = signal<string | null>(null);
   readonly draftRevision = signal(0);
-  readonly generationState = signal<'idle' | 'generating' | 'generated' | 'found' | 'error'>('idle');
+  readonly generationState = signal<
+    'idle' | 'generating' | 'generated' | 'found' | 'uploaded' | 'error'
+  >('idle');
   readonly generationMessage = signal<string | null>(null);
   readonly skillOptions = computed<SkillOption[]>(() => {
     const skills = new Map<string, SkillOption>();
-    SKILL_OPTIONS.forEach((option) =>
-      skills.set(option.name.toLocaleLowerCase(), option),
-    );
+    const hiddenSkills = this.store.hiddenUserSkills();
+    SKILL_OPTIONS.forEach((option) => {
+      const key = option.name.toLocaleLowerCase();
+      if (!hiddenSkills.has(key)) {
+        skills.set(key, option);
+      }
+    });
     this.store.userSkills().forEach((skill) => {
+      if (hiddenSkills.has(skill.name.toLocaleLowerCase())) return;
       const catalogOption = findSkillOptionByName(skill.name);
       skills.set(skill.name.toLocaleLowerCase(), {
         name: skill.name,
@@ -95,6 +111,23 @@ export class SkillSelectorComponent {
     this.selectedSkillsChange.emit(
       this.selectedSkills().filter((item) => item.name !== skill.name),
     );
+  }
+
+  deleteSkillDraft(): void {
+    const draftName = this.skillInput.value.trim();
+    if (!draftName) {
+      this.clearSkillDraft();
+      return;
+    }
+
+    const normalizedName = draftName.toLocaleLowerCase();
+    this.selectedSkillsChange.emit(
+      this.selectedSkills().filter(
+        (skill) => skill.name.toLocaleLowerCase() !== normalizedName,
+      ),
+    );
+    this.store.deleteUserSkill(draftName);
+    this.clearSkillDraft();
   }
 
   selectSkill(name: string): void {
@@ -184,19 +217,101 @@ export class SkillSelectorComponent {
     this.refreshDraft();
   }
 
-  onSkillImageChange(event: Event): void {
+  onComposerFocusOut(event: FocusEvent): void {
+    const composer = event.currentTarget as HTMLElement;
+    const nextTarget = event.relatedTarget;
+    if (nextTarget instanceof Node && composer.contains(nextTarget)) return;
+
+    if (this.blurAddTimer) clearTimeout(this.blurAddTimer);
+    this.blurAddTimer = setTimeout(() => {
+      if (!composer.contains(composer.ownerDocument.activeElement)) {
+        this.addSkill();
+      }
+      this.blurAddTimer = null;
+    });
+  }
+
+  async onSkillImageChange(event: Event): Promise<void> {
     const inputElement = event.target as HTMLInputElement;
     const file = inputElement.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const icon = String(reader.result ?? '');
+
+    if (!SUPPORTED_SKILL_IMAGE_TYPES.has(file.type)) {
+      this.generationState.set('error');
+      this.generationMessage.set(
+        'Use an SVG, PNG, JPG or WebP image.',
+      );
+      inputElement.value = '';
+      return;
+    }
+    if (file.size > MAX_SKILL_IMAGE_SIZE) {
+      this.generationState.set('error');
+      this.generationMessage.set('Use an image no larger than 2 MB.');
+      inputElement.value = '';
+      return;
+    }
+
+    this.generationMessage.set('Optimizing image...');
+    try {
+      const icon = await this.optimizeSkillImage(file);
       this.draftIcon.set(icon);
       this.applySkillImageDraft(icon);
       this.refreshDraft();
-    };
-    reader.readAsDataURL(file);
-    inputElement.value = '';
+      this.generationState.set('uploaded');
+      this.generationMessage.set('Image optimized and ready.');
+    } catch {
+      this.generationState.set('error');
+      this.generationMessage.set(
+        'Could not process this image. Try another SVG, PNG, JPG or WebP file.',
+      );
+    } finally {
+      inputElement.value = '';
+    }
+  }
+
+  private optimizeSkillImage(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const objectUrl = URL.createObjectURL(file);
+      const image = new Image();
+      image.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const width = image.naturalWidth;
+        const height = image.naturalHeight;
+        if (!width || !height) {
+          reject(new Error('Image has no dimensions'));
+          return;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = SKILL_ICON_SIZE;
+        canvas.height = SKILL_ICON_SIZE;
+        const context = canvas.getContext('2d');
+        if (!context) {
+          reject(new Error('Canvas is unavailable'));
+          return;
+        }
+
+        const scale = Math.min(
+          SKILL_ICON_SIZE / width,
+          SKILL_ICON_SIZE / height,
+        );
+        const targetWidth = width * scale;
+        const targetHeight = height * scale;
+        context.drawImage(
+          image,
+          (SKILL_ICON_SIZE - targetWidth) / 2,
+          (SKILL_ICON_SIZE - targetHeight) / 2,
+          targetWidth,
+          targetHeight,
+        );
+        resolve(canvas.toDataURL('image/webp', 0.85));
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Image could not be decoded'));
+      };
+      image.src = objectUrl;
+    });
   }
 
   private refreshDraft(): void {

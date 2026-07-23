@@ -1,19 +1,22 @@
 <section class="cv-editor">
   <div class="editor-card">
     <h2 class="editor-title">{{ activeLabel() }}</h2>
-      @switch (activeSection()) {
-        @case ('personal') { 
-          @if (cv().template === 'classic') {
-            <app-personal-main-section />
-          } @else {
-            <app-personal-section />
-          }
+    @if (activeError(); as error) {
+      <div class="editor-validation-alert" role="alert">{{ error }}</div>
+    }
+    @switch (activeSection()) {
+      @case ('personal') {
+        @if (cv().template === 'classic') {
+          <app-personal-main-section />
+        } @else {
+          <app-personal-section />
         }
-        @case ('details') { <app-personal-details-section /> }
-        @case ('experience') { <app-experience-section /> }
-        @case ('education') { <app-education-section /> }
-        @case ('skills') { <app-general-skills-section /> }
-        @case ('additional') { <app-additional-sections-section /> }
       }
+      @case ('details') { <app-personal-details-section /> }
+      @case ('experience') { <app-experience-section /> }
+      @case ('education') { <app-education-section /> }
+      @case ('skills') { <app-general-skills-section /> }
+      @case ('additional') { <app-additional-sections-section /> }
+    }
   </div>
 </section>

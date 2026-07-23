@@ -64,6 +64,14 @@ export class UsersController {
     return this.usersService.getUserSkills(id);
   }
 
+  @Delete(':id/skills')
+  deleteSkill(
+    @Param('id') id: string,
+    @Body() body: { skillName?: string },
+  ) {
+    return this.usersService.deleteUserSkill(id, body?.skillName);
+  }
+
   @Get(':id/cvs')
   getCvs(@Param('id') id: string) {
     return this.usersService.getUserCvs(id);

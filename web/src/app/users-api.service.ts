@@ -28,6 +28,7 @@ export interface ExperienceSkill {
 export interface UserSkill {
   name: string;
   icon: string | null;
+  hidden: boolean;
 }
 
 export interface SkillIconGenerationResult {
@@ -121,6 +122,15 @@ export class UsersApiService {
 
   getUserSkills(userId: string): Observable<UserSkill[]> {
     return this.http.get<UserSkill[]>(`${this.base}/${userId}/skills`);
+  }
+
+  deleteUserSkill(
+    userId: string,
+    skillName: string,
+  ): Observable<{ success: true }> {
+    return this.http.delete<{ success: true }>(`${this.base}/${userId}/skills`, {
+      body: { skillName },
+    });
   }
 
   getCvSectionLibrary(

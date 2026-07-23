@@ -38,3 +38,14 @@
   font-size: v.$font-size-lg;
   font-weight: 600;
 }
+
+.editor-validation-alert {
+  margin: -4px 0 20px;
+  padding: 10px 12px;
+  border: 1px solid var(--app-danger);
+  border-radius: v.$radius-control;
+  background: var(--app-danger-hover);
+  color: var(--app-danger);
+  font-size: v.$font-size-sm;
+  line-height: 1.4;
+}

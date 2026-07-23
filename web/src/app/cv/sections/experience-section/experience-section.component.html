@@ -71,15 +71,27 @@
 
     <div class="experience-skills-editor">
       <div class="skills-editor-header">
-        <span class="field-label">Skills used in this role</span>
-        <mat-button-toggle-group
-          [value]="skillMode()"
-          aria-label="Experience skill style"
-          (change)="setSkillMode($event.value)"
-        >
-          <mat-button-toggle value="text">Text</mat-button-toggle>
-          <mat-button-toggle value="icons">Icons</mat-button-toggle>
-        </mat-button-toggle-group>
+        <div class="skills-editor-title">
+          <span class="field-label">Skills used in this role</span>
+          <p>
+            Type or choose a skill. It is added automatically when you leave
+            the field.
+          </p>
+        </div>
+        <div class="skill-display-row">
+          <div>
+            <span class="field-label">Skill appearance</span>
+            <p>Show skills as simple text labels or compact visual icons.</p>
+          </div>
+          <mat-button-toggle-group
+            [value]="skillMode()"
+            aria-label="Experience skill style"
+            (change)="setSkillMode($event.value)"
+          >
+            <mat-button-toggle value="text">Text</mat-button-toggle>
+            <mat-button-toggle value="icons">Icons</mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
       </div>
       <app-skill-selector
         [selectedSkills]="skillsAt(i)"
@@ -87,7 +99,6 @@
         [allowImageUpload]="skillMode() === 'icons'"
         inputLabel="Find or add skill"
         placeholder="e.g. Angular"
-        addButtonLabel="Add skill"
         (selectedSkillsChange)="updateSkills(i, $event)"
       />
     </div>

@@ -76,10 +76,17 @@ export class CvEditorComponent implements OnInit {
         }
         this.showToast('success', 'CV saved');
       },
-      () => this.showToast('error', 'Could not save CV'),
+      (message) => {
+        this.openFirstInvalidSection();
+        this.showToast('error', message);
+      },
     );
     if (!saveStarted) {
-      this.showToast('error', 'Could not save CV');
+      this.openFirstInvalidSection();
+      this.showToast(
+        'error',
+        this.store.error() ?? 'Could not save CV',
+      );
     }
   }
 
@@ -135,5 +142,15 @@ export class CvEditorComponent implements OnInit {
       this.saveToast.set(null);
       this.saveToastTimer = null;
     }, 2000);
+  }
+
+  private openFirstInvalidSection(): void {
+    const invalidSections = this.store.invalidSections();
+    const firstInvalidSection = this.cv().sectionOrder.find((sectionId) =>
+      invalidSections.has(sectionId),
+    );
+    if (firstInvalidSection) {
+      this.activeSection.set(firstInvalidSection);
+    }
   }
 }

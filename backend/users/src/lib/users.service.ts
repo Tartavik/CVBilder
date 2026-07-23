@@ -190,18 +190,64 @@ export class UsersService {
     return this.settingsRepo.save(settings);
   }
 
-  async getUserSkills(userId: string): Promise<Array<{ name: string; icon: string | null }>> {
+  async getUserSkills(
+    userId: string,
+  ): Promise<Array<{ name: string; icon: string | null; hidden: boolean }>> {
     const user = await this.findById(userId);
     try {
       const skills = await this.userSkillRepo.find({
         where: { user: { id: user.id } },
         order: { name: 'ASC' },
       });
-      return skills.map((skill) => ({ name: skill.name, icon: skill.icon }));
+      return skills.map((skill) => ({
+        name: skill.name,
+        icon: skill.icon,
+        hidden: skill.hidden,
+      }));
     } catch (error) {
       if (this.isMissingUserSkillsTable(error)) return [];
       throw error;
     }
+  }
+
+  async deleteUserSkill(
+    userId: string,
+    skillName?: string,
+  ): Promise<{ success: true }> {
+    const trimmedName = skillName?.trim();
+    if (!trimmedName) {
+      throw new BadRequestException('Skill name is required');
+    }
+    if (trimmedName.length > CV_FIELD_LIMITS.skill) {
+      throw new BadRequestException(
+        `Skill name must be ${CV_FIELD_LIMITS.skill} characters or fewer`,
+      );
+    }
+
+    const user = await this.findById(userId);
+    const userSkills = await this.userSkillRepo.find({
+      where: { user: { id: user.id } },
+    });
+    const existingSkill = userSkills.find(
+      (skill) =>
+        skill.name.toLocaleLowerCase() === trimmedName.toLocaleLowerCase(),
+    );
+
+    if (existingSkill) {
+      existingSkill.hidden = true;
+      await this.userSkillRepo.save(existingSkill);
+    } else {
+      await this.userSkillRepo.save(
+        this.userSkillRepo.create({
+          user,
+          name: trimmedName,
+          icon: null,
+          hidden: true,
+        }),
+      );
+    }
+
+    return { success: true };
   }
 
   async getUserCvLibrary(userId: string, cvId?: string) {
@@ -673,6 +719,10 @@ export class UsersService {
       where: { user: { id: userId }, name: trimmedName },
     });
     if (existingSkill?.icon) {
+      if (existingSkill.hidden) {
+        existingSkill.hidden = false;
+        await this.userSkillRepo.save(existingSkill);
+      }
       return { icon: existingSkill.icon, source: 'found' };
     }
 
@@ -878,7 +928,9 @@ export class UsersService {
             typeof skill.name !== 'string' ||
             !skill.name.trim() ||
             skill.name.trim().length > CV_FIELD_LIMITS.skill ||
-            (skill.icon !== undefined && typeof skill.icon !== 'string'),
+            (skill.icon !== undefined &&
+              skill.icon !== null &&
+              typeof skill.icon !== 'string'),
         ))
     ) {
       throw new BadRequestException(
@@ -1201,9 +1253,15 @@ export class UsersService {
       if (existing) {
         existing.name = skill.name;
         existing.icon = skill.icon || existing.icon;
+        existing.hidden = false;
         return existing;
       }
-      return userSkillRepo.create({ user, name: skill.name, icon: skill.icon });
+      return userSkillRepo.create({
+        user,
+        name: skill.name,
+        icon: skill.icon,
+        hidden: false,
+      });
     });
 
     try {

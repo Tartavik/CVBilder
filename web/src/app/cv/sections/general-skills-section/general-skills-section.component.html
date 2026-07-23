@@ -1,11 +1,10 @@
 <p class="section-hint">
-  Optional skills that describe your overall professional profile.
+  Type or choose a skill, then leave the field to add it automatically.
 </p>
 
 <app-skill-selector
   [selectedSkills]="selectedSkills()"
   inputLabel="Find or add general skill"
   placeholder="e.g. TypeScript"
-  addButtonLabel="Add"
   (selectedSkillsChange)="updateSkills($event)"
 />

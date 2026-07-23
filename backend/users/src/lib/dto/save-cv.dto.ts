@@ -10,7 +10,7 @@ export class PersonalDataDto {
 
 export class ExperienceSkillDto {
   name!: string;
-  icon?: string;
+  icon?: string | null;
 }
 
 export class ExperienceItemDto {

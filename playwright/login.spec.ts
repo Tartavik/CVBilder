@@ -61,8 +61,12 @@ test.describe('Auth flow', () => {
     const loginResponse = await loginResponsePromise;
 
     expect(loginResponse.status()).toBe(401);
-    await expect(page.getByText('Invalid email or password')).toBeVisible();
+    const errorToast = page.locator('.login-toast', {
+      hasText: 'Invalid email or password',
+    });
+    await expect(errorToast).toBeVisible();
     await expect(page.getByRole('button', { name: 'Login' })).toBeEnabled();
     await expect(page.locator('mat-spinner')).toHaveCount(0);
+    await expect(errorToast).toBeHidden({ timeout: 3000 });
   });
 });

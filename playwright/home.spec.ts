@@ -91,6 +91,261 @@ test.describe('Home page flows', () => {
     await expect(page.locator('mat-datepicker-content')).toBeVisible();
   });
 
+  test('should add skills on blur and permanently hide deleted skill options', async ({
+    page,
+  }) => {
+    const email = randomEmail();
+
+    await registerAndLogin(page, email, password);
+    await page.getByRole('button', { name: 'New CV' }).click();
+    await page
+      .locator('button.template-option', { hasText: 'Single column' })
+      .click();
+
+    await page.getByRole('button', { name: /Experience/ }).click();
+    await page.getByRole('button', { name: 'Add experience' }).click();
+
+    await expect(
+      page.getByText(
+        'Type or choose a skill. It is added automatically when you leave the field.',
+      ),
+    ).toBeVisible();
+    await expect(page.getByText('Skill appearance')).toBeVisible();
+    await expect(
+      page.getByText(
+        'Show skills as simple text labels or compact visual icons.',
+      ),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Add skill' }),
+    ).toHaveCount(0);
+
+    const skillInput = page.getByLabel('Find or add skill');
+    await skillInput.fill('Observability');
+    await page.getByLabel('Company').focus();
+    await expect(page.getByText('Observability', { exact: true })).toBeVisible();
+    await expect(skillInput).toHaveValue('');
+
+    await page.getByRole('radio', { name: 'Icons' }).click();
+    await expect(page.getByText('Customize skill icon')).toBeVisible();
+    await expect(
+      page.getByText(
+        'Generate an icon with AI or upload your own image for the skill entered above.',
+      ),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Generate AI icon' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Upload image' }),
+    ).toBeVisible();
+
+    await skillInput.fill('AWS');
+    const deleteResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'DELETE' &&
+        /\/api\/users\/[^/]+\/skills$/.test(response.url()),
+    );
+    await page
+      .getByRole('button', { name: 'Delete AWS from skill list' })
+      .click();
+    expect((await deleteResponsePromise).ok()).toBeTruthy();
+    await expect(skillInput).toHaveValue('');
+
+    await skillInput.fill('AWS');
+    await expect(
+      page.locator('mat-option').filter({ hasText: /^AWS$/ }),
+    ).toHaveCount(0);
+
+    const userId = await page.evaluate(() =>
+      sessionStorage.getItem('currentUserId'),
+    );
+    const skillsResponse = await page.request.get(
+      `/api/users/${userId}/skills`,
+    );
+    expect(skillsResponse.ok()).toBeTruthy();
+    expect(await skillsResponse.json()).toContainEqual(
+      expect.objectContaining({ name: 'AWS', hidden: true }),
+    );
+  });
+
+  test('should optimize an uploaded skill image and save the CV', async ({
+    page,
+  }) => {
+    const email = randomEmail();
+
+    await registerAndLogin(page, email, password);
+    await page.getByRole('button', { name: 'New CV' }).click();
+    await page
+      .locator('button.template-option', { hasText: 'Single column' })
+      .click();
+
+    await page.getByLabel('Full name').fill('Skill Image CV');
+    await page.getByLabel('Job title').fill('Engineer');
+    await page.getByLabel('Email').fill('skill-image@example.com');
+    await page.getByLabel('Phone').fill('+380501234567');
+    await page.getByLabel('City').fill('Kyiv');
+    await page.getByLabel('Summary').fill('A CV with an uploaded skill icon.');
+    await expect(page.locator('app-cv-preview')).toContainText(
+      'A CV with an uploaded skill icon.',
+    );
+
+    await page.getByRole('button', { name: /Experience/ }).click();
+    await page.getByRole('button', { name: 'Add experience' }).click();
+    await page.getByLabel('Company').fill('Example Company');
+    await page.getByLabel('Position').fill('Frontend Engineer');
+    const startDate = page.getByLabel('Start date');
+    await startDate.evaluate((element) => element.removeAttribute('readonly'));
+    await startDate.fill('2/9/1994');
+    await page.getByLabel('Current').check();
+    await page
+      .getByLabel('Description')
+      .fill('Built and maintained accessible web applications.');
+
+    await page.getByRole('radio', { name: 'Icons' }).click();
+    const skillInput = page.getByLabel('Find or add skill');
+    await skillInput.fill('Plain skill');
+    await page.getByLabel('Company').focus();
+    await expect(
+      page.getByRole('button', { name: 'Remove Plain skill' }),
+    ).toBeVisible();
+
+    await skillInput.fill('Large SVG skill');
+    const largeSvg = [
+      '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">',
+      '<rect width="128" height="128" rx="20" fill="#2563eb"/>',
+      `<desc>${'large-upload'.repeat(15000)}</desc>`,
+      '</svg>',
+    ].join('');
+    await page
+      .locator('.skill-image-field input[type="file"]')
+      .setInputFiles({
+        name: 'large-icon.svg',
+        mimeType: 'image/svg+xml',
+        buffer: Buffer.from(largeSvg),
+      });
+    await expect(page.getByText('Image optimized and ready.')).toBeVisible();
+    await page.getByLabel('Company').focus();
+    await expect(
+      page.getByRole('button', { name: 'Remove Large SVG skill' }),
+    ).toBeVisible();
+    await expect(page.locator('app-cv-preview')).toContainText(
+      'Built and maintained accessible web applications.',
+    );
+
+    const saveUrl = /\/api\/users\/[^/]+\/cvs\/[^/]+$/;
+    await page.route(saveUrl, async (route) => {
+      if (route.request().method() !== 'POST') {
+        await route.continue();
+        return;
+      }
+      await route.fulfill({
+        status: 400,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          statusCode: 400,
+          message: 'Experience 1 skill icon is invalid',
+        }),
+      });
+    });
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.locator('.save-toast')).toContainText(
+      'Experience 1 skill icon is invalid',
+    );
+    await expect(page.locator('.editor-validation-alert')).toContainText(
+      'Experience 1 skill icon is invalid',
+    );
+    await expect(
+      page.locator('.section-item.invalid', { hasText: 'Experience' }),
+    ).toBeVisible();
+    await page.unroute(saveUrl);
+
+    const requestPromise = page.waitForRequest(
+      (request) =>
+        request.method() === 'POST' &&
+        /\/api\/users\/[^/]+\/cvs\/[^/]+$/.test(request.url()),
+    );
+    const responsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' &&
+        /\/api\/users\/[^/]+\/cvs\/[^/]+$/.test(response.url()),
+    );
+    await page.getByRole('button', { name: 'Save' }).click();
+
+    const saveRequest = await requestPromise;
+    const requestData = saveRequest.postDataJSON() as {
+      experience: Array<{
+        skills: Array<{ name: string; icon: string | null }>;
+      }>;
+    };
+    const uploadedIcon = requestData.experience[0].skills.find(
+      (skill) => skill.name === 'Large SVG skill',
+    )?.icon;
+    const plainIcon = requestData.experience[0].skills.find(
+      (skill) => skill.name === 'Plain skill',
+    )?.icon;
+    expect(plainIcon).toBeNull();
+    expect(uploadedIcon).toMatch(/^data:image\/webp;base64,/);
+    expect(uploadedIcon?.length).toBeLessThan(100_000);
+
+    const saveResponse = await responsePromise;
+    expect(saveResponse.ok(), await saveResponse.text()).toBeTruthy();
+    await expect(page.getByText('CV saved')).toBeVisible();
+  });
+
+  test('should reset validation state after reopening a saved CV', async ({
+    page,
+  }) => {
+    const email = randomEmail();
+
+    await registerAndLogin(page, email, password);
+    await page.getByRole('button', { name: 'New CV' }).click();
+    await page
+      .locator('button.template-option', { hasText: 'Single column' })
+      .click();
+
+    await page.getByLabel('Full name').fill('Validation reset CV');
+    const jobTitle = page.getByLabel('Job title');
+    await jobTitle.fill('Engineer');
+    await page.getByLabel('Email').fill('validation@example.com');
+    await page.getByLabel('Phone').fill('+380501234567');
+    await page.getByLabel('City').fill('Kyiv');
+    await page.getByLabel('Summary').fill('Valid summary');
+
+    await expect(page.locator('app-cv-preview')).toContainText('Valid summary');
+    const saveResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' &&
+        /\/api\/users\/[^/]+\/cvs\/[^/]+$/.test(response.url()),
+    );
+    await page.getByRole('button', { name: 'Save' }).click();
+    expect((await saveResponsePromise).ok()).toBeTruthy();
+    await expect(page.getByText('CV saved')).toBeVisible();
+    await expect(page).toHaveURL(/\/cv\/[^/]+\/edit$/);
+
+    await jobTitle.clear();
+    await expect(page.locator('app-cv-preview')).not.toContainText('Engineer');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.locator('.save-toast')).toContainText(
+      'Job title is required',
+    );
+    await expect(page.locator('.editor-validation-alert')).toContainText(
+      'Job title is required',
+    );
+    await expect(jobTitle).toHaveClass(/ng-touched/);
+
+    await page.getByRole('link', { name: 'Home' }).click();
+    const cvCard = page
+      .locator('section.cv-section')
+      .first()
+      .locator('mat-card', { hasText: 'Validation reset CV' });
+    await cvCard.getByRole('link', { name: 'Edit' }).click();
+
+    const reopenedJobTitle = page.getByLabel('Job title');
+    await expect(reopenedJobTitle).toHaveValue('Engineer');
+    await expect(reopenedJobTitle).toHaveClass(/ng-untouched/);
+  });
+
   test('should delete a saved CV only after confirmation', async ({ page }) => {
     const email = randomEmail();
 
