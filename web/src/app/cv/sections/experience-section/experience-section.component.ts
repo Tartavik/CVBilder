@@ -2,6 +2,7 @@ import { Component, DestroyRef, OnInit, computed, effect, inject } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormArray,
+  FormControl,
   FormGroup,
   ReactiveFormsModule,
 } from '@angular/forms';
@@ -13,6 +14,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { debounceTime } from 'rxjs';
 import { AppIconComponent } from '../../../shared/app-icon.component';
 import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';
@@ -39,6 +41,7 @@ import {
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatButtonModule,
     MatButtonToggleModule,
     MatDatepickerModule,
@@ -68,6 +71,8 @@ export class ExperienceSectionComponent implements OnInit {
 
   readonly form = new FormArray<FormGroup>([]);
   readonly skillMode = computed(() => this.store.cv().experienceSkillMode);
+  readonly reusableExperiences = computed(() => this.store.reusableExperiences());
+  readonly reusableSelection = new FormControl<string | null>(null);
 
   get groups(): FormGroup[] {
     return this.form.controls as FormGroup[];
@@ -91,7 +96,18 @@ export class ExperienceSectionComponent implements OnInit {
   }
 
   add() {
-    this.store.addExperience();
+    this.appendExperience();
+  }
+
+  addReusableExperience(id: string | null): void {
+    const source = this.reusableExperiences().find((item) => item.id === id);
+    if (!source) return;
+    this.appendExperience(source);
+    this.reusableSelection.reset(null, { emitEvent: false });
+  }
+
+  private appendExperience(source?: Partial<ExperienceItem>): void {
+    this.store.addExperience(source);
     const items = this.store.cv().experience;
     const newItem = items[items.length - 1];
     this.form.push(createExperienceGroup(newItem, this.destroyRef), {

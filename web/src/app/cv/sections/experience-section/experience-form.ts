@@ -2,6 +2,10 @@ import { DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { SHORT_TEXT_PATTERN } from '../../../shared/validation-patterns';
+import {
+  CV_FIELD_LIMITS,
+  CV_MIN_TEXT_LENGTH,
+} from '../../cv-field-limits';
 import { ExperienceItem } from '../../cv.store';
 
 export function createExperienceGroup(
@@ -11,12 +15,14 @@ export function createExperienceGroup(
   const group = new FormGroup({
     company: new FormControl(item?.company ?? '', [
       Validators.required,
-      Validators.minLength(2),
+      Validators.minLength(CV_MIN_TEXT_LENGTH),
+      Validators.maxLength(CV_FIELD_LIMITS.shortText),
       Validators.pattern(SHORT_TEXT_PATTERN),
     ]),
     position: new FormControl(item?.position ?? '', [
       Validators.required,
-      Validators.minLength(2),
+      Validators.minLength(CV_MIN_TEXT_LENGTH),
+      Validators.maxLength(CV_FIELD_LIMITS.shortText),
       Validators.pattern(SHORT_TEXT_PATTERN),
     ]),
     startDate: new FormControl(toDate(item?.startDate), Validators.required),
@@ -24,7 +30,8 @@ export function createExperienceGroup(
     current: new FormControl(item?.current ?? false),
     description: new FormControl(item?.description ?? '', [
       Validators.required,
-      Validators.minLength(2),
+      Validators.minLength(CV_MIN_TEXT_LENGTH),
+      Validators.maxLength(CV_FIELD_LIMITS.longText),
     ]),
     skills: new FormControl(item?.skills ?? []),
   });

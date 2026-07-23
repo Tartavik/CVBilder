@@ -89,39 +89,6 @@
     }
   </section>
 
-  <section class="sidebar-group" [class.closed]="!isTemplateSectionOpen()">
-    <button
-      type="button"
-      class="sidebar-group__toggle"
-      (click)="isTemplateSectionOpen.set(!isTemplateSectionOpen())"
-      [attr.aria-expanded]="isTemplateSectionOpen()"
-    >
-      <span>Template</span>
-      <span class="sidebar-chevron">{{ isTemplateSectionOpen() ? '−' : '+' }}</span>
-    </button>
-
-    @if (isTemplateSectionOpen()) {
-      <div class="template-switch">
-        <button
-          type="button"
-          class="sidebar-chip"
-          [class.active]="cv().template === 'single'"
-          (click)="selectTemplate('single')"
-        >
-          Single
-        </button>
-        <button
-          type="button"
-          class="sidebar-chip"
-          [class.active]="cv().template === 'classic'"
-          (click)="selectTemplate('classic')"
-        >
-          Classic
-        </button>
-      </div>
-    }
-  </section>
-
   <section class="sidebar-group" [class.closed]="!actionsOpen()">
     <button
       type="button"
@@ -139,10 +106,22 @@
           <app-icon name="home" />
           <span>Home</span>
         </a>
-        <a class="sidebar-action" [routerLink]="['/public/cv', cvId()]">
-          <app-icon name="visibility" />
-          <span>Public page</span>
-        </a>
+        @if (isDraft()) {
+          <button
+            class="sidebar-action"
+            type="button"
+            disabled
+            title="Save the CV to open its public page"
+          >
+            <app-icon name="visibility" />
+            <span>Public page</span>
+          </button>
+        } @else {
+          <a class="sidebar-action" [routerLink]="['/public/cv', cvId()]">
+            <app-icon name="visibility" />
+            <span>Public page</span>
+          </a>
+        }
         <button
           class="sidebar-action"
           type="button"
@@ -156,6 +135,18 @@
           <app-icon name="picture_as_pdf" />
           <span>Export PDF</span>
         </button>
+        @if (!isDraft()) {
+          <button
+            class="sidebar-action warn"
+            type="button"
+            [disabled]="saving() || deleting()"
+            [attr.aria-busy]="deleting()"
+            (click)="deleteCv.emit()"
+          >
+            <app-icon [name]="deleting() ? 'hourglass_empty' : 'delete'" />
+            <span>Delete CV</span>
+          </button>
+        }
         <button class="sidebar-action warn" type="button" (click)="logout.emit()">
           <app-icon name="logout" />
           <span>Logout</span>

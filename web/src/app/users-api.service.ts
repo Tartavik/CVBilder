@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { AdditionalSectionItem } from './cv/additional-sections';
 
 export interface User {
   id: string;
@@ -53,6 +54,11 @@ export interface EducationItem {
   year: string;
 }
 
+export interface CvSectionLibrary {
+  experience: ExperienceItem[];
+  education: EducationItem[];
+}
+
 export interface CvData {
   id?: string;
   title?: string;
@@ -62,6 +68,7 @@ export interface CvData {
   personal: PersonalData;
   experience: ExperienceItem[];
   education: EducationItem[];
+  additionalSections?: AdditionalSectionItem[];
   generalSkills?: string[];
   experienceSkillMode?: 'text' | 'icons';
   sectionOrder?: string[];
@@ -76,6 +83,7 @@ export interface CvSummary {
   updatedAt: string;
 }
 
+export type CvTemplate = 'single' | 'classic';
 export type ThemeMode = 'light' | 'dark';
 
 export interface UserSettings {
@@ -107,16 +115,26 @@ export class UsersApiService {
     return this.http.post<User>(`${this.base}/login`, { email, password });
   }
 
-  createCv(userId: string): Observable<CvSummary> {
-    return this.http.post<CvSummary>(`${this.base}/${userId}/cvs`, {});
-  }
-
   getUserCvs(userId: string): Observable<CvSummary[]> {
     return this.http.get<CvSummary[]>(`${this.base}/${userId}/cvs`);
   }
 
   getUserSkills(userId: string): Observable<UserSkill[]> {
     return this.http.get<UserSkill[]>(`${this.base}/${userId}/skills`);
+  }
+
+  getCvSectionLibrary(
+    userId: string,
+    cvId?: string,
+  ): Observable<CvSectionLibrary> {
+    if (!cvId) {
+      return this.http.get<CvSectionLibrary>(
+        `${this.base}/${userId}/cv-library`,
+      );
+    }
+    return this.http.get<CvSectionLibrary>(
+      `${this.base}/${userId}/cvs/${cvId}/library`,
+    );
   }
 
   getProfile(userId: string): Observable<UserProfile | null> {
@@ -162,12 +180,32 @@ export class UsersApiService {
     );
   }
 
+  createCvFromDraft(
+    userId: string,
+    cvId: string,
+    cvData: CvData,
+  ): Observable<{ success: boolean; cvId: string }> {
+    return this.http.post<{ success: boolean; cvId: string }>(
+      `${this.base}/${userId}/cvs/${cvId}`,
+      cvData,
+    );
+  }
+
   getCv(userId: string, cvId: string): Observable<CvData> {
     return this.http.get<CvData>(`${this.base}/${userId}/cvs/${cvId}`);
   }
 
   getPublicCv(cvId: string): Observable<CvData> {
     return this.http.get<CvData>(`/api/cvs/${cvId}`);
+  }
+
+  deleteCv(
+    userId: string,
+    cvId: string,
+  ): Observable<{ success: true }> {
+    return this.http.delete<{ success: true }>(
+      `${this.base}/${userId}/cvs/${cvId}`,
+    );
   }
 
   uploadCvPhoto(
@@ -185,9 +223,15 @@ export class UsersApiService {
 
   generateSkillIcon(
     userId: string,
-    cvId: string,
+    cvId: string | null,
     skillName: string,
   ): Observable<SkillIconGenerationResult> {
+    if (!cvId) {
+      return this.http.post<SkillIconGenerationResult>(
+        `${this.base}/${userId}/skills/icon/generate`,
+        { skillName },
+      );
+    }
     return this.http.post<SkillIconGenerationResult>(
       `${this.base}/${userId}/cvs/${cvId}/skills/icon/generate`,
       { skillName },

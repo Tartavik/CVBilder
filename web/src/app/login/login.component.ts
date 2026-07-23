@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,6 +11,7 @@ import { AuthService } from '../auth.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ErrorService } from '../shared/errors/error.service';
 import { STRICT_EMAIL_PATTERN } from '../shared/validation-patterns';
+import { TimeoutError, finalize, timeout } from 'rxjs';
 
 @Component({
   selector: 'app-login',
@@ -40,25 +41,40 @@ export class LoginComponent {
     password: new FormControl('', [Validators.required, Validators.minLength(6)]),
   });
 
-  loading = false;
-  error = '';
+  readonly loading = signal(false);
+  readonly error = signal('');
 
   submit() {
     if (this.form.invalid) return;
-    this.loading = true;
-    this.error = '';
+    this.loading.set(true);
+    this.error.set('');
     const email = this.form.value.email ?? '';
     const password = this.form.value.password ?? '';
-    this.api.login(email, password).subscribe({
-      next: (user) => {
-        this.auth.setCurrentUser(user.id);
-        this.router.navigate(['/home']);
-      },
-      error: (err: HttpErrorResponse) => {
-        this.error = this.errors.getMessage(err, 'Invalid email or password');
-        this.loading = false;
-      },
-    });
+    this.api
+      .login(email, password)
+      .pipe(
+        timeout(15000),
+        finalize(() => {
+          this.loading.set(false);
+        }),
+      )
+      .subscribe({
+        next: (user) => {
+          this.auth.setCurrentUser(user.id);
+          this.router.navigate(['/home']);
+        },
+        error: (err: unknown) => {
+          if (err instanceof TimeoutError) {
+            this.error.set('Login took too long. Please try again.');
+            return;
+          }
+          if (err instanceof HttpErrorResponse && err.status === 401) {
+            this.error.set('Invalid email or password');
+            return;
+          }
+          this.error.set(this.errors.getMessage(err, 'Could not log in'));
+        },
+      });
   }
 
   goToRegister() {

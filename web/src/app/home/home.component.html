@@ -1,37 +1,17 @@
-<div class="dashboard" [class.dark]="theme() === 'dark'">
-  <header class="dashboard-header">
-    <div class="dashboard-header__brand">
-      <h1>Your CV workspace</h1>
-      <p class="subtitle">Create, edit and share CVs with a public link.</p>
-    </div>
-    <div class="dashboard-tools">
-      <app-dashboard-settings
-        [theme]="theme()"
-        [themeSaving]="themeSaving()"
-        [profileForm]="profileForm"
-        [profileSaving]="profileSaving()"
-        [profileMessage]="profileMessage()"
-        (themeToggle)="toggleTheme()"
-        (profileSave)="saveProfile()"
-      />
-      <button mat-stroked-button type="button" (click)="logout()">Logout</button>
-    </div>
-  </header>
-
+<div class="dashboard">
   <section class="create-panel">
     <div>
       <h2>Create a new CV</h2>
-      <p>Start with an empty CV and choose its layout in the editor.</p>
+      <p>Choose a template, then make the CV your own.</p>
     </div>
     <button
       mat-raised-button
       color="primary"
       type="button"
-      [disabled]="creating()"
       (click)="createCv()"
     >
       <app-icon name="add_circle" />
-      {{ creating() ? 'Creating...' : 'New CV' }}
+      New CV
     </button>
   </section>
 
@@ -65,7 +45,24 @@
                   <app-icon name="edit" />
                   Edit
                 </a>
-                <a mat-button [routerLink]="['/public/cv', cv.id]">
+                <button
+                  mat-button
+                  type="button"
+                  class="delete-action"
+                  [disabled]="deletingCvId() !== null"
+                  [attr.aria-busy]="deletingCvId() === cv.id"
+                  (click)="confirmDeleteCv(cv)"
+                >
+                  <app-icon
+                    [name]="deletingCvId() === cv.id ? 'hourglass_empty' : 'delete'"
+                  />
+                  Delete
+                </button>
+                <a
+                  mat-button
+                  class="public-link"
+                  [routerLink]="['/public/cv', cv.id]"
+                >
                   <app-icon name="visibility" />
                   Public link
                 </a>

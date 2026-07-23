@@ -2,14 +2,16 @@
 
 :host {
   display: block;
-  width: 100%;
-  min-height: 100%;
+  width: 210mm;
+  min-width: 210mm;
+  min-height: 297mm;
+  flex: 0 0 210mm;
 }
 
 .classic-page {
   display: flex;
-  width: 100%;
-  min-height: 100%;
+  width: 210mm;
+  min-height: 297mm;
   background: v.$preview-color-paper;
   font-family: 'Georgia', serif;
   font-size: v.$preview-font-base;
@@ -199,6 +201,12 @@
 }
 
 @media print {
+  :host {
+    width: 210mm;
+    min-width: 210mm;
+    min-height: 297mm;
+  }
+
   .classic-page {
     width: 210mm;
     min-height: 297mm;

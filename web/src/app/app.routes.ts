@@ -3,6 +3,12 @@ import { authGuard, guestGuard } from './auth.guard';
 
 export const appRoutes: Route[] = [
   {
+    path: 'login',
+    canActivate: [guestGuard],
+    loadComponent: () =>
+      import('./login/login.component').then((m) => m.LoginComponent),
+  },
+  {
     path: '',
     loadComponent: () =>
       import('./layout/app-shell/app-shell.component').then(
@@ -16,12 +22,6 @@ export const appRoutes: Route[] = [
           import('./landing/landing.component').then(
             (m) => m.LandingComponent,
           ),
-      },
-      {
-        path: 'login',
-        canActivate: [guestGuard],
-        loadComponent: () =>
-          import('./login/login.component').then((m) => m.LoginComponent),
       },
       {
         path: 'register',
@@ -55,5 +55,9 @@ export const appRoutes: Route[] = [
     canActivate: [authGuard],
     loadComponent: () =>
       import('./users-list/users-list.component').then((m) => m.UsersListComponent),
+  },
+  {
+    path: '**',
+    redirectTo: '',
   },
 ];

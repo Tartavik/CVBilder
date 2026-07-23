@@ -24,9 +24,10 @@
   margin: 0 auto;
   padding: 24px;
   border-radius: v.$radius-control;
-  background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  box-shadow: var(--app-shadow);
+  color: var(--app-text);
 }
 
 .editor-title {

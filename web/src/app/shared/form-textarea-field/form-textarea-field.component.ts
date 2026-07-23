@@ -21,9 +21,14 @@ export class FormTextareaFieldComponent {
   readonly label = input.required<string>();
   readonly placeholder = input('');
   readonly rows = input(3);
+  readonly maxLength = input(500);
 
   readonly formControl = computed(() => {
     const control = this.control();
     return control instanceof FormControl ? control : null;
   });
+
+  characterCount(control: FormControl): number {
+    return `${control.value ?? ''}`.length;
+  }
 }

@@ -1,0 +1,69 @@
+<div class="template-picker">
+  <header>
+    <span class="eyebrow">New CV</span>
+    <h2>Choose a template</h2>
+    <p>Select the layout that fits your CV. Your content comes next.</p>
+  </header>
+
+  <div class="template-options">
+    <button
+      type="button"
+      class="template-option"
+      aria-label="Create a CV with the single-column template"
+      (click)="select('single')"
+    >
+      <span class="template-preview single-preview" aria-hidden="true">
+        <span class="preview-heading"></span>
+        <span class="preview-subheading"></span>
+        <span class="preview-divider"></span>
+        <span class="preview-section-title"></span>
+        <span class="preview-line wide"></span>
+        <span class="preview-line"></span>
+        <span class="preview-line short"></span>
+        <span class="preview-section-title second"></span>
+        <span class="preview-line wide"></span>
+        <span class="preview-line"></span>
+      </span>
+      <span class="template-copy">
+        <strong>Single column</strong>
+        <small>Clean, modern and easy to scan.</small>
+        <span class="select-label">Use template</span>
+      </span>
+    </button>
+
+    <button
+      type="button"
+      class="template-option"
+      aria-label="Create a CV with the classic two-column template"
+      (click)="select('classic')"
+    >
+      <span class="template-preview classic-preview" aria-hidden="true">
+        <span class="preview-sidebar">
+          <span class="preview-avatar"></span>
+          <span class="preview-line"></span>
+          <span class="preview-line short"></span>
+          <span class="preview-line"></span>
+        </span>
+        <span class="preview-main">
+          <span class="preview-heading"></span>
+          <span class="preview-subheading"></span>
+          <span class="preview-divider"></span>
+          <span class="preview-section-title"></span>
+          <span class="preview-line wide"></span>
+          <span class="preview-line"></span>
+          <span class="preview-section-title second"></span>
+          <span class="preview-line wide"></span>
+        </span>
+      </span>
+      <span class="template-copy">
+        <strong>Classic</strong>
+        <small>Structured two-column professional layout.</small>
+        <span class="select-label">Use template</span>
+      </span>
+    </button>
+  </div>
+
+  <div class="dialog-actions">
+    <button mat-button type="button" mat-dialog-close>Cancel</button>
+  </div>
+</div>

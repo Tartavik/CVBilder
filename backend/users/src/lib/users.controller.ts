@@ -5,9 +5,11 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Put,
+  UnauthorizedException,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -38,7 +40,7 @@ export class UsersController {
   @Post('login')
   async login(@Body() dto: LoginDto) {
     const user = await this.usersService.login(dto.email, dto.password);
-    if (!user) throw new ConflictException('Invalid email or password');
+    if (!user) throw new UnauthorizedException('Invalid email or password');
     return user;
   }
 
@@ -67,9 +69,23 @@ export class UsersController {
     return this.usersService.getUserCvs(id);
   }
 
-  @Post(':id/cvs')
-  createCv(@Param('id') id: string) {
-    return this.usersService.createCv(id);
+  @Get(':id/cvs/:cvId/library')
+  getCvLibrary(@Param('id') id: string, @Param('cvId') cvId: string) {
+    return this.usersService.getUserCvLibrary(id, cvId);
+  }
+
+  @Post(':id/cvs/:cvId')
+  createCvFromDraft(
+    @Param('id') id: string,
+    @Param('cvId', new ParseUUIDPipe()) cvId: string,
+    @Body() dto: SaveCvDto,
+  ) {
+    return this.usersService.createCvFromDraft(id, cvId, dto);
+  }
+
+  @Get(':id/cv-library')
+  getNewCvLibrary(@Param('id') id: string) {
+    return this.usersService.getUserCvLibrary(id);
   }
 
   @Get(':id/cvs/:cvId')
@@ -96,6 +112,11 @@ export class UsersController {
     return this.usersService.saveCv(id, cvId, dto);
   }
 
+  @Delete(':id/cvs/:cvId')
+  deleteCv(@Param('id') id: string, @Param('cvId') cvId: string) {
+    return this.usersService.deleteCv(id, cvId);
+  }
+
   @Post(':id/cvs/:cvId/skills/icon/generate')
   generateSkillIcon(
     @Param('id') id: string,
@@ -103,6 +124,14 @@ export class UsersController {
     @Body() body: { skillName?: string },
   ) {
     return this.usersService.generateSkillIcon(id, cvId, body?.skillName);
+  }
+
+  @Post(':id/skills/icon/generate')
+  generateUserSkillIcon(
+    @Param('id') id: string,
+    @Body() body: { skillName?: string },
+  ) {
+    return this.usersService.generateUserSkillIcon(id, body?.skillName);
   }
 
   @Post(':id/cvs/:cvId/photo')

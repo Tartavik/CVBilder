@@ -6,3 +6,22 @@
 mat-form-field {
   width: 100%;
 }
+
+.field-shell {
+  position: relative;
+}
+
+.character-counter {
+  position: absolute;
+  z-index: 2;
+  top: 9px;
+  right: 14px;
+  color: var(--app-muted);
+  font-size: var(--app-font-size-sm);
+  line-height: 1;
+  pointer-events: none;
+}
+
+.has-counter input {
+  padding-right: 86px;
+}

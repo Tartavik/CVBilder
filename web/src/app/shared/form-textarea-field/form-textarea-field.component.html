@@ -1,12 +1,18 @@
 @if (formControl(); as control) {
-  <mat-form-field appearance="outline">
-    <mat-label>{{ label() }}</mat-label>
-    <textarea
-      matInput
-      [formControl]="control"
-      [rows]="rows()"
-      [placeholder]="placeholder()"
-    ></textarea>
-    <mat-error appFieldError [control]="control" />
-  </mat-form-field>
+  <div class="field-shell">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ label() }}</mat-label>
+      <textarea
+        matInput
+        [formControl]="control"
+        [rows]="rows()"
+        [placeholder]="placeholder()"
+        [attr.maxlength]="maxLength()"
+      ></textarea>
+      <mat-error appFieldError [control]="control" />
+    </mat-form-field>
+    <span class="character-counter" aria-hidden="true">
+      {{ characterCount(control) }} of {{ maxLength() }}
+    </span>
+  </div>
 }

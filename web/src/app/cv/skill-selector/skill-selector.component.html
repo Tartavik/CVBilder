@@ -15,42 +15,49 @@
 
 <div class="skill-composer">
   <div class="skill-selector-row">
-    <mat-form-field appearance="outline">
-      <input
-        matInput
-        [attr.aria-label]="inputLabel()"
-        [formControl]="skillInput"
-        [matAutocomplete]="skillAuto"
-        [placeholder]="inputLabel()"
-        (input)="onDraftInput()"
-        (keydown.enter)="addSkill()"
-      />
-      @if (hasSkillDraft()) {
-        <button
-          mat-icon-button
-          matSuffix
-          class="danger-icon-button"
-          type="button"
-          aria-label="Clear skill"
-          (click)="clearSkillDraft()"
-        >
-          <app-icon name="delete" />
-        </button>
-      }
-      <mat-autocomplete
-        #skillAuto="matAutocomplete"
-        (optionSelected)="selectSkill($event.option.value)"
-      >
-        @for (option of filteredSkillOptions(); track option.name) {
-          <mat-option [value]="option.name">
-            <div class="skill-option-row">
-              <app-skill-icon [name]="option.name" [icon]="option.icon" />
-              <span>{{ option.name }}</span>
-            </div>
-          </mat-option>
+    <div class="skill-input-shell">
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          [attr.aria-label]="inputLabel()"
+          [formControl]="skillInput"
+          [matAutocomplete]="skillAuto"
+          [placeholder]="inputLabel()"
+          [attr.maxlength]="skillNameLimit"
+          (input)="onDraftInput()"
+          (keydown.enter)="addSkill()"
+        />
+        @if (hasSkillDraft()) {
+          <button
+            mat-icon-button
+            matSuffix
+            class="danger-icon-button"
+            type="button"
+            aria-label="Clear skill"
+            (click)="clearSkillDraft()"
+          >
+            <app-icon name="delete" />
+          </button>
         }
-      </mat-autocomplete>
-    </mat-form-field>
+        <mat-error>Use no more than {{ skillNameLimit }} characters</mat-error>
+        <mat-autocomplete
+          #skillAuto="matAutocomplete"
+          (optionSelected)="selectSkill($event.option.value)"
+        >
+          @for (option of filteredSkillOptions(); track option.name) {
+            <mat-option [value]="option.name">
+              <div class="skill-option-row">
+                <app-skill-icon [name]="option.name" [icon]="option.icon" />
+                <span>{{ option.name }}</span>
+              </div>
+            </mat-option>
+          }
+        </mat-autocomplete>
+      </mat-form-field>
+      <span class="skill-character-counter" aria-hidden="true">
+        {{ skillInput.value.length }} of {{ skillNameLimit }}
+      </span>
+    </div>
     <button mat-stroked-button type="button" (click)="addSkill()">
       <app-icon name="add" />
       {{ addButtonLabel() }}

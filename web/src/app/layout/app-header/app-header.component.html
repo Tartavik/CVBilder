@@ -12,7 +12,25 @@
 
     <nav class="account-navigation" aria-label="Account navigation">
       @if (isLoggedIn()) {
-        <a class="profile-button" routerLink="/home" aria-label="Open your dashboard">
+        <app-dashboard-settings
+          [theme]="theme()"
+          [themeSaving]="themeSaving()"
+          [profileForm]="profileForm"
+          [profileSaving]="profileSaving()"
+          [profileMessage]="profileMessage()"
+          [profileMessageIsError]="profileMessageIsError()"
+          (themeToggle)="toggleTheme()"
+          (profileSave)="saveProfile()"
+          (logoutClick)="logout()"
+        />
+
+        <a
+          class="profile-button"
+          routerLink="/home"
+          aria-label="Open your dashboard"
+          matTooltip="Dashboard"
+          matTooltipPosition="below"
+        >
           <app-icon name="person" />
         </a>
       } @else {

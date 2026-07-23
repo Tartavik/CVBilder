@@ -2,15 +2,17 @@
 
 :host {
   display: block;
-  width: 100%;
-  min-height: 100%;
+  width: 210mm;
+  min-width: 210mm;
+  min-height: 297mm;
+  flex: 0 0 210mm;
 }
 
 .preview-page {
-  width: 100%;
-  min-height: 100%;
+  width: 210mm;
+  min-height: 297mm;
   background: v.$preview-color-paper;
-  padding: clamp(32px, 5vw, 16mm) clamp(24px, 4vw, 14mm);
+  padding: 16mm 14mm;
   font-family: 'Georgia', serif;
   font-size: v.$preview-font-base;
   color: v.$preview-color-text;
@@ -20,6 +22,12 @@
 }
 
 @media print {
+  :host {
+    width: 210mm;
+    min-width: 210mm;
+    min-height: 297mm;
+  }
+
   .preview-page {
     width: 210mm;
     min-height: 297mm;

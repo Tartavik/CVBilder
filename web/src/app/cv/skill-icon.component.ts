@@ -7,7 +7,8 @@ import { getSkillOption } from './skill-catalog';
   template: `
     <span
       class="skill-icon"
-      [style.background]="option().color"
+      [class.skill-icon--image]="imageSrc()"
+      [style.background]="imageSrc() ? 'transparent' : option().color"
       [attr.title]="name()"
       [attr.aria-label]="name()"
       role="img"
@@ -41,9 +42,11 @@ import { getSkillOption } from './skill-catalog';
     }
 
     img {
+      display: block;
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      background: transparent;
+      object-fit: contain;
     }
   `,
 })

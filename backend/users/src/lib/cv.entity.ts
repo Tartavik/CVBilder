@@ -34,6 +34,13 @@ export class CvEntity {
   })
   sectionOrder!: string[];
 
+  @Column({
+    name: 'additional_sections',
+    type: 'jsonb',
+    default: [],
+  })
+  additionalSections!: Array<Record<string, string>>;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

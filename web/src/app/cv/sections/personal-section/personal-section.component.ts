@@ -10,6 +10,10 @@ import {
   SHORT_TEXT_PATTERN,
   STRICT_EMAIL_PATTERN,
 } from '../../../shared/validation-patterns';
+import {
+  CV_FIELD_LIMITS,
+  CV_MIN_TEXT_LENGTH,
+} from '../../cv-field-limits';
 import { CvStore } from '../../cv.store';
 
 @Component({
@@ -41,30 +45,36 @@ export class PersonalSectionComponent implements OnInit {
   form = new FormGroup({
     fullName:  new FormControl('', [
       Validators.required,
-      Validators.minLength(2),
+      Validators.minLength(CV_MIN_TEXT_LENGTH),
+      Validators.maxLength(CV_FIELD_LIMITS.shortText),
       Validators.pattern(SHORT_TEXT_PATTERN),
     ]),
     jobTitle:  new FormControl('', [
       Validators.required,
-      Validators.minLength(2),
+      Validators.minLength(CV_MIN_TEXT_LENGTH),
+      Validators.maxLength(CV_FIELD_LIMITS.shortText),
       Validators.pattern(SHORT_TEXT_PATTERN),
     ]),
     email:     new FormControl('', [
       Validators.required,
+      Validators.maxLength(CV_FIELD_LIMITS.email),
       Validators.pattern(STRICT_EMAIL_PATTERN),
     ]),
     phone:     new FormControl('', [
       Validators.required,
+      Validators.maxLength(CV_FIELD_LIMITS.phone),
       Validators.pattern(PHONE_PATTERN),
     ]),
     city:      new FormControl('', [
       Validators.required,
-      Validators.minLength(2),
+      Validators.minLength(CV_MIN_TEXT_LENGTH),
+      Validators.maxLength(CV_FIELD_LIMITS.shortText),
       Validators.pattern(SHORT_TEXT_PATTERN),
     ]),
     summary:   new FormControl('', [
       Validators.required,
-      Validators.minLength(2),
+      Validators.minLength(CV_MIN_TEXT_LENGTH),
+      Validators.maxLength(CV_FIELD_LIMITS.longText),
     ]),
   });
 

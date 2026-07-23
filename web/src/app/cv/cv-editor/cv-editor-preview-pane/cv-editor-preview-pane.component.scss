@@ -16,9 +16,9 @@
   min-width: 0;
   padding: 32px;
   overflow: auto;
-  background: #ffffff;
-  border-left: none;
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
+  background: var(--app-workspace-bg);
+  border-left: 1px solid var(--app-border);
+  box-shadow: var(--app-shadow);
 }
 
 .preview-scroll {
@@ -32,6 +32,9 @@
 .preview-scroll app-cv-preview,
 .preview-scroll app-cv-preview-classic {
   display: block;
-  width: 100%;
-  min-height: 100%;
+  width: 210mm;
+  min-width: 210mm;
+  min-height: 297mm;
+  flex: 0 0 210mm;
+  margin: 0 auto;
 }

@@ -15,10 +15,11 @@
 
     <app-cv-editor-sidebar
       [cvId]="cvId"
+      [deleting]="deleting()"
       [activeSection]="activeSection()"
       (activeSectionChange)="activeSection.set($event)"
-      (activeTemplate)="setTemplate($event)"
       (save)="saveCv()"
+      (deleteCv)="confirmDeleteCv()"
       (exportPdf)="exportPdf()"
       (logout)="logout()"
     />

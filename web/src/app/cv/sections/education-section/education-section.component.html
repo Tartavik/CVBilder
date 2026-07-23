@@ -1,3 +1,22 @@
+@if (reusableEducation().length) {
+  <div class="reuse-entry-row">
+    <mat-form-field appearance="outline">
+      <mat-label>Reuse saved education</mat-label>
+      <mat-select
+        [formControl]="reusableSelection"
+        (selectionChange)="addReusableEducation($event.value)"
+      >
+        @for (item of reusableEducation(); track item.id) {
+          <mat-option [value]="item.id">
+            {{ item.institution }} — {{ item.degree }} ({{ item.year }})
+          </mat-option>
+        }
+      </mat-select>
+      <mat-hint>Select education from another CV to fill every field</mat-hint>
+    </mat-form-field>
+  </div>
+}
+
 @for (group of groups; track $index; let i = $index) {
   <div [formGroup]="group" class="edu-item">
     <div class="field-row">

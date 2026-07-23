@@ -2,7 +2,7 @@ import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AppIconComponent } from '../../../shared/app-icon.component';
-import { CvSection, CvStore, CvTemplate } from '../../cv.store';
+import { CvSection, CvStore } from '../../cv.store';
 
 @Component({
   selector: 'app-cv-editor-sidebar',
@@ -16,18 +16,19 @@ export class CvEditorSidebarComponent {
 
   readonly activeSection = input.required<CvSection['id']>();
   readonly cvId = input.required<string>();
+  readonly deleting = input(false);
   readonly activeSectionChange = output<CvSection['id']>();
-  readonly activeTemplate = output<CvTemplate>();
   readonly save = output<void>();
+  readonly deleteCv = output<void>();
   readonly exportPdf = output<void>();
   readonly logout = output<void>();
 
   readonly cv = this.store.cv;
   readonly saving = this.store.loading;
+  readonly isDraft = this.store.isDraft;
   readonly invalidSections = this.store.invalidSections;
 
   readonly sectionsOpen = signal(true);
-  readonly isTemplateSectionOpen = signal(true);
   readonly actionsOpen = signal(true);
 
   readonly singleDraggableSections = computed<CvSection['id'][]>(() =>
@@ -56,10 +57,6 @@ export class CvEditorSidebarComponent {
 
   setActive(sectionId: CvSection['id']): void {
     this.activeSectionChange.emit(sectionId);
-  }
-
-  selectTemplate(template: CvTemplate): void {    
-    this.activeTemplate.emit(template);
   }
 
   isInvalid(sectionId: CvSection['id']): boolean {

@@ -12,6 +12,10 @@
     linear-gradient(90deg, rgb(239 249 255 / 82%), rgb(255 255 255 / 98%) 24%, #fff 76%, rgb(239 246 255 / 76%));
   box-shadow: 0 6px 24px rgb(15 23 42 / 6%);
   backdrop-filter: blur(14px);
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 .site-header__inner {
@@ -31,7 +35,10 @@
   overflow: hidden;
   flex: 0 0 auto;
   border-radius: 10px;
-  transition: transform 0.2s ease;
+  transition:
+    background-color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.2s ease;
 }
 
 .brand-logo__image {
@@ -48,6 +55,7 @@
 .account-navigation {
   display: flex;
   align-items: center;
+  gap: 10px;
 }
 
 .login-button {
@@ -109,6 +117,67 @@
   transform: translateY(-2px);
 }
 
+:host-context(body[data-app-theme='dark']) {
+  .site-header {
+    border-bottom-color: rgb(141 211 255 / 18%);
+    background:
+      linear-gradient(90deg, rgb(2 6 23 / 98%), rgb(17 24 39 / 98%) 36%, rgb(22 32 51 / 98%));
+    box-shadow: 0 8px 28px rgb(0 0 0 / 32%);
+  }
+
+  .brand-logo {
+    background: rgb(255 255 255 / 96%);
+    box-shadow:
+      0 0 0 1px rgb(141 211 255 / 16%),
+      0 8px 20px rgb(0 0 0 / 22%);
+  }
+
+  .login-button {
+    border-color: rgb(141 211 255 / 42%);
+    background: linear-gradient(135deg, #3b82f6, #3159dc);
+    box-shadow:
+      0 10px 26px rgb(37 99 235 / 34%),
+      inset 0 1px 0 rgb(255 255 255 / 18%);
+  }
+
+  .login-button:hover {
+    border-color: rgb(141 211 255 / 68%);
+    background: linear-gradient(135deg, #4b91ff, #3b63e8);
+    box-shadow:
+      0 13px 30px rgb(37 99 235 / 42%),
+      inset 0 1px 0 rgb(255 255 255 / 24%);
+  }
+
+  .profile-button {
+    border-color: rgb(141 211 255 / 52%);
+    background: linear-gradient(145deg, #263653, #111827);
+    color: #b9e4ff;
+    box-shadow:
+      0 10px 26px rgb(0 0 0 / 34%),
+      inset 0 1px 0 rgb(255 255 255 / 10%);
+  }
+
+  .profile-button app-icon {
+    color: #b9e4ff;
+    filter: drop-shadow(0 0 5px rgb(141 211 255 / 28%));
+  }
+
+  .profile-button:hover {
+    border-color: rgb(141 211 255 / 78%);
+    background: linear-gradient(145deg, #314566, #172033);
+    box-shadow:
+      0 13px 30px rgb(0 0 0 / 42%),
+      0 0 18px rgb(141 211 255 / 10%),
+      inset 0 1px 0 rgb(255 255 255 / 14%);
+  }
+
+  .login-button:focus-visible,
+  .profile-button:focus-visible,
+  .brand-logo:focus-visible {
+    outline-color: rgb(141 211 255 / 62%);
+  }
+}
+
 .login-button:focus-visible,
 .profile-button:focus-visible,
 .brand-logo:focus-visible {
@@ -145,5 +214,9 @@
   .profile-button {
     width: 44px;
     height: 44px;
+  }
+
+  .account-navigation {
+    gap: 6px;
   }
 }

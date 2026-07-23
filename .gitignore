@@ -33,6 +33,9 @@ node_modules
 npm-debug.log
 yarn-error.log
 testem.log
+*.log
+/playwright-report/
+/test-results/
 /typings
 
 # System Files

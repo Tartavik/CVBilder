@@ -120,6 +120,35 @@
   margin: 8px 0;
 }
 
+.full-width {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.login-link {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--app-border);
+  text-align: center;
+
+  p {
+    margin: 0;
+    font-size: v.$font-size-md;
+  }
+
+  a {
+    border-bottom: 2px solid transparent;
+    text-decoration: none;
+    transform: none !important;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+
+  a:hover {
+    border-bottom-color: var(--app-sidebar-accent);
+    color: var(--app-sidebar-accent);
+  }
+}
+
 @keyframes rise-in {
   from {
     opacity: 0;

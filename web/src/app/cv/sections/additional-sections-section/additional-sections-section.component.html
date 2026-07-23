@@ -1,0 +1,336 @@
+<p class="section-hint">
+  Add the sections that fit your profession and this specific application.
+</p>
+
+<div class="additional-section-add">
+  <mat-form-field appearance="outline">
+    <mat-label>Section type</mat-label>
+    <mat-select [formControl]="selectedType">
+      @for (option of options; track option.type) {
+        <mat-option [value]="option.type">{{ option.label }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  <button
+    mat-stroked-button
+    type="button"
+    [disabled]="!selectedType.value"
+    (click)="add()"
+  >
+    <app-icon name="add" />
+    Add entry
+  </button>
+</div>
+
+@for (group of groups; track $index; let i = $index) {
+  <article [formGroup]="group" class="additional-entry-item">
+    <header class="additional-entry-header">
+      <div>
+        <span class="additional-entry-type">{{ sectionLabel(typeAt(i)) }}</span>
+        <h3>{{ group.get('title')?.value || titleLabel(typeAt(i)) }}</h3>
+      </div>
+      <button
+        mat-icon-button
+        class="danger-icon-button"
+        color="warn"
+        type="button"
+        (click)="remove(i)"
+        [attr.aria-label]="'Remove ' + sectionLabel(typeAt(i)) + ' entry'"
+      >
+        <app-icon name="delete" />
+      </button>
+    </header>
+
+    @if (typeAt(i) === 'custom') {
+      <app-form-text-field
+        [control]="group.get('sectionTitle')"
+        label="Section name"
+        placeholder="e.g. Conferences"
+      />
+    }
+
+    <app-form-text-field
+      [control]="group.get('title')"
+      [label]="titleLabel(typeAt(i))"
+      [placeholder]="
+        typeAt(i) === 'language'
+          ? 'English'
+          : typeAt(i) === 'link'
+            ? 'GitHub'
+            : 'Entry title'
+      "
+    />
+
+    @switch (typeAt(i)) {
+      @case ('language') {
+        <mat-form-field appearance="outline">
+          <mat-label>Level</mat-label>
+          <mat-select formControlName="level">
+            @for (level of languageLevels; track level) {
+              <mat-option [value]="level">{{ level }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+
+      @case ('project') {
+        <app-form-text-field
+          [control]="group.get('subtitle')"
+          label="Role or technologies"
+          placeholder="Lead developer · Angular, NestJS"
+        />
+        <div class="field-row">
+          <app-form-text-field
+            [control]="group.get('startDate')"
+            label="Start"
+            type="month"
+          />
+          <app-form-text-field
+            [control]="group.get('endDate')"
+            label="End"
+            type="month"
+          />
+        </div>
+        <app-form-text-field
+          [control]="group.get('url')"
+          label="Project URL"
+          type="url"
+          placeholder="https://example.com"
+          patternMessage="Enter a valid HTTP or HTTPS URL"
+        />
+        <app-form-textarea-field
+          [control]="group.get('description')"
+          label="Description"
+          placeholder="What you built and the result..."
+        />
+      }
+
+      @case ('certification') {
+        <div class="field-row">
+          <app-form-text-field
+            [control]="group.get('subtitle')"
+            label="Issuer"
+            placeholder="Google"
+          />
+          <app-form-text-field
+            [control]="group.get('startDate')"
+            label="Issued"
+            type="month"
+          />
+        </div>
+        <app-form-text-field
+          [control]="group.get('url')"
+          label="Credential URL"
+          type="url"
+          placeholder="https://..."
+          patternMessage="Enter a valid HTTP or HTTPS URL"
+        />
+        <app-form-textarea-field
+          [control]="group.get('description')"
+          label="Details"
+        />
+      }
+
+      @case ('link') {
+        <app-form-text-field
+          [control]="group.get('url')"
+          label="URL"
+          type="url"
+          placeholder="https://..."
+          patternMessage="Enter a valid HTTP or HTTPS URL"
+        />
+        <app-form-text-field
+          [control]="group.get('subtitle')"
+          label="Description"
+          placeholder="Portfolio, GitHub, LinkedIn..."
+        />
+      }
+
+      @case ('award') {
+        <div class="field-row">
+          <app-form-text-field
+            [control]="group.get('subtitle')"
+            label="Issuer"
+          />
+          <app-form-text-field
+            [control]="group.get('startDate')"
+            label="Date"
+            type="month"
+          />
+        </div>
+        <app-form-textarea-field
+          [control]="group.get('description')"
+          label="Details"
+        />
+      }
+
+      @case ('volunteering') {
+        <app-form-text-field
+          [control]="group.get('subtitle')"
+          label="Role"
+        />
+        <div class="field-row">
+          <app-form-text-field
+            [control]="group.get('startDate')"
+            label="Start"
+            type="month"
+          />
+          <app-form-text-field
+            [control]="group.get('endDate')"
+            label="End"
+            type="month"
+          />
+        </div>
+        <app-form-text-field
+          [control]="group.get('location')"
+          label="Location"
+        />
+        <app-form-textarea-field
+          [control]="group.get('description')"
+          label="Contribution"
+        />
+      }
+
+      @case ('publication') {
+        <div class="field-row">
+          <app-form-text-field
+            [control]="group.get('subtitle')"
+            label="Publisher"
+          />
+          <app-form-text-field
+            [control]="group.get('startDate')"
+            label="Published"
+            type="month"
+          />
+        </div>
+        <app-form-text-field
+          [control]="group.get('url')"
+          label="Publication URL"
+          type="url"
+          placeholder="https://..."
+          patternMessage="Enter a valid HTTP or HTTPS URL"
+        />
+        <app-form-textarea-field
+          [control]="group.get('description')"
+          label="Summary"
+        />
+      }
+
+      @case ('license') {
+        <div class="field-row">
+          <app-form-text-field
+            [control]="group.get('subtitle')"
+            label="Issuing organization"
+          />
+          <app-form-text-field
+            [control]="group.get('startDate')"
+            label="Issued"
+            type="month"
+          />
+          <app-form-text-field
+            [control]="group.get('endDate')"
+            label="Expires"
+            type="month"
+          />
+        </div>
+        <app-form-text-field
+          [control]="group.get('url')"
+          label="Verification URL"
+          type="url"
+          placeholder="https://..."
+          patternMessage="Enter a valid HTTP or HTTPS URL"
+        />
+      }
+
+      @case ('membership') {
+        <app-form-text-field
+          [control]="group.get('subtitle')"
+          label="Role or membership type"
+        />
+        <div class="field-row">
+          <app-form-text-field
+            [control]="group.get('startDate')"
+            label="Start"
+            type="month"
+          />
+          <app-form-text-field
+            [control]="group.get('endDate')"
+            label="End"
+            type="month"
+          />
+        </div>
+        <app-form-textarea-field
+          [control]="group.get('description')"
+          label="Details"
+        />
+      }
+
+      @case ('reference') {
+        <app-form-text-field
+          [control]="group.get('subtitle')"
+          label="Role and company"
+          placeholder="Engineering Manager at..."
+        />
+        <app-form-textarea-field
+          [control]="group.get('description')"
+          label="Contact details or note"
+          placeholder="Available on request"
+        />
+      }
+
+      @case ('careerBreak') {
+        <div class="field-row">
+          <app-form-text-field
+            [control]="group.get('startDate')"
+            label="Start"
+            type="month"
+          />
+          <app-form-text-field
+            [control]="group.get('endDate')"
+            label="End"
+            type="month"
+          />
+        </div>
+        <app-form-textarea-field
+          [control]="group.get('description')"
+          label="Description"
+          placeholder="Briefly explain the period and relevant activities"
+        />
+      }
+
+      @case ('custom') {
+        <app-form-text-field
+          [control]="group.get('subtitle')"
+          label="Subtitle"
+        />
+        <div class="field-row">
+          <app-form-text-field
+            [control]="group.get('startDate')"
+            label="Start or date"
+            type="month"
+          />
+          <app-form-text-field
+            [control]="group.get('endDate')"
+            label="End"
+            type="month"
+          />
+        </div>
+        <app-form-text-field
+          [control]="group.get('url')"
+          label="URL"
+          type="url"
+          placeholder="https://..."
+          patternMessage="Enter a valid HTTP or HTTPS URL"
+        />
+        <app-form-textarea-field
+          [control]="group.get('description')"
+          label="Description"
+        />
+      }
+    }
+  </article>
+}
+
+@if (!groups.length) {
+  <p class="empty">No additional sections added yet.</p>
+}

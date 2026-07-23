@@ -1,13 +1,19 @@
-import { Component, DestroyRef, OnInit, effect, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, effect, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
 import { debounceTime } from 'rxjs';
 import { AppIconComponent } from '../../../shared/app-icon.component';
 import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';
 import { FormTextFieldComponent } from '../../../shared/form-text-field/form-text-field.component';
 import { SHORT_TEXT_PATTERN } from '../../../shared/validation-patterns';
+import {
+  CV_FIELD_LIMITS,
+  CV_MIN_TEXT_LENGTH,
+} from '../../cv-field-limits';
 import { CvStore, EducationItem } from '../../cv.store';
 
 @Component({
@@ -16,6 +22,8 @@ import { CvStore, EducationItem } from '../../cv.store';
   imports: [
     ReactiveFormsModule,
     MatButtonModule,
+    MatFormFieldModule,
+    MatSelectModule,
     AppIconComponent,
     FormTextFieldComponent,
   ],
@@ -35,6 +43,8 @@ export class EducationSectionComponent implements OnInit {
   });
 
   readonly form = new FormArray<FormGroup>([]);
+  readonly reusableEducation = computed(() => this.store.reusableEducation());
+  readonly reusableSelection = new FormControl<string | null>(null);
 
   get groups(): FormGroup[] {
     return this.form.controls as FormGroup[];
@@ -60,28 +70,43 @@ export class EducationSectionComponent implements OnInit {
     return new FormGroup({
       institution: new FormControl(item?.institution ?? '', [
         Validators.required,
-        Validators.minLength(2),
+        Validators.minLength(CV_MIN_TEXT_LENGTH),
+        Validators.maxLength(CV_FIELD_LIMITS.shortText),
         Validators.pattern(SHORT_TEXT_PATTERN),
       ]),
       degree:      new FormControl(item?.degree      ?? '', [
         Validators.required,
-        Validators.minLength(2),
+        Validators.minLength(CV_MIN_TEXT_LENGTH),
+        Validators.maxLength(CV_FIELD_LIMITS.shortText),
         Validators.pattern(SHORT_TEXT_PATTERN),
       ]),
       field:       new FormControl(item?.field       ?? '', [
         Validators.required,
-        Validators.minLength(2),
+        Validators.minLength(CV_MIN_TEXT_LENGTH),
+        Validators.maxLength(CV_FIELD_LIMITS.shortText),
         Validators.pattern(SHORT_TEXT_PATTERN),
       ]),
       year:        new FormControl(item?.year        ?? '', [
         Validators.required,
+        Validators.maxLength(4),
         Validators.pattern(/^\d{4}$/),
       ]),
     });
   }
 
   add() {
-    this.store.addEducation();
+    this.appendEducation();
+  }
+
+  addReusableEducation(id: string | null): void {
+    const source = this.reusableEducation().find((item) => item.id === id);
+    if (!source) return;
+    this.appendEducation(source);
+    this.reusableSelection.reset(null, { emitEvent: false });
+  }
+
+  private appendEducation(source?: Partial<EducationItem>): void {
+    this.store.addEducation(source);
     const items = this.store.cv().education;
     const newItem = items[items.length - 1];
     this.form.push(this.createGroup(newItem), { emitEvent: false });

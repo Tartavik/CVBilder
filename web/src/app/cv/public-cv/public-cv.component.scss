@@ -2,7 +2,7 @@
 @use 'mixins' as m;
 
 .public-page {
-  width: min(1000px, calc(100% - 32px));
+  width: min(210mm, calc(100% - 32px));
   margin: 0 auto;
   padding: 24px 0 64px;
 }
@@ -30,8 +30,19 @@
 }
 
 .preview-wrapper {
-  display: flex;
-  justify-content: center;
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 16px;
+
+  app-cv-preview,
+  app-cv-preview-classic {
+    display: block;
+    width: 210mm;
+    min-width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+  }
 }
 
 .state {

@@ -90,6 +90,13 @@
           </div>
         }
       }
+      @case ('additional') {
+        @if (cv().additionalSections.length) {
+          <app-additional-sections-preview
+            [items]="cv().additionalSections"
+          />
+        }
+      }
     }
   }
 </div>

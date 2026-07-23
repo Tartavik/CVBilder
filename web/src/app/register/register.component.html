@@ -31,8 +31,23 @@
               }
             </mat-form-field>
 
-            @if (error) {
-              <p class="error">{{ error }}</p>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Confirm password</mat-label>
+              <input
+                matInput
+                type="password"
+                formControlName="confirmPassword"
+                placeholder="••••••••"
+              />
+              @if (form.controls.confirmPassword.hasError('required')) {
+                <mat-error>Confirm your password</mat-error>
+              } @else if (form.controls.confirmPassword.hasError('passwordMismatch')) {
+                <mat-error>Passwords do not match</mat-error>
+              }
+            </mat-form-field>
+
+            @if (error()) {
+              <p class="error" role="alert">{{ error() }}</p>
             }
 
             <button
@@ -40,15 +55,22 @@
               color="primary"
               type="submit"
               class="full-width"
-              [disabled]="form.invalid || loading"
+              [disabled]="form.invalid || loading()"
             >
-              @if (loading) {
+              @if (loading()) {
                 <mat-spinner diameter="20" />
               } @else {
                 Create account
               }
             </button>
           </form>
+
+          <div class="login-link">
+            <p>
+              Already have an account?
+              <a mat-button color="accent" routerLink="/login">Back to login</a>
+            </p>
+          </div>
         </mat-card-content>
       </mat-card>
     </div>

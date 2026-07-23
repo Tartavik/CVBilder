@@ -15,6 +15,7 @@ export class FieldErrorDirective {
   private readonly errorMessages: Array<[string, () => string]> = [
     ['required', () => this.requiredMessage()],
     ['minlength', () => this.getMinLengthMessage()],
+    ['maxlength', () => this.getMaxLengthMessage()],
     ['pattern', () => this.patternMessage()],
     ['matDatepickerParse', () => 'Enter a valid date'],
     ['startDateInFuture', () => 'Start date cannot be in the future'],
@@ -47,5 +48,10 @@ export class FieldErrorDirective {
   private getMinLengthMessage(): string {
     const requiredLength = this.control()?.errors?.['minlength']?.requiredLength;
     return `Use at least ${requiredLength} characters`;
+  }
+
+  private getMaxLengthMessage(): string {
+    const requiredLength = this.control()?.errors?.['maxlength']?.requiredLength;
+    return `Use no more than ${requiredLength} characters`;
   }
 }

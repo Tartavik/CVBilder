@@ -7,11 +7,11 @@
   --accent: var(--app-sidebar-accent);
   --accent-soft: #{v.$color-primary-soft};
   --surface: var(--app-surface);
-  --surface-soft: #{v.$color-surface-soft};
+  --surface-soft: var(--app-surface-soft);
   --panel: linear-gradient(135deg, #{v.$color-primary-soft}, #{v.$color-surface-soft});
-  --border: #{v.$color-border};
+  --border: var(--app-border);
   --card-border: var(--app-border);
-  --shadow: #{v.$shadow-sm};
+  --shadow: var(--app-shadow);
   --empty: var(--app-surface);
 
   position: relative;
@@ -31,58 +31,19 @@
     content: "";
     pointer-events: none;
   }
-
-  &.dark {
-    --text: var(--app-text);
-    --muted: var(--app-muted);
-    --accent: var(--app-sidebar-accent);
-    --accent-soft: #{v.$color-dark-border};
-    --surface: var(--app-surface);
-    --surface-soft: var(--app-surface);
-    --panel: #{v.$color-dark-surface-soft};
-    --border: var(--app-border-strong);
-    --card-border: var(--app-border);
-    --shadow: #{v.$shadow-lg};
-    --empty: #{v.$color-dark-page-bg};
-  }
 }
 
-.dashboard-header,
+:host-context(body[data-app-theme='dark']) .dashboard {
+  --accent-soft: #{v.$color-dark-border};
+  --panel: #{v.$color-dark-surface-soft};
+  --border: var(--app-border-strong);
+  --empty: #{v.$color-dark-page-bg};
+}
+
 .create-panel,
 .section-heading,
 mat-card-actions {
   @include m.flex-between;
-}
-
-.dashboard-header {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 16px;
-  margin-bottom: 32px;
-  padding: 28px 30px;
-  background: linear-gradient(180deg, rgba(56, 184, 120, 0.08), rgba(67, 97, 238, 0.08));
-  border: 1px solid rgba(56, 184, 120, 0.16);
-  border-radius: 28px;
-  color: var(--text);
-}
-
-.dashboard-header__brand {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.dashboard-header h1 {
-  margin: 0;
-  font-size: 2rem;
-}
-
-.dashboard-tools {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
 }
 
 .create-panel {
@@ -110,7 +71,6 @@ mat-card-actions {
   text-transform: uppercase;
 }
 
-.subtitle,
 .create-panel p,
 .section-heading p,
 .cv-card p {
@@ -241,6 +201,20 @@ mat-card-actions {
   app-icon {
     margin-right: 8px;
   }
+
+  mat-card-actions {
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .delete-action {
+    color: v.$color-danger;
+  }
+
+  .public-link {
+    margin-left: auto;
+  }
 }
 
 .public-card {
@@ -264,15 +238,9 @@ mat-card-actions {
 }
 
 @media (max-width: v.$breakpoint-mobile) {
-  .dashboard-header,
   .create-panel {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .dashboard-tools {
-    width: 100%;
-    flex-wrap: wrap;
   }
 
   .skill-search {

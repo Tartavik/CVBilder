@@ -30,8 +30,8 @@
               }
             </mat-form-field>
 
-            @if (error) {
-              <p class="error">{{ error }}</p>
+            @if (error()) {
+              <p class="error" role="alert">{{ error() }}</p>
             }
 
             <button
@@ -39,9 +39,9 @@
               color="primary"
               type="submit"
               class="full-width"
-              [disabled]="form.invalid || loading"
+              [disabled]="form.invalid || loading()"
             >
-              @if (loading) {
+              @if (loading()) {
                 <mat-spinner diameter="20" />
               } @else {
                 Login

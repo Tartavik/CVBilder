@@ -1,9 +1,14 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'crypto';
 import { mkdir, unlink, writeFile } from 'fs/promises';
 import { join } from 'path';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { ProfileEntity } from './profile.entity';
 import { SettingsEntity } from './settings.entity';
 import { UserEntity } from './user.entity';
@@ -16,6 +21,7 @@ import { UserSkillEntity } from './user-skill.entity';
 import { PersonalDetailEntity } from './personalDetail.entity';
 import { AiIconService } from './ai-icon.service';
 import {
+  AdditionalSectionItemDto,
   EducationItemDto,
   ExperienceItemDto,
   ExperienceSkillDto,
@@ -28,12 +34,36 @@ const DEFAULT_SECTION_ORDER = [
   'experience',
   'education',
   'skills',
+  'additional',
   'details',
 ];
 const VALID_SECTION_IDS = new Set(DEFAULT_SECTION_ORDER);
+const ADDITIONAL_SECTION_TYPES = new Set([
+  'language',
+  'project',
+  'certification',
+  'link',
+  'award',
+  'volunteering',
+  'publication',
+  'license',
+  'membership',
+  'reference',
+  'careerBreak',
+  'custom',
+]);
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PHONE_PATTERN = /^\+[1-9]\d{9,14}$/;
 const SHORT_TEXT_PATTERN = /^[\p{L}][\p{L} .,'+#&-]*$/u;
+const CV_MIN_TEXT_LENGTH = 2;
+const CV_FIELD_LIMITS = {
+  shortText: 120,
+  longText: 500,
+  email: 120,
+  phone: 16,
+  skill: 50,
+  url: 2048,
+} as const;
 const PHOTO_MIME_TYPES = new Map([
   ['image/jpeg', '.jpg'],
   ['image/png', '.png'],
@@ -160,20 +190,6 @@ export class UsersService {
     return this.settingsRepo.save(settings);
   }
 
-  async createCv(userId: string) {
-    const user = await this.findById(userId);
-    const cv = await this.cvRepo.save(
-      this.cvRepo.create({
-        user,
-        title: 'Untitled CV',
-        template: 'single',
-        experienceSkillMode: 'text',
-        sectionOrder: [...DEFAULT_SECTION_ORDER],
-      }),
-    );
-    return this.toCvSummary(cv, user);
-  }
-
   async getUserSkills(userId: string): Promise<Array<{ name: string; icon: string | null }>> {
     const user = await this.findById(userId);
     try {
@@ -186,6 +202,125 @@ export class UsersService {
       if (this.isMissingUserSkillsTable(error)) return [];
       throw error;
     }
+  }
+
+  async getUserCvLibrary(userId: string, cvId?: string) {
+    if (cvId) {
+      const cv = await this.cvRepo.findOne({
+        where: { id: cvId, user: { id: userId } },
+      });
+      if (!cv) throw new NotFoundException(`CV ${cvId} not found`);
+    } else {
+      await this.findById(userId);
+    }
+
+    const experienceQuery = this.experienceRepo
+      .createQueryBuilder('experience')
+      .innerJoin('experience.cv', 'cv')
+      .innerJoin('cv.user', 'user')
+      .where('user.id = :userId', { userId })
+      .orderBy('experience.createdAt', 'DESC');
+    const educationQuery = this.educationRepo
+      .createQueryBuilder('education')
+      .innerJoin('education.cv', 'cv')
+      .innerJoin('cv.user', 'user')
+      .where('user.id = :userId', { userId })
+      .orderBy('education.createdAt', 'DESC');
+
+    if (cvId) {
+      experienceQuery.andWhere('cv.id != :cvId', { cvId });
+      educationQuery.andWhere('cv.id != :cvId', { cvId });
+    }
+
+    const [experiences, education] = await Promise.all([
+      experienceQuery.getMany(),
+      educationQuery.getMany(),
+    ]);
+
+    const experienceSkills = experiences.length
+      ? await this.experienceSkillRepo.find({
+          where: { experience: { id: In(experiences.map((item) => item.id)) } },
+          relations: ['experience'],
+          order: { createdAt: 'ASC' },
+        })
+      : [];
+    const skillsByExperience = new Map<
+      string,
+      Array<{ name: string; icon: string | null }>
+    >();
+    experienceSkills.forEach((skill) => {
+      const skills = skillsByExperience.get(skill.experience.id) ?? [];
+      skills.push({ name: skill.name, icon: skill.icon });
+      skillsByExperience.set(skill.experience.id, skills);
+    });
+
+    const uniqueExperiences = new Map<
+      string,
+      {
+        id: string;
+        company: string;
+        position: string;
+        startDate: string;
+        endDate: string;
+        current: boolean;
+        description: string;
+        skills: Array<{ name: string; icon: string | null }>;
+      }
+    >();
+    experiences.forEach((experience) => {
+      const startDate = this.toDateOnly(experience.startDate);
+      const endDate = this.toDateOnly(experience.endDate);
+      const key = this.createLibraryKey([
+        experience.companyName,
+        experience.position,
+        startDate,
+        endDate,
+      ]);
+      if (uniqueExperiences.has(key)) return;
+      uniqueExperiences.set(key, {
+        id: experience.id,
+        company: experience.companyName,
+        position: experience.position,
+        startDate,
+        endDate,
+        current: !experience.endDate,
+        description: experience.description || '',
+        skills: skillsByExperience.get(experience.id) ?? [],
+      });
+    });
+
+    const uniqueEducation = new Map<
+      string,
+      {
+        id: string;
+        institution: string;
+        degree: string;
+        field: string;
+        year: string;
+      }
+    >();
+    education.forEach((item) => {
+      const year = item.graduationYear?.toString() || '';
+      const key = this.createLibraryKey([
+        item.name,
+        item.degree,
+        item.description || '',
+        year,
+      ]);
+      if (uniqueEducation.has(key)) return;
+      uniqueEducation.set(key, {
+        id: item.id,
+        institution: item.name,
+        degree: item.degree,
+        field: item.description || '',
+        year,
+      });
+    });
+
+    return {
+      experience: [...uniqueExperiences.values()],
+      education: [...uniqueEducation.values()],
+    };
   }
 
   async getUserCvs(userId: string) {
@@ -248,6 +383,38 @@ export class UsersService {
   }
 
   async saveCv(userId: string, cvId: string, dto: SaveCvDto) {
+    return this.persistCv(userId, cvId, dto, false);
+  }
+
+  async createCvFromDraft(userId: string, cvId: string, dto: SaveCvDto) {
+    return this.persistCv(userId, cvId, dto, true);
+  }
+
+  async deleteCv(
+    userId: string,
+    cvId: string,
+  ): Promise<{ success: true }> {
+    const cv = await this.cvRepo.findOne({
+      where: { id: cvId, user: { id: userId } },
+    });
+    if (!cv) throw new NotFoundException(`CV ${cvId} not found`);
+
+    const personalDetail = await this.personalDetailRepo.findOne({
+      where: { cv: { id: cvId } },
+    });
+    const photoUrl = personalDetail?.photoUrl ?? null;
+
+    await this.cvRepo.remove(cv);
+    await this.removePhotoFile(photoUrl);
+    return { success: true };
+  }
+
+  private async persistCv(
+    userId: string,
+    cvId: string,
+    dto: SaveCvDto,
+    createNew: boolean,
+  ) {
     this.validateCv(dto);
     const sectionOrder = this.normalizeSectionOrder(dto.sectionOrder);
     const template = dto.template ?? 'single';
@@ -269,12 +436,29 @@ export class UsersService {
       let cv = await cvRepo.findOne({
         where: { id: cvId, user: { id: userId } },
       });
+      if (createNew && cv) {
+        throw new ConflictException(`CV ${cvId} already exists`);
+      }
+      if (!cv && createNew) {
+        cv = cvRepo.create({
+          id: cvId,
+          user,
+          title: 'Untitled CV',
+          template,
+          experienceSkillMode: 'text',
+          sectionOrder: [...DEFAULT_SECTION_ORDER],
+          additionalSections: [],
+        });
+      }
       if (!cv) throw new NotFoundException(`CV ${cvId} not found`);
 
       cv.title = this.getCvTitle(dto, cv.title);
       cv.template = template;
       cv.experienceSkillMode = dto.experienceSkillMode ?? 'text';
       cv.sectionOrder = sectionOrder;
+      cv.additionalSections = this.normalizeAdditionalSections(
+        dto.additionalSections ?? [],
+      );
       cv = await cvRepo.save(cv);
 
       const personal = dto.personal;
@@ -447,6 +631,7 @@ export class UsersService {
         field: item.description || '',
         year: item.graduationYear?.toString() || '',
       })),
+      additionalSections: cv.additionalSections ?? [],
       generalSkills: generalSkills.map((skill) => skill.name),
       experienceSkillMode: cv.experienceSkillMode,
       sectionOrder: cv.sectionOrder,
@@ -459,15 +644,27 @@ export class UsersService {
     cvId: string,
     skillName?: string,
   ): Promise<{ icon: string; source: 'generated' | 'found' }> {
-    const trimmedName = skillName?.trim();
-    if (!trimmedName) {
-      throw new BadRequestException('Skill name is required');
-    }
-
     const cv = await this.cvRepo.findOne({
       where: { id: cvId, user: { id: userId } },
     });
     if (!cv) throw new NotFoundException(`CV ${cvId} not found`);
+
+    return this.generateUserSkillIcon(userId, skillName);
+  }
+
+  async generateUserSkillIcon(
+    userId: string,
+    skillName?: string,
+  ): Promise<{ icon: string; source: 'generated' | 'found' }> {
+    const trimmedName = skillName?.trim();
+    if (!trimmedName) {
+      throw new BadRequestException('Skill name is required');
+    }
+    if (trimmedName.length > CV_FIELD_LIMITS.skill) {
+      throw new BadRequestException(
+        `Skill name must be ${CV_FIELD_LIMITS.skill} characters or fewer`,
+      );
+    }
 
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException(`User ${userId} not found`);
@@ -560,6 +757,8 @@ export class UsersService {
       !dto?.personal ||
       !Array.isArray(dto.experience) ||
       !Array.isArray(dto.education) ||
+      (dto.additionalSections !== undefined &&
+        !Array.isArray(dto.additionalSections)) ||
       (dto.generalSkills !== undefined &&
         !Array.isArray(dto.generalSkills)) ||
       (dto.sectionOrder !== undefined && !Array.isArray(dto.sectionOrder))
@@ -584,20 +783,29 @@ export class UsersService {
     dto.education.forEach((education, index) =>
       this.validateEducation(education, index),
     );
+    dto.additionalSections?.forEach((item, index) =>
+      this.validateAdditionalSection(item, index),
+    );
+    this.validateSkillNames(dto.generalSkills ?? [], 'General skills');
   }
 
   private validatePersonal(personal: PersonalDataDto): void {
-    const requiredFields: Array<[keyof PersonalDataDto, string, boolean?]> = [
-      ['fullName', 'Full name'],
-      ['jobTitle', 'Job title'],
-      ['email', 'Email', false],
-      ['phone', 'Phone', false],
-      ['city', 'City'],
-      ['summary', 'Summary', false],
+    const requiredFields: Array<
+      [keyof PersonalDataDto, string, boolean, number]
+    > = [
+      ['fullName', 'Full name', true, CV_FIELD_LIMITS.shortText],
+      ['jobTitle', 'Job title', true, CV_FIELD_LIMITS.shortText],
+      ['email', 'Email', false, CV_FIELD_LIMITS.email],
+      ['phone', 'Phone', false, CV_FIELD_LIMITS.phone],
+      ['city', 'City', true, CV_FIELD_LIMITS.shortText],
+      ['summary', 'Summary', false, CV_FIELD_LIMITS.longText],
     ];
 
-    for (const [field, label, validateText = true] of requiredFields) {
-      this.validateRequiredString(personal[field], label, { validateText });
+    for (const [field, label, validateText, maxLength] of requiredFields) {
+      this.validateRequiredString(personal[field], label, {
+        validateText,
+        maxLength,
+      });
     }
 
     if (!EMAIL_PATTERN.test(personal.email.trim())) {
@@ -654,10 +862,11 @@ export class UsersService {
     }
     if (
       typeof experience.description !== 'string' ||
-      experience.description.trim().length < 2
+      experience.description.trim().length < CV_MIN_TEXT_LENGTH ||
+      experience.description.trim().length > CV_FIELD_LIMITS.longText
     ) {
       throw new BadRequestException(
-        `Experience ${index + 1} description must be at least 2 characters`,
+        `Experience ${index + 1} description must be ${CV_MIN_TEXT_LENGTH}-${CV_FIELD_LIMITS.longText} characters`,
       );
     }
     if (
@@ -667,6 +876,8 @@ export class UsersService {
           (skill) =>
             !skill ||
             typeof skill.name !== 'string' ||
+            !skill.name.trim() ||
+            skill.name.trim().length > CV_FIELD_LIMITS.skill ||
             (skill.icon !== undefined && typeof skill.icon !== 'string'),
         ))
     ) {
@@ -689,6 +900,97 @@ export class UsersService {
     this.parseYear(education.year, index);
   }
 
+  private validateAdditionalSection(
+    item: AdditionalSectionItemDto,
+    index: number,
+  ): void {
+    if (!item || !ADDITIONAL_SECTION_TYPES.has(item.type)) {
+      throw new BadRequestException(
+        `Additional section ${index + 1} has an invalid type`,
+      );
+    }
+    if (
+      typeof item.title !== 'string' ||
+      item.title.trim().length < CV_MIN_TEXT_LENGTH ||
+      item.title.trim().length > CV_FIELD_LIMITS.shortText
+    ) {
+      throw new BadRequestException(
+        `Additional section ${index + 1} requires a title`,
+      );
+    }
+    if (
+      item.type === 'custom' &&
+      (typeof item.sectionTitle !== 'string' ||
+        item.sectionTitle.trim().length < CV_MIN_TEXT_LENGTH ||
+        item.sectionTitle.trim().length > CV_FIELD_LIMITS.shortText)
+    ) {
+      throw new BadRequestException(
+        `Additional section ${index + 1} requires a section name`,
+      );
+    }
+    if (
+      item.type === 'language' &&
+      (typeof item.level !== 'string' || !item.level.trim())
+    ) {
+      throw new BadRequestException(
+        `Additional section ${index + 1} requires a language level`,
+      );
+    }
+    if (
+      item.type === 'link' &&
+      (typeof item.url !== 'string' || !item.url.trim())
+    ) {
+      throw new BadRequestException(
+        `Additional section ${index + 1} requires a URL`,
+      );
+    }
+    this.validateOptionalMaxLength(
+      item.sectionTitle,
+      `Additional section ${index + 1} section name`,
+      CV_FIELD_LIMITS.shortText,
+    );
+    this.validateOptionalMaxLength(
+      item.subtitle,
+      `Additional section ${index + 1} subtitle`,
+      CV_FIELD_LIMITS.shortText,
+    );
+    this.validateOptionalMaxLength(
+      item.description,
+      `Additional section ${index + 1} description`,
+      CV_FIELD_LIMITS.longText,
+    );
+    this.validateOptionalMaxLength(
+      item.location,
+      `Additional section ${index + 1} location`,
+      CV_FIELD_LIMITS.shortText,
+    );
+    this.validateOptionalMaxLength(
+      item.level,
+      `Additional section ${index + 1} level`,
+      CV_FIELD_LIMITS.shortText,
+    );
+    this.validateOptionalMaxLength(
+      item.url,
+      `Additional section ${index + 1} URL`,
+      CV_FIELD_LIMITS.url,
+    );
+    if (item.url?.trim()) {
+      let url: URL;
+      try {
+        url = new URL(item.url.trim());
+      } catch {
+        throw new BadRequestException(
+          `Additional section ${index + 1} contains an invalid URL`,
+        );
+      }
+      if (!['http:', 'https:'].includes(url.protocol)) {
+        throw new BadRequestException(
+          `Additional section ${index + 1} URL must use HTTP or HTTPS`,
+        );
+      }
+    }
+  }
+
   private validateCredentials(email: string, password: string): void {
     if (typeof email !== 'string' || !EMAIL_PATTERN.test(email.trim())) {
       throw new BadRequestException('Enter a valid email');
@@ -705,13 +1007,23 @@ export class UsersService {
   private validateRequiredString(
     value: string,
     label: string,
-    options: { validateText?: boolean } = {},
+    options: { validateText?: boolean; maxLength?: number } = {},
   ): void {
     if (typeof value !== 'string' || !value.trim()) {
       throw new BadRequestException(`${label} is required`);
     }
-    if (value.trim().length < 2) {
-      throw new BadRequestException(`${label} must be at least 2 characters`);
+    if (value.trim().length < CV_MIN_TEXT_LENGTH) {
+      throw new BadRequestException(
+        `${label} must be at least ${CV_MIN_TEXT_LENGTH} characters`,
+      );
+    }
+    if (
+      options.maxLength !== undefined &&
+      value.trim().length > options.maxLength
+    ) {
+      throw new BadRequestException(
+        `${label} must be ${options.maxLength} characters or fewer`,
+      );
     }
     if (options.validateText !== false && !SHORT_TEXT_PATTERN.test(value.trim())) {
       throw new BadRequestException(`${label} contains unsupported characters`);
@@ -721,9 +1033,38 @@ export class UsersService {
   private isValidShortText(value: string): boolean {
     return (
       typeof value === 'string' &&
-      value.trim().length >= 2 &&
+      value.trim().length >= CV_MIN_TEXT_LENGTH &&
+      value.trim().length <= CV_FIELD_LIMITS.shortText &&
       SHORT_TEXT_PATTERN.test(value.trim())
     );
+  }
+
+  private validateOptionalMaxLength(
+    value: string | undefined,
+    label: string,
+    maxLength: number,
+  ): void {
+    if (value === undefined || value === '') return;
+    if (typeof value !== 'string' || value.trim().length > maxLength) {
+      throw new BadRequestException(
+        `${label} must be ${maxLength} characters or fewer`,
+      );
+    }
+  }
+
+  private validateSkillNames(skills: string[], label: string): void {
+    if (
+      skills.some(
+        (skill) =>
+          typeof skill !== 'string' ||
+          !skill.trim() ||
+          skill.trim().length > CV_FIELD_LIMITS.skill,
+      )
+    ) {
+      throw new BadRequestException(
+        `${label} must contain names up to ${CV_FIELD_LIMITS.skill} characters`,
+      );
+    }
   }
 
   private parseDate(value: string, field: string): Date {
@@ -771,6 +1112,36 @@ export class UsersService {
       if (name) uniqueSkills.set(name.toLocaleLowerCase(), name);
     });
     return [...uniqueSkills.values()];
+  }
+
+  private normalizeAdditionalSections(
+    items: AdditionalSectionItemDto[],
+  ): Array<Record<string, string>> {
+    return items.map((item) => ({
+      id: item.id?.trim() || randomUUID(),
+      type: item.type,
+      sectionTitle: item.sectionTitle?.trim() || '',
+      title: item.title.trim(),
+      subtitle: item.subtitle?.trim() || '',
+      description: item.description?.trim() || '',
+      startDate: item.startDate?.trim() || '',
+      endDate: item.endDate?.trim() || '',
+      url: item.url?.trim() || '',
+      level: item.level?.trim() || '',
+      location: item.location?.trim() || '',
+    }));
+  }
+
+  private createLibraryKey(values: string[]): string {
+    return values
+      .map((value) => value.trim().toLocaleLowerCase())
+      .join('\u0000');
+  }
+
+  private toDateOnly(value: Date | string | null | undefined): string {
+    if (!value) return '';
+    if (typeof value === 'string') return value.slice(0, 10);
+    return value.toISOString().slice(0, 10);
   }
 
   private normalizeExperienceSkills(

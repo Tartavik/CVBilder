@@ -1,11 +1,12 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { AppIconComponent } from '../../shared/app-icon.component';
+import { CV_FIELD_LIMITS } from '../cv-field-limits';
 import { CvStore, ExperienceSkill } from '../cv.store';
 import {
   findSkillOptionByName,
@@ -40,7 +41,11 @@ export class SkillSelectorComponent {
   readonly addButtonLabel = input('Add skill');
   readonly selectedSkillsChange = output<ExperienceSkill[]>();
 
-  readonly skillInput = new FormControl('', { nonNullable: true });
+  readonly skillNameLimit = CV_FIELD_LIMITS.skill;
+  readonly skillInput = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.maxLength(CV_FIELD_LIMITS.skill)],
+  });
   readonly draftIcon = signal<string | null>(null);
   readonly draftRevision = signal(0);
   readonly generationState = signal<'idle' | 'generating' | 'generated' | 'found' | 'error'>('idle');
@@ -66,6 +71,7 @@ export class SkillSelectorComponent {
     const draftName = this.skillInput.value.trim();
     if (
       !draftName ||
+      this.skillInput.invalid ||
       this.selectedSkills().some(
         (skill) =>
           skill.name.toLocaleLowerCase() === draftName.toLocaleLowerCase(),

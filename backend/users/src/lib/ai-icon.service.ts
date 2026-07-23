@@ -84,11 +84,20 @@ export class AiIconService {
     }
 
     try {
+      const configuredModel = this.configService.get<string>(
+        'OPENAI_IMAGE_MODEL',
+        'gpt-image-1.5',
+      );
+      const transparentModel = configuredModel.startsWith('gpt-image-2')
+        ? 'gpt-image-1.5'
+        : configuredModel;
       const response = await this.openai.images.generate({
-        model: this.configService.get<string>('OPENAI_IMAGE_MODEL', 'gpt-image-2'),
-        prompt: `Create a clean square tech icon for ${skillName}. Minimal flat style, modern, bold, no text, transparent background, suitable for CV skill badge.`,
+        model: transparentModel,
+        prompt: `Create an isolated tech symbol for ${skillName}. Minimal flat vector style, modern and bold, no text, no tile, no frame, transparent background, suitable for a small CV skill icon.`,
         size: '1024x1024',
         quality: 'low',
+        background: 'transparent',
+        output_format: 'png',
       });
 
       const imageBase64 = (response as { data?: Array<{ b64_json?: string; url?: string }> }).data?.[0]?.b64_json;
@@ -96,7 +105,7 @@ export class AiIconService {
         const buffer = Buffer.from(imageBase64, 'base64');
         const optimized = await sharp(buffer)
           .resize(128, 128, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
-          .webp({ quality: 85 })
+          .webp({ quality: 85, alphaQuality: 100 })
           .toBuffer();
         return `data:image/webp;base64,${optimized.toString('base64')}`;
       }
@@ -151,7 +160,7 @@ export class AiIconService {
       .map((part) => part[0] ?? '')
       .join('')
       .toUpperCase() || '?';
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><rect width="128" height="128" rx="24" fill="#2563eb"/><circle cx="64" cy="64" r="38" fill="#ffffff" opacity="0.2"/><text x="64" y="74" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#ffffff">${initials}</text></svg>`;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><circle cx="64" cy="64" r="48" fill="#2563eb"/><text x="64" y="75" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#ffffff">${initials}</text></svg>`;
     return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
   }
 }

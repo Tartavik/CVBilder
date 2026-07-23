@@ -1,0 +1,65 @@
+@use 'variables' as v;
+
+.additional-section-add {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+
+  mat-form-field {
+    min-width: 260px;
+    flex: 1;
+  }
+
+  button {
+    margin-top: 8px;
+  }
+}
+
+.additional-entry-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid var(--app-border);
+  border-radius: v.$radius-control;
+  margin-bottom: 16px;
+  background: var(--app-surface-soft);
+}
+
+.additional-entry-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+
+  h3 {
+    margin: 2px 0 0;
+    color: var(--app-title);
+    font-size: v.$font-size-base;
+  }
+}
+
+.additional-entry-type {
+  color: var(--app-sidebar-accent);
+  font-size: v.$font-size-sm;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+@media (max-width: v.$breakpoint-mobile) {
+  .additional-section-add {
+    flex-direction: column;
+
+    mat-form-field {
+      width: 100%;
+      min-width: 0;
+    }
+
+    button {
+      margin-top: 0;
+    }
+  }
+}

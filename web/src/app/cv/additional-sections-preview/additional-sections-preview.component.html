@@ -1,0 +1,38 @@
+<div class="additional-preview" [class.classic]="variant() === 'classic'">
+  @for (group of groups(); track group.key) {
+    <section class="additional-preview-section">
+      <h2>{{ group.title }}</h2>
+      @for (item of group.items; track item.id) {
+        <article class="additional-preview-item">
+          <div class="additional-preview-header">
+            <strong>{{ item.title }}</strong>
+            @if (dateRange(item)) {
+              <span class="additional-preview-date">{{ dateRange(item) }}</span>
+            }
+          </div>
+          @if (item.subtitle || item.location) {
+            <div class="additional-preview-meta">
+              @if (item.subtitle) {
+                <span>{{ item.subtitle }}</span>
+              }
+              @if (item.location) {
+                <span>{{ item.location }}</span>
+              }
+            </div>
+          }
+          @if (item.level) {
+            <div class="additional-preview-level">{{ item.level }}</div>
+          }
+          @if (item.description) {
+            <pre>{{ item.description }}</pre>
+          }
+          @if (item.url) {
+            <a [href]="item.url" target="_blank" rel="noopener noreferrer">
+              {{ item.url }}
+            </a>
+          }
+        </article>
+      }
+    </section>
+  }
+</div>

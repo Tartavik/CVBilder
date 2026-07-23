@@ -5,6 +5,10 @@ import { debounceTime } from 'rxjs';
 import { FormTextFieldComponent } from '../../../shared/form-text-field/form-text-field.component';
 import { ProfilePhotoFieldComponent } from '../../../shared/profile-photo-field/profile-photo-field.component';
 import { SHORT_TEXT_PATTERN } from '../../../shared/validation-patterns';
+import {
+  CV_FIELD_LIMITS,
+  CV_MIN_TEXT_LENGTH,
+} from '../../cv-field-limits';
 import { CvStore } from '../../cv.store';
 
 @Component({
@@ -35,12 +39,14 @@ export class PersonalMainSectionComponent implements OnInit {
   readonly form = new FormGroup({
     fullName: new FormControl('', [
       Validators.required,
-      Validators.minLength(2),
+      Validators.minLength(CV_MIN_TEXT_LENGTH),
+      Validators.maxLength(CV_FIELD_LIMITS.shortText),
       Validators.pattern(SHORT_TEXT_PATTERN),
     ]),
     jobTitle: new FormControl('', [
       Validators.required,
-      Validators.minLength(2),
+      Validators.minLength(CV_MIN_TEXT_LENGTH),
+      Validators.maxLength(CV_FIELD_LIMITS.shortText),
       Validators.pattern(SHORT_TEXT_PATTERN),
     ]),
   });

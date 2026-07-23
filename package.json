@@ -9,6 +9,9 @@
     "start:all": "nx run-many -t serve -p web,api --parallel=2",
     "lint": "nx run-many -t lint",
     "build": "nx run-many -t build -p web,api",
+    "e2e": "npx playwright test",
+    "e2e:headed": "npx playwright test --headed",
+    "e2e:report": "npx playwright show-report",
     "typeorm": "ts-node --transpile-only --project api/tsconfig.app.json -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d api/src/db/data-source.ts",
     "migration:generate": "npm run typeorm -- migration:generate api/src/db/migrations/AutoMigration",
     "migration:run": "npm run typeorm -- migration:run",
@@ -51,7 +54,8 @@
     "tslib": "^2.3.0",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.40.0",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^5.1.4",
+    "@playwright/test": "^1.57.0"
   },
   "dependencies": {
     "@angular/animations": "^21.2.14",

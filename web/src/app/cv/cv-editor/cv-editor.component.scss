@@ -15,9 +15,9 @@
   min-height: 0;
   overflow: hidden;
   background: var(--app-workspace-bg);
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--app-border);
   border-radius: 30px;
-  box-shadow: 0 24px 52px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--app-shadow);
 }
 
 .cv-layout > * {
