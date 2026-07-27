@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, inject, signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../auth.service';
@@ -10,6 +10,8 @@ import { CvEditorSidebarComponent } from './cv-editor-sidebar/cv-editor-sidebar.
 import { ThemeService } from '../../shared/theme.service';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { UsersApiService } from '../../users-api.service';
+import { Observable, map, take, tap } from 'rxjs';
+import type { PendingChangesAware } from './pending-changes.guard';
 
 type SaveToast = {
   kind: 'success' | 'error';
@@ -27,7 +29,7 @@ type SaveToast = {
   templateUrl: './cv-editor.component.html',
   styleUrl: './cv-editor.component.scss',
 })
-export class CvEditorComponent implements OnInit {
+export class CvEditorComponent implements OnInit, PendingChangesAware {
   private readonly store = inject(CvStore);
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
@@ -45,6 +47,7 @@ export class CvEditorComponent implements OnInit {
   readonly activeSection = signal<CvSection['id']>('personal');
   readonly saveToast = signal<SaveToast | null>(null);
   readonly deleting = signal(false);
+  readonly publicationChanging = signal(false);
   private saveToastTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
@@ -65,6 +68,7 @@ export class CvEditorComponent implements OnInit {
 
   saveCv(): void {
     const wasDraft = this.store.isDraft();
+    const wasPublished = this.store.isPublished();
     const saveStarted = this.store.saveToDB(
       this.userId,
       this.cvId,
@@ -74,7 +78,14 @@ export class CvEditorComponent implements OnInit {
             replaceUrl: true,
           });
         }
-        this.showToast('success', 'CV saved');
+        this.showToast(
+          'success',
+          wasPublished && !this.store.isPublished()
+            ? 'Draft saved. The incomplete CV was unpublished.'
+            : this.store.isPublished()
+              ? 'CV saved'
+              : 'Draft saved',
+        );
       },
       (message) => {
         this.openFirstInvalidSection();
@@ -83,19 +94,134 @@ export class CvEditorComponent implements OnInit {
     );
     if (!saveStarted) {
       this.openFirstInvalidSection();
-      this.showToast(
-        'error',
-        this.store.error() ?? 'Could not save CV',
-      );
+      this.showToast('error', this.store.error() ?? 'Could not save CV');
     }
   }
 
   logout(): void {
-    this.auth.logout();
+    const canLeave = this.canDeactivate();
+    if (typeof canLeave === 'boolean') {
+      if (canLeave) this.auth.logout();
+      return;
+    }
+    canLeave.pipe(take(1)).subscribe((confirmed) => {
+      if (confirmed) this.auth.logout();
+    });
+  }
+
+  canDeactivate(): boolean | Observable<boolean> {
+    if (!this.store.hasUnsavedChanges()) return true;
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '440px',
+      maxWidth: 'calc(100vw - 24px)',
+      autoFocus: false,
+      data: {
+        title: 'Discard unsaved changes?',
+        message:
+          'You have unsaved changes. If you leave the editor, all unsaved data will be lost.',
+        confirmText: 'Leave editor',
+        cancelText: 'Stay',
+      },
+    });
+
+    return dialogRef.afterClosed().pipe(
+      take(1),
+      map((confirmed) => confirmed === true),
+      tap((confirmed) => {
+        if (confirmed) this.store.markCurrentStateAsSaved();
+      }),
+    );
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (!this.store.hasUnsavedChanges()) return;
+    event.preventDefault();
+    event.returnValue = '';
   }
 
   exportPdf(): void {
+    if (!this.store.validateForReadyAction()) {
+      this.openFirstInvalidSection();
+      this.showToast(
+        'error',
+        this.store.error() ?? 'Complete the CV before exporting it',
+      );
+      return;
+    }
     this.cvExport.exportPdf(this.cv().template);
+  }
+
+  publishCv(): void {
+    if (this.publicationChanging() || !this.store.validateForReadyAction()) {
+      this.openFirstInvalidSection();
+      if (!this.publicationChanging()) {
+        this.showToast(
+          'error',
+          this.store.error() ?? 'Complete the CV before publishing it',
+        );
+      }
+      return;
+    }
+
+    const wasDraft = this.store.isDraft();
+    this.publicationChanging.set(true);
+    this.store.saveToDB(
+      this.userId,
+      this.cvId,
+      (savedCvId) => {
+        this.store.setPublication(
+          this.userId,
+          savedCvId,
+          true,
+          () => {
+            this.publicationChanging.set(false);
+            if (wasDraft) {
+              this.router.navigate(['/cv', savedCvId, 'edit'], {
+                replaceUrl: true,
+              });
+            }
+            this.showToast('success', 'CV published');
+          },
+          (message) => {
+            this.publicationChanging.set(false);
+            this.openFirstInvalidSection();
+            this.showToast('error', message);
+          },
+        );
+      },
+      (message) => {
+        this.publicationChanging.set(false);
+        this.openFirstInvalidSection();
+        this.showToast('error', message);
+      },
+    );
+  }
+
+  unpublishCv(): void {
+    if (
+      this.store.isDraft() ||
+      this.publicationChanging() ||
+      !this.store.isPublished()
+    ) {
+      return;
+    }
+
+    this.publicationChanging.set(true);
+    this.store.setPublication(
+      this.userId,
+      this.cvId,
+      false,
+      () => {
+        this.publicationChanging.set(false);
+        this.showToast('success', 'CV moved to drafts');
+      },
+      (message) => {
+        this.publicationChanging.set(false);
+        this.showToast('error', message);
+      },
+    );
   }
 
   confirmDeleteCv(): void {
@@ -124,6 +250,7 @@ export class CvEditorComponent implements OnInit {
     this.deleting.set(true);
     this.api.deleteCv(this.userId, this.cvId).subscribe({
       next: () => {
+        this.store.markCurrentStateAsSaved();
         this.router.navigate(['/home'], { replaceUrl: true });
       },
       error: () => {

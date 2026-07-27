@@ -28,6 +28,8 @@ import {
   PersonalDataDto,
   SaveCvDto,
 } from './dto/save-cv.dto';
+import { compare, hash } from 'bcryptjs';
+import { AuthUser } from './auth.types';
 
 const DEFAULT_SECTION_ORDER = [
   'personal',
@@ -53,7 +55,7 @@ const ADDITIONAL_SECTION_TYPES = new Set([
   'custom',
 ]);
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const PHONE_PATTERN = /^\+[1-9]\d{9,14}$/;
+const PHONE_PATTERN = /^\+[1-9]\d{6,14}$/;
 const SHORT_TEXT_PATTERN = /^[\p{L}][\p{L} .,'+#&-]*$/u;
 const CV_MIN_TEXT_LENGTH = 2;
 const CV_FIELD_LIMITS = {
@@ -69,6 +71,8 @@ const PHOTO_MIME_TYPES = new Map([
   ['image/png', '.png'],
   ['image/webp', '.webp'],
 ]);
+const BCRYPT_ROUNDS = 12;
+const BCRYPT_HASH_PATTERN = /^\$2[aby]\$\d{2}\$/;
 
 interface UploadedPhoto {
   buffer: Buffer;
@@ -119,29 +123,51 @@ export class UsersService {
     return user;
   }
 
-  async findAll(): Promise<UserEntity[]> {
-    return this.userRepo.find({ order: { createdAt: 'DESC' } });
+  async findAll(): Promise<AuthUser[]> {
+    const users = await this.userRepo.find({ order: { createdAt: 'DESC' } });
+    return users.map((user) => this.toAuthUser(user));
   }
 
-  async create(email: string, passwordHash: string): Promise<UserEntity> {
-    this.validateCredentials(email, passwordHash);
+  async create(email: string, password: string): Promise<AuthUser> {
+    this.validateCredentials(email, password);
+    const passwordHash = await hash(password, BCRYPT_ROUNDS);
     const user = this.userRepo.create({
       email: this.normalizeEmail(email),
       passwordHash,
     });
-    return this.userRepo.save(user);
+    return this.toAuthUser(await this.userRepo.save(user));
   }
 
   async findByEmail(email: string): Promise<UserEntity | null> {
     if (typeof email !== 'string') return null;
-    return this.userRepo.findOne({ where: { email: this.normalizeEmail(email) } });
+    return this.userRepo.findOne({
+      where: { email: this.normalizeEmail(email) },
+    });
   }
 
-  async login(email: string, password: string): Promise<UserEntity | null> {
+  async login(email: string, password: string): Promise<AuthUser | null> {
     this.validateCredentials(email, password);
-    const user = await this.findByEmail(email);
-    if (!user || user.passwordHash !== password) return null;
-    return user;
+    const user = await this.userRepo
+      .createQueryBuilder('user')
+      .addSelect('user.passwordHash')
+      .where('LOWER(user.email) = :email', {
+        email: this.normalizeEmail(email),
+      })
+      .getOne();
+    if (!user) return null;
+
+    const alreadyHashed = BCRYPT_HASH_PATTERN.test(user.passwordHash);
+    const passwordMatches = alreadyHashed
+      ? await compare(password, user.passwordHash)
+      : user.passwordHash === password;
+    if (!passwordMatches) return null;
+
+    if (!alreadyHashed) {
+      user.passwordHash = await hash(password, BCRYPT_ROUNDS);
+      await this.userRepo.save(user);
+    }
+
+    return this.toAuthUser(user);
   }
 
   async getProfile(userId: string): Promise<ProfileEntity | null> {
@@ -163,7 +189,9 @@ export class UsersService {
     data: { firstName: string; lastName: string; location?: string | null },
   ): Promise<ProfileEntity> {
     const user = await this.findById(userId);
-    let profile = await this.profileRepo.findOne({ where: { user: { id: userId } } });
+    let profile = await this.profileRepo.findOne({
+      where: { user: { id: userId } },
+    });
 
     if (profile) {
       Object.assign(profile, data);
@@ -179,7 +207,9 @@ export class UsersService {
     data: { theme: 'light' | 'dark' },
   ): Promise<SettingsEntity> {
     const user = await this.findById(userId);
-    let settings = await this.settingsRepo.findOne({ where: { user: { id: userId } } });
+    let settings = await this.settingsRepo.findOne({
+      where: { user: { id: userId } },
+    });
 
     if (settings) {
       Object.assign(settings, data);
@@ -379,37 +409,6 @@ export class UsersService {
     return cvs.map((cv) => this.toCvSummary(cv, cv.user));
   }
 
-  async getAllCvs(skillsQuery?: string) {
-    const skills = this.normalizeSkillNames(skillsQuery?.split(',') ?? []);
-    const query = this.cvRepo
-      .createQueryBuilder('cv')
-      .leftJoinAndSelect('cv.user', 'user')
-      .orderBy('cv.updatedAt', 'DESC');
-
-    skills.forEach((skill, index) => {
-      const parameter = `skill${index}`;
-      query.andWhere(
-        `(EXISTS (
-          SELECT 1
-          FROM general_skills general_skill
-          WHERE general_skill.cv_id = cv.id
-            AND LOWER(general_skill.name) = LOWER(:${parameter})
-        ) OR EXISTS (
-          SELECT 1
-          FROM experiences experience
-          INNER JOIN experience_skills experience_skill
-            ON experience_skill.experience_id = experience.id
-          WHERE experience.cv_id = cv.id
-            AND LOWER(experience_skill.name) = LOWER(:${parameter})
-        ))`,
-        { [parameter]: skill },
-      );
-    });
-
-    const cvs = await query.getMany();
-    return cvs.map((cv) => this.toCvSummary(cv, cv.user));
-  }
-
   async getUserCv(userId: string, cvId: string) {
     const cv = await this.cvRepo.findOne({
       where: { id: cvId, user: { id: userId } },
@@ -421,7 +420,7 @@ export class UsersService {
 
   async getPublicCv(cvId: string) {
     const cv = await this.cvRepo.findOne({
-      where: { id: cvId },
+      where: { id: cvId, isPublished: true },
       relations: ['user'],
     });
     if (!cv) throw new NotFoundException(`CV ${cvId} not found`);
@@ -436,10 +435,39 @@ export class UsersService {
     return this.persistCv(userId, cvId, dto, true);
   }
 
-  async deleteCv(
+  async setCvPublication(
     userId: string,
     cvId: string,
-  ): Promise<{ success: true }> {
+    isPublished?: boolean,
+  ): Promise<{ isPublished: boolean }> {
+    if (typeof isPublished !== 'boolean') {
+      throw new BadRequestException('isPublished must be a boolean');
+    }
+
+    const cv = await this.cvRepo.findOne({
+      where: { id: cvId, user: { id: userId } },
+      relations: ['user'],
+    });
+    if (!cv) throw new NotFoundException(`CV ${cvId} not found`);
+
+    if (isPublished) {
+      const cvData = await this.getCvData(cv);
+      this.validateCvForPublication({
+        ...cvData,
+        additionalSections: cvData.additionalSections.map((item) => ({
+          ...item,
+          type: item['type'] ?? '',
+          title: item['title'] ?? '',
+        })),
+      });
+    }
+
+    cv.isPublished = isPublished;
+    await this.cvRepo.save(cv);
+    return { isPublished: cv.isPublished };
+  }
+
+  async deleteCv(userId: string, cvId: string): Promise<{ success: true }> {
     const cv = await this.cvRepo.findOne({
       where: { id: cvId, user: { id: userId } },
     });
@@ -461,7 +489,7 @@ export class UsersService {
     dto: SaveCvDto,
     createNew: boolean,
   ) {
-    this.validateCv(dto);
+    this.validateCvDraft(dto);
     const sectionOrder = this.normalizeSectionOrder(dto.sectionOrder);
     const template = dto.template ?? 'single';
     let obsoletePhotoUrl: string | null = null;
@@ -505,13 +533,19 @@ export class UsersService {
       cv.additionalSections = this.normalizeAdditionalSections(
         dto.additionalSections ?? [],
       );
+      if (cv.isPublished && !this.isCvReady(dto)) {
+        cv.isPublished = false;
+      }
       cv = await cvRepo.save(cv);
 
       const personal = dto.personal;
       let personalDetail = await personalDetailRepo.findOne({
         where: { cv: { id: cv.id } },
       });
-      const hasPhotoDraft = Object.prototype.hasOwnProperty.call(personal, 'photo');
+      const hasPhotoDraft = Object.prototype.hasOwnProperty.call(
+        personal,
+        'photo',
+      );
       const currentPhotoUrl = personalDetail?.photoUrl ?? null;
       const nextPhotoUrl = hasPhotoDraft
         ? this.normalizeCvPhotoUrl(personal.photo)
@@ -545,15 +579,15 @@ export class UsersService {
           cv,
           companyName: exp.company,
           position: exp.position,
-          startDate: this.parseDate(
-            exp.startDate,
-            `experience[${index}].startDate`,
-          ),
+          startDate: exp.startDate
+            ? this.parseDate(exp.startDate, `experience[${index}].startDate`)
+            : null,
           endDate: exp.current
             ? null
             : exp.endDate
               ? this.parseDate(exp.endDate, `experience[${index}].endDate`)
               : null,
+          isCurrent: exp.current ?? false,
           description: exp.description,
         }),
       );
@@ -575,12 +609,12 @@ export class UsersService {
       }
 
       await educationRepo.delete({ cv: { id: cv.id } });
-      const education = dto.education.map((edu, index) =>
+      const education = dto.education.map((edu) =>
         educationRepo.create({
           cv,
           name: edu.institution,
           degree: edu.degree,
-          graduationYear: this.parseYear(edu.year, index),
+          graduationYear: edu.year ? Number(edu.year) : null,
           description: edu.field,
         }),
       );
@@ -599,7 +633,11 @@ export class UsersService {
         dto.experience.flatMap((experience) => experience.skills ?? []),
       );
 
-      return { success: true, cvId: cv.id };
+      return {
+        success: true,
+        cvId: cv.id,
+        isPublished: cv.isPublished,
+      };
     });
 
     await this.removePhotoFile(obsoletePhotoUrl);
@@ -651,6 +689,7 @@ export class UsersService {
       ownerEmail: cv.user.email,
       createdAt: cv.createdAt,
       updatedAt: cv.updatedAt,
+      isPublished: cv.isPublished,
       personal: {
         fullName: personal?.fullName || '',
         jobTitle: personal?.jobTitle || '',
@@ -667,7 +706,7 @@ export class UsersService {
         startDate: experience.startDate?.toString() || '',
         endDate: experience.endDate?.toString() || '',
         description: experience.description || '',
-        current: !experience.endDate,
+        current: experience.isCurrent,
         skills: skillsByExperience.get(experience.id) ?? [],
       })),
       education: education.map((item) => ({
@@ -726,10 +765,16 @@ export class UsersService {
       return { icon: existingSkill.icon, source: 'found' };
     }
 
-    const { icon, source } = await this.aiIconService.findOrGenerateIcon(userId, trimmedName);
-    await this.upsertUserSkills(this.userSkillRepo, user, [], [
-      { name: trimmedName, icon },
-    ]);
+    const { icon, source } = await this.aiIconService.findOrGenerateIcon(
+      userId,
+      trimmedName,
+    );
+    await this.upsertUserSkills(
+      this.userSkillRepo,
+      user,
+      [],
+      [{ name: trimmedName, icon }],
+    );
     return { icon, source };
   }
 
@@ -790,6 +835,7 @@ export class UsersService {
       ownerEmail: user.email,
       createdAt: cv.createdAt,
       updatedAt: cv.updatedAt,
+      isPublished: cv.isPublished,
     };
   }
 
@@ -802,15 +848,30 @@ export class UsersService {
     );
   }
 
-  private validateCv(dto: SaveCvDto): void {
+  private validateCvForPublication(dto: SaveCvDto): void {
+    this.validateCvDraft(dto);
+    this.validatePersonal(dto.personal);
+    dto.experience.forEach((experience, index) =>
+      this.validateExperience(experience, index),
+    );
+    dto.education.forEach((education, index) =>
+      this.validateEducation(education, index),
+    );
+    dto.additionalSections?.forEach((item, index) =>
+      this.validateAdditionalSection(item, index),
+    );
+  }
+
+  private validateCvDraft(dto: SaveCvDto): void {
     if (
       !dto?.personal ||
+      typeof dto.personal !== 'object' ||
+      Array.isArray(dto.personal) ||
       !Array.isArray(dto.experience) ||
       !Array.isArray(dto.education) ||
       (dto.additionalSections !== undefined &&
         !Array.isArray(dto.additionalSections)) ||
-      (dto.generalSkills !== undefined &&
-        !Array.isArray(dto.generalSkills)) ||
+      (dto.generalSkills !== undefined && !Array.isArray(dto.generalSkills)) ||
       (dto.sectionOrder !== undefined && !Array.isArray(dto.sectionOrder))
     ) {
       throw new BadRequestException('Invalid CV payload');
@@ -826,17 +887,230 @@ export class UsersService {
       throw new BadRequestException('Invalid experience skill mode');
     }
 
-    this.validatePersonal(dto.personal);
+    if (
+      dto.sectionOrder?.some(
+        (section) =>
+          typeof section !== 'string' || !VALID_SECTION_IDS.has(section),
+      )
+    ) {
+      throw new BadRequestException('Invalid CV section order');
+    }
+
+    this.validateDraftPersonal(dto.personal);
     dto.experience.forEach((experience, index) =>
-      this.validateExperience(experience, index),
+      this.validateDraftExperience(experience, index),
     );
     dto.education.forEach((education, index) =>
-      this.validateEducation(education, index),
+      this.validateDraftEducation(education, index),
     );
     dto.additionalSections?.forEach((item, index) =>
-      this.validateAdditionalSection(item, index),
+      this.validateDraftAdditionalSection(item, index),
     );
     this.validateSkillNames(dto.generalSkills ?? [], 'General skills');
+  }
+
+  private validateDraftPersonal(personal: PersonalDataDto): void {
+    const fields: Array<[keyof PersonalDataDto, string, number]> = [
+      ['fullName', 'Full name', CV_FIELD_LIMITS.shortText],
+      ['jobTitle', 'Job title', CV_FIELD_LIMITS.shortText],
+      ['email', 'Email', CV_FIELD_LIMITS.email],
+      ['phone', 'Phone', CV_FIELD_LIMITS.phone],
+      ['city', 'City', CV_FIELD_LIMITS.shortText],
+      ['summary', 'Summary', CV_FIELD_LIMITS.longText],
+    ];
+
+    fields.forEach(([field, label, maxLength]) =>
+      this.validateDraftString(personal[field], label, maxLength),
+    );
+    this.validateOptionalDraftString(
+      personal.photo,
+      'Photo URL',
+      CV_FIELD_LIMITS.url,
+    );
+  }
+
+  private validateDraftExperience(
+    experience: ExperienceItemDto,
+    index: number,
+  ): void {
+    if (!experience || typeof experience !== 'object') {
+      throw new BadRequestException(`Experience ${index + 1} is invalid`);
+    }
+    this.validateDraftString(
+      experience.company,
+      `Experience ${index + 1} company`,
+      CV_FIELD_LIMITS.shortText,
+    );
+    this.validateDraftString(
+      experience.position,
+      `Experience ${index + 1} position`,
+      CV_FIELD_LIMITS.shortText,
+    );
+    this.validateDraftString(
+      experience.startDate,
+      `Experience ${index + 1} start date`,
+      10,
+    );
+    this.validateOptionalDraftString(
+      experience.endDate,
+      `Experience ${index + 1} end date`,
+      10,
+    );
+    this.validateOptionalDraftString(
+      experience.description,
+      `Experience ${index + 1} description`,
+      CV_FIELD_LIMITS.longText,
+    );
+    if (
+      experience.current !== undefined &&
+      typeof experience.current !== 'boolean'
+    ) {
+      throw new BadRequestException(
+        `Experience ${index + 1} current must be a boolean`,
+      );
+    }
+    if (experience.startDate) {
+      this.parseDate(experience.startDate, `experience[${index}].startDate`);
+    }
+    if (experience.endDate) {
+      this.parseDate(experience.endDate, `experience[${index}].endDate`);
+    }
+    if (
+      experience.skills !== undefined &&
+      (!Array.isArray(experience.skills) ||
+        experience.skills.some(
+          (skill) =>
+            !skill ||
+            typeof skill !== 'object' ||
+            typeof skill.name !== 'string' ||
+            !skill.name.trim() ||
+            skill.name.trim().length > CV_FIELD_LIMITS.skill ||
+            (skill.icon !== undefined &&
+              skill.icon !== null &&
+              typeof skill.icon !== 'string'),
+        ))
+    ) {
+      throw new BadRequestException(
+        `experience[${index}].skills must contain valid skill objects`,
+      );
+    }
+  }
+
+  private validateDraftEducation(
+    education: EducationItemDto,
+    index: number,
+  ): void {
+    if (!education || typeof education !== 'object') {
+      throw new BadRequestException(`Education ${index + 1} is invalid`);
+    }
+    this.validateDraftString(
+      education.institution,
+      `Education ${index + 1} institution`,
+      CV_FIELD_LIMITS.shortText,
+    );
+    this.validateDraftString(
+      education.degree,
+      `Education ${index + 1} degree`,
+      CV_FIELD_LIMITS.shortText,
+    );
+    this.validateDraftString(
+      education.field,
+      `Education ${index + 1} field`,
+      CV_FIELD_LIMITS.shortText,
+    );
+    this.validateDraftString(education.year, `Education ${index + 1} year`, 4);
+    if (education.year && !/^\d{1,4}$/.test(education.year)) {
+      throw new BadRequestException(
+        `education[${index}].year must contain up to four digits`,
+      );
+    }
+  }
+
+  private validateDraftAdditionalSection(
+    item: AdditionalSectionItemDto,
+    index: number,
+  ): void {
+    if (!item || !ADDITIONAL_SECTION_TYPES.has(item.type)) {
+      throw new BadRequestException(
+        `Additional section ${index + 1} has an invalid type`,
+      );
+    }
+    this.validateDraftString(
+      item.title,
+      `Additional section ${index + 1} title`,
+      CV_FIELD_LIMITS.shortText,
+    );
+    const fields: Array<[string | undefined, string, number]> = [
+      [
+        item.sectionTitle,
+        `Additional section ${index + 1} section name`,
+        CV_FIELD_LIMITS.shortText,
+      ],
+      [
+        item.subtitle,
+        `Additional section ${index + 1} subtitle`,
+        CV_FIELD_LIMITS.shortText,
+      ],
+      [
+        item.description,
+        `Additional section ${index + 1} description`,
+        CV_FIELD_LIMITS.longText,
+      ],
+      [
+        item.location,
+        `Additional section ${index + 1} location`,
+        CV_FIELD_LIMITS.shortText,
+      ],
+      [
+        item.level,
+        `Additional section ${index + 1} level`,
+        CV_FIELD_LIMITS.shortText,
+      ],
+      [item.url, `Additional section ${index + 1} URL`, CV_FIELD_LIMITS.url],
+      [item.startDate, `Additional section ${index + 1} start date`, 10],
+      [item.endDate, `Additional section ${index + 1} end date`, 10],
+    ];
+    fields.forEach(([value, label, maxLength]) =>
+      this.validateOptionalDraftString(value, label, maxLength),
+    );
+
+    if (item.startDate) {
+      this.parseDate(item.startDate, `additionalSections[${index}].startDate`);
+    }
+    if (item.endDate) {
+      this.parseDate(item.endDate, `additionalSections[${index}].endDate`);
+    }
+  }
+
+  private validateDraftString(
+    value: unknown,
+    label: string,
+    maxLength: number,
+  ): void {
+    if (typeof value !== 'string' || value.length > maxLength) {
+      throw new BadRequestException(
+        `${label} must be ${maxLength} characters or fewer`,
+      );
+    }
+  }
+
+  private validateOptionalDraftString(
+    value: unknown,
+    label: string,
+    maxLength: number,
+  ): void {
+    if (value === undefined) return;
+    this.validateDraftString(value, label, maxLength);
+  }
+
+  private isCvReady(dto: SaveCvDto): boolean {
+    try {
+      this.validateCvForPublication(dto);
+      return true;
+    } catch (error) {
+      if (error instanceof BadRequestException) return false;
+      throw error;
+    }
   }
 
   private validatePersonal(personal: PersonalDataDto): void {
@@ -863,7 +1137,7 @@ export class UsersService {
     }
     if (!PHONE_PATTERN.test(personal.phone.trim())) {
       throw new BadRequestException(
-        'Phone must start with + and contain 10-15 digits',
+        'Phone must start with + and contain 7-15 digits',
       );
     }
   }
@@ -1026,20 +1300,22 @@ export class UsersService {
       `Additional section ${index + 1} URL`,
       CV_FIELD_LIMITS.url,
     );
-    if (item.url?.trim()) {
-      let url: URL;
-      try {
-        url = new URL(item.url.trim());
-      } catch {
-        throw new BadRequestException(
-          `Additional section ${index + 1} contains an invalid URL`,
-        );
-      }
-      if (!['http:', 'https:'].includes(url.protocol)) {
-        throw new BadRequestException(
-          `Additional section ${index + 1} URL must use HTTP or HTTPS`,
-        );
-      }
+    if (item.url?.trim()) this.validateHttpUrl(item.url, index);
+  }
+
+  private validateHttpUrl(value: string, index: number): void {
+    let url: URL;
+    try {
+      url = new URL(value.trim());
+    } catch {
+      throw new BadRequestException(
+        `Additional section ${index + 1} contains an invalid URL`,
+      );
+    }
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      throw new BadRequestException(
+        `Additional section ${index + 1} URL must use HTTP or HTTPS`,
+      );
     }
   }
 
@@ -1050,6 +1326,16 @@ export class UsersService {
     if (typeof password !== 'string' || password.length < 6) {
       throw new BadRequestException('Password must be at least 6 characters');
     }
+  }
+
+  private toAuthUser(user: UserEntity): AuthUser {
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   }
 
   private normalizeEmail(email: string): string {
@@ -1077,7 +1363,10 @@ export class UsersService {
         `${label} must be ${options.maxLength} characters or fewer`,
       );
     }
-    if (options.validateText !== false && !SHORT_TEXT_PATTERN.test(value.trim())) {
+    if (
+      options.validateText !== false &&
+      !SHORT_TEXT_PATTERN.test(value.trim())
+    ) {
       throw new BadRequestException(`${label} contains unsupported characters`);
     }
   }
@@ -1153,7 +1442,9 @@ export class UsersService {
     );
     return [
       ...uniqueOrder,
-      ...DEFAULT_SECTION_ORDER.filter((section) => !uniqueOrder.includes(section)),
+      ...DEFAULT_SECTION_ORDER.filter(
+        (section) => !uniqueOrder.includes(section),
+      ),
     ];
   }
 

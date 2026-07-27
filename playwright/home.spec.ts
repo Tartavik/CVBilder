@@ -20,8 +20,18 @@ async function registerAndLogin(page: Page, email: string, password: string) {
   await expect(page).toHaveURL('/home');
 }
 
+async function authHeaders(page: Page): Promise<Record<string, string>> {
+  const accessToken = await page.evaluate(() =>
+    sessionStorage.getItem('accessToken'),
+  );
+  expect(accessToken).toBeTruthy();
+  return { Authorization: `Bearer ${accessToken}` };
+}
+
 test.describe('Home page flows', () => {
-  test('should open a draft without persisting an abandoned CV', async ({ page }) => {
+  test('should open a draft without persisting an abandoned CV', async ({
+    page,
+  }) => {
     const email = randomEmail();
 
     await registerAndLogin(page, email, password);
@@ -30,8 +40,12 @@ test.describe('Home page flows', () => {
     ).toBeVisible();
 
     await page.locator('button:has-text("New CV")').click();
-    await expect(page.getByRole('heading', { name: 'Choose a template' })).toBeVisible();
-    await page.locator('button.template-option', { hasText: 'Single column' }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Choose a template' }),
+    ).toBeVisible();
+    await page
+      .locator('button.template-option', { hasText: 'Single column' })
+      .click();
     await expect(page).toHaveURL(/\/cv\/[^/]+\/edit\?.*draft=1/);
 
     const userId = await page.evaluate(() =>
@@ -40,7 +54,9 @@ test.describe('Home page flows', () => {
     expect(userId).toBeTruthy();
     await page.getByRole('link', { name: 'Home' }).click();
 
-    const response = await page.request.get(`/api/users/${userId}/cvs`);
+    const response = await page.request.get(`/api/users/${userId}/cvs`, {
+      headers: await authHeaders(page),
+    });
     expect(response.ok()).toBeTruthy();
     expect(await response.json()).toEqual([]);
   });
@@ -57,11 +73,105 @@ test.describe('Home page flows', () => {
     await expect(page.getByText('Profile saved')).toBeVisible();
 
     await page.getByRole('button', { name: 'New CV' }).click();
-    await page.locator('button.template-option', { hasText: 'Single column' }).click();
+    await page
+      .locator('button.template-option', { hasText: 'Single column' })
+      .click();
     await expect(page).toHaveURL(/\/cv\/[^/]+\/edit\?.*draft=1/);
 
     await expect(page.getByLabel('Full name')).toHaveValue('Olena Koval');
     await expect(page.getByLabel('City')).toHaveValue('Kyiv, Ukraine');
+  });
+
+  test('should warn before leaving an editor with unsaved changes', async ({
+    page,
+  }) => {
+    const email = randomEmail();
+
+    await registerAndLogin(page, email, password);
+    await page.getByRole('button', { name: 'New CV' }).click();
+    await page
+      .locator('button.template-option', { hasText: 'Single column' })
+      .click();
+
+    await page.getByLabel('Full name').fill('Unsaved candidate');
+    await page.getByRole('link', { name: 'Home' }).click();
+
+    let dialog = page.getByRole('dialog');
+    await expect(
+      dialog.getByRole('heading', {
+        name: 'Discard unsaved changes?',
+      }),
+    ).toBeVisible();
+    await expect(dialog).toContainText('all unsaved data will be lost');
+    await dialog.getByRole('button', { name: 'Stay' }).click();
+    await expect(page).toHaveURL(/\/cv\/[^/]+\/edit\?.*draft=1/);
+    await expect(page.getByLabel('Full name')).toHaveValue('Unsaved candidate');
+
+    await page.getByRole('link', { name: 'Home' }).click();
+    dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: 'Leave editor' }).click();
+    await expect(page).toHaveURL('/home');
+
+    const userId = await page.evaluate(() =>
+      sessionStorage.getItem('currentUserId'),
+    );
+    const response = await page.request.get(`/api/users/${userId}/cvs`, {
+      headers: await authHeaders(page),
+    });
+    expect(response.ok()).toBeTruthy();
+    expect(await response.json()).toEqual([]);
+  });
+
+  test('should save incomplete sections as a private draft', async ({
+    page,
+  }) => {
+    const email = randomEmail();
+
+    await registerAndLogin(page, email, password);
+    await page.getByRole('button', { name: 'New CV' }).click();
+    await page
+      .locator('button.template-option', { hasText: 'Single column' })
+      .click();
+
+    await page.getByRole('button', { name: /Experience/ }).click();
+    await page.getByRole('button', { name: 'Add experience' }).click();
+    await page.getByRole('button', { name: /Education/ }).click();
+    await page.getByRole('button', { name: 'Add education' }).click();
+
+    const saveResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' &&
+        /\/api\/users\/[^/]+\/cvs\/[^/]+$/.test(response.url()),
+    );
+    await page.getByRole('button', { name: 'Save' }).click();
+    expect((await saveResponsePromise).ok()).toBeTruthy();
+    await expect(page.getByText('Draft saved')).toBeVisible();
+
+    const userId = await page.evaluate(() =>
+      sessionStorage.getItem('currentUserId'),
+    );
+    const draftCvId = page.url().match(/\/cv\/([^/]+)\/edit$/)?.[1];
+    expect(userId).toBeTruthy();
+    expect(draftCvId).toBeTruthy();
+
+    const savedDraft = await page.request.get(
+      `/api/users/${userId}/cvs/${draftCvId}`,
+      { headers: await authHeaders(page) },
+    );
+    expect(savedDraft.ok()).toBeTruthy();
+    expect(await savedDraft.json()).toMatchObject({
+      isPublished: false,
+      experience: [{ startDate: '', current: false }],
+      education: [{ year: '' }],
+    });
+
+    const publicDraft = await page.request.get(`/api/cvs/${draftCvId}`);
+    expect(publicDraft.status()).toBe(404);
+
+    await page.getByRole('button', { name: 'Publish' }).click();
+    await expect(page.locator('.save-toast')).toContainText(
+      'Full name is required',
+    );
   });
 
   test('should only accept experience dates from the date picker', async ({
@@ -116,14 +226,16 @@ test.describe('Home page flows', () => {
         'Show skills as simple text labels or compact visual icons.',
       ),
     ).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: 'Add skill' }),
-    ).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Add skill' })).toHaveCount(
+      0,
+    );
 
     const skillInput = page.getByLabel('Find or add skill');
     await skillInput.fill('Observability');
     await page.getByLabel('Company').focus();
-    await expect(page.getByText('Observability', { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Remove Observability' }),
+    ).toBeVisible();
     await expect(skillInput).toHaveValue('');
 
     await page.getByRole('radio', { name: 'Icons' }).click();
@@ -162,6 +274,7 @@ test.describe('Home page flows', () => {
     );
     const skillsResponse = await page.request.get(
       `/api/users/${userId}/skills`,
+      { headers: await authHeaders(page) },
     );
     expect(skillsResponse.ok()).toBeTruthy();
     expect(await skillsResponse.json()).toContainEqual(
@@ -217,13 +330,11 @@ test.describe('Home page flows', () => {
       `<desc>${'large-upload'.repeat(15000)}</desc>`,
       '</svg>',
     ].join('');
-    await page
-      .locator('.skill-image-field input[type="file"]')
-      .setInputFiles({
-        name: 'large-icon.svg',
-        mimeType: 'image/svg+xml',
-        buffer: Buffer.from(largeSvg),
-      });
+    await page.locator('.skill-image-field input[type="file"]').setInputFiles({
+      name: 'large-icon.svg',
+      mimeType: 'image/svg+xml',
+      buffer: Buffer.from(largeSvg),
+    });
     await expect(page.getByText('Image optimized and ready.')).toBeVisible();
     await page.getByLabel('Company').focus();
     await expect(
@@ -290,7 +401,7 @@ test.describe('Home page flows', () => {
 
     const saveResponse = await responsePromise;
     expect(saveResponse.ok(), await saveResponse.text()).toBeTruthy();
-    await expect(page.getByText('CV saved')).toBeVisible();
+    await expect(page.getByText('Draft saved')).toBeVisible();
   });
 
   test('should reset validation state after reopening a saved CV', async ({
@@ -320,12 +431,19 @@ test.describe('Home page flows', () => {
     );
     await page.getByRole('button', { name: 'Save' }).click();
     expect((await saveResponsePromise).ok()).toBeTruthy();
-    await expect(page.getByText('CV saved')).toBeVisible();
+    await expect(page.getByText('Draft saved')).toBeVisible();
     await expect(page).toHaveURL(/\/cv\/[^/]+\/edit$/);
 
     await jobTitle.clear();
     await expect(page.locator('app-cv-preview')).not.toContainText('Engineer');
     await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.locator('.save-toast')).toContainText('Draft saved');
+    const draftCvId = page.url().match(/\/cv\/([^/]+)\/edit$/)?.[1];
+    expect(draftCvId).toBeTruthy();
+    const publicDraftResponse = await page.request.get(`/api/cvs/${draftCvId}`);
+    expect(publicDraftResponse.status()).toBe(404);
+
+    await page.getByRole('button', { name: 'Publish' }).click();
     await expect(page.locator('.save-toast')).toContainText(
       'Job title is required',
     );
@@ -342,7 +460,7 @@ test.describe('Home page flows', () => {
     await cvCard.getByRole('link', { name: 'Edit' }).click();
 
     const reopenedJobTitle = page.getByLabel('Job title');
-    await expect(reopenedJobTitle).toHaveValue('Engineer');
+    await expect(reopenedJobTitle).toHaveValue('');
     await expect(reopenedJobTitle).toHaveClass(/ng-untouched/);
   });
 
@@ -351,7 +469,9 @@ test.describe('Home page flows', () => {
 
     await registerAndLogin(page, email, password);
     await page.getByRole('button', { name: 'New CV' }).click();
-    await page.locator('button.template-option', { hasText: 'Single column' }).click();
+    await page
+      .locator('button.template-option', { hasText: 'Single column' })
+      .click();
 
     await page.getByLabel('Full name').fill('CV to delete');
     await page.getByLabel('Job title').fill('Designer');
@@ -361,10 +481,13 @@ test.describe('Home page flows', () => {
       emailField.locator('xpath=ancestor::app-form-text-field'),
     ).toContainText('18 of 120');
     const phoneField = page.getByLabel('Phone');
-    await phoneField.fill('380 (50) 123-45-67');
-    await expect(phoneField).toHaveValue('+380501234567');
+    await phoneField.fill('501234567');
     await expect(
-      phoneField.locator('xpath=ancestor::app-form-text-field'),
+      page.locator('app-phone-field .iti__selected-dial-code'),
+    ).toHaveText('+380');
+    await expect(phoneField).toHaveValue('50 123 4567');
+    await expect(
+      phoneField.locator('xpath=ancestor::app-phone-field'),
     ).not.toContainText('of 16');
     await page.getByLabel('City').fill('Kyiv');
     const summary = page.getByLabel('Summary');
@@ -395,15 +518,14 @@ test.describe('Home page flows', () => {
     );
     await page.getByRole('button', { name: 'Save' }).click();
     const saveResponse = await saveResponsePromise;
-    expect(
-      saveResponse.ok(),
-      await saveResponse.text(),
-    ).toBeTruthy();
+    expect(saveResponse.ok(), await saveResponse.text()).toBeTruthy();
     await expect(page).toHaveURL(/\/cv\/[^/]+\/edit$/);
 
     await page.getByRole('button', { name: 'Delete CV' }).click();
     let dialog = page.getByRole('dialog');
-    await expect(dialog.getByRole('heading', { name: 'Delete CV?' })).toBeVisible();
+    await expect(
+      dialog.getByRole('heading', { name: 'Delete CV?' }),
+    ).toBeVisible();
     await dialog.getByRole('button', { name: 'Cancel' }).click();
     await expect(page).toHaveURL(/\/cv\/[^/]+\/edit$/);
 
@@ -411,8 +533,10 @@ test.describe('Home page flows', () => {
       sessionStorage.getItem('currentUserId'),
     );
     expect(userId).toBeTruthy();
-    let response = await page.request.get(`/api/users/${userId}/cvs`);
-    expect((await response.json())).toHaveLength(1);
+    let response = await page.request.get(`/api/users/${userId}/cvs`, {
+      headers: await authHeaders(page),
+    });
+    expect(await response.json()).toHaveLength(1);
 
     await page.getByRole('link', { name: 'Home' }).click();
     const myCvSection = page.locator('section.cv-section').first();
@@ -425,7 +549,9 @@ test.describe('Home page flows', () => {
     await dialog.getByRole('button', { name: 'Delete' }).click();
 
     await expect(cvCard).toHaveCount(0);
-    response = await page.request.get(`/api/users/${userId}/cvs`);
+    response = await page.request.get(`/api/users/${userId}/cvs`, {
+      headers: await authHeaders(page),
+    });
     expect(response.ok()).toBeTruthy();
     expect(await response.json()).toEqual([]);
   });
@@ -436,6 +562,8 @@ test.describe('Home page flows', () => {
     await registerAndLogin(page, email, password);
     await page.getByRole('button', { name: 'Log out' }).click();
     await expect(page).toHaveURL('/login');
-    await expect(page.locator('mat-card-title', { hasText: 'Login' })).toBeVisible();
+    await expect(
+      page.locator('mat-card-title', { hasText: 'Login' }),
+    ).toBeVisible();
   });
 });

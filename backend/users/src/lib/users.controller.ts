@@ -11,6 +11,7 @@ import {
   Put,
   UnauthorizedException,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -20,10 +21,17 @@ import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { LoginDto } from './dto/login.dto';
 import { SaveCvDto } from './dto/save-cv.dto';
 import { UsersService } from './users.service';
+import { AuthTokenService } from './auth-token.service';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { Public } from './public.decorator';
 
 @Controller('users')
+@UseGuards(JwtAuthGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly authTokenService: AuthTokenService,
+  ) {}
 
   @Get()
   findAll() {
@@ -31,6 +39,7 @@ export class UsersController {
   }
 
   @Post()
+  @Public()
   async create(@Body() dto: CreateUserDto) {
     const existing = await this.usersService.findByEmail(dto.email);
     if (existing) throw new ConflictException('Email already in use');
@@ -38,10 +47,11 @@ export class UsersController {
   }
 
   @Post('login')
+  @Public()
   async login(@Body() dto: LoginDto) {
     const user = await this.usersService.login(dto.email, dto.password);
     if (!user) throw new UnauthorizedException('Invalid email or password');
-    return user;
+    return this.authTokenService.createSession(user);
   }
 
   @Get(':id')
@@ -65,10 +75,7 @@ export class UsersController {
   }
 
   @Delete(':id/skills')
-  deleteSkill(
-    @Param('id') id: string,
-    @Body() body: { skillName?: string },
-  ) {
+  deleteSkill(@Param('id') id: string, @Body() body: { skillName?: string }) {
     return this.usersService.deleteUserSkill(id, body?.skillName);
   }
 
@@ -118,6 +125,15 @@ export class UsersController {
     @Body() dto: SaveCvDto,
   ) {
     return this.usersService.saveCv(id, cvId, dto);
+  }
+
+  @Patch(':id/cvs/:cvId/publication')
+  setCvPublication(
+    @Param('id') id: string,
+    @Param('cvId') cvId: string,
+    @Body() body: { isPublished?: boolean },
+  ) {
+    return this.usersService.setCvPublication(id, cvId, body?.isPublished);
   }
 
   @Delete(':id/cvs/:cvId')

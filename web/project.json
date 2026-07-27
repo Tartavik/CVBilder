@@ -28,7 +28,10 @@
         "stylePreprocessorOptions": {
           "includePaths": ["web/src/styles"]
         },
-        "styles": ["web/src/styles.scss"]
+        "styles": [
+          "node_modules/intl-tel-input/dist/css/intlTelInput.css",
+          "web/src/styles.scss"
+        ]
       },
       "configurations": {
         "production": {
@@ -40,7 +43,7 @@
             },
             {
               "type": "anyComponentStyle",
-              "maximumWarning": "4kb",
+              "maximumWarning": "5kb",
               "maximumError": "8kb"
             }
           ],

@@ -1,0 +1,20 @@
+@if (formControl(); as control) {
+  <mat-form-field appearance="outline">
+    <mat-label>{{ label() }}</mat-label>
+    <input
+      matInput
+      readonly
+      [matDatepicker]="picker"
+      [formControl]="control"
+      [min]="min()"
+      [max]="max()"
+      (click)="picker.open()"
+    />
+    <mat-datepicker-toggle matIconSuffix [for]="picker" />
+    <mat-datepicker
+      #picker
+      startView="multi-year"
+      (monthSelected)="selectMonth($event, picker)"
+    />
+  </mat-form-field>
+}

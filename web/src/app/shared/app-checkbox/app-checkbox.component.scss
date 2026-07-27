@@ -1,0 +1,132 @@
+@use 'variables' as v;
+
+:host {
+  display: block;
+  flex: 0 0 156px;
+  min-width: 0;
+}
+
+.app-checkbox {
+  position: relative;
+  display: flex;
+  height: 56px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border: 1px solid var(--app-border-strong);
+  border-radius: v.$radius-control;
+  background: var(--app-surface);
+  color: var(--app-text);
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+
+  &:hover:not(.app-checkbox--disabled) {
+    border-color: var(--app-sidebar-accent);
+    background: color-mix(
+      in srgb,
+      var(--app-sidebar-accent) 6%,
+      var(--app-surface)
+    );
+    transform: translateY(-1px);
+  }
+
+  input {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+  }
+
+  input:focus-visible + .app-checkbox__control {
+    outline: 3px solid
+      color-mix(in srgb, var(--app-sidebar-accent) 24%, transparent);
+    outline-offset: 3px;
+  }
+}
+
+.app-checkbox--checked {
+  border-color: color-mix(
+    in srgb,
+    var(--app-sidebar-accent) 70%,
+    var(--app-border)
+  );
+  background: color-mix(
+    in srgb,
+    var(--app-sidebar-accent) 8%,
+    var(--app-surface)
+  );
+}
+
+.app-checkbox__control {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  place-items: center;
+  border: 1.5px solid var(--app-border-strong);
+  border-radius: 7px;
+  background: var(--app-surface);
+  color: #fff;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentcolor;
+    stroke-dasharray: 16;
+    stroke-dashoffset: 16;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2.2;
+    transition: stroke-dashoffset 0.18s ease;
+  }
+}
+
+.app-checkbox--checked .app-checkbox__control {
+  border-color: var(--app-sidebar-accent);
+  background: linear-gradient(135deg, var(--app-sidebar-accent), #7290ff);
+  box-shadow: 0 6px 14px rgb(67 97 238 / 24%);
+
+  svg {
+    stroke-dashoffset: 0;
+  }
+}
+
+.app-checkbox__copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.app-checkbox__label {
+  font-size: v.$font-size-md;
+  font-weight: 700;
+}
+
+.app-checkbox__hint {
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--app-muted);
+  font-size: v.$font-size-sm;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-checkbox--disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}

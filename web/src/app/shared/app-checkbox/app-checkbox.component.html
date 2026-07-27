@@ -1,0 +1,26 @@
+<label
+  class="app-checkbox"
+  [class.app-checkbox--checked]="checked()"
+  [class.app-checkbox--disabled]="disabled()"
+>
+  <input
+    type="checkbox"
+    [checked]="checked()"
+    [disabled]="disabled()"
+    [attr.aria-label]="label()"
+    [attr.aria-describedby]="hint() ? hintId : null"
+    (change)="updateChecked($event)"
+    (blur)="markTouched()"
+  />
+  <span class="app-checkbox__control" aria-hidden="true">
+    <svg viewBox="0 0 16 16">
+      <path d="m3.2 8.1 3 3.1 6.6-6.7" />
+    </svg>
+  </span>
+  <span class="app-checkbox__copy">
+    <span class="app-checkbox__label">{{ label() }}</span>
+    @if (hint()) {
+      <span [id]="hintId" class="app-checkbox__hint">{{ hint() }}</span>
+    }
+  </span>
+</label>

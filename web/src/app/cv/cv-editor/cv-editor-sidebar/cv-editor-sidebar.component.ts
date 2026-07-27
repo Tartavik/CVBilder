@@ -1,5 +1,16 @@
-import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import {
+  CdkDragDrop,
+  DragDropModule,
+  moveItemInArray,
+} from '@angular/cdk/drag-drop';
+import {
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AppIconComponent } from '../../../shared/app-icon.component';
 import { CvSection, CvStore } from '../../cv.store';
@@ -17,8 +28,11 @@ export class CvEditorSidebarComponent {
   readonly activeSection = input.required<CvSection['id']>();
   readonly cvId = input.required<string>();
   readonly deleting = input(false);
+  readonly publicationChanging = input(false);
   readonly activeSectionChange = output<CvSection['id']>();
   readonly save = output<void>();
+  readonly publish = output<void>();
+  readonly unpublish = output<void>();
   readonly deleteCv = output<void>();
   readonly exportPdf = output<void>();
   readonly logout = output<void>();
@@ -26,6 +40,7 @@ export class CvEditorSidebarComponent {
   readonly cv = this.store.cv;
   readonly saving = this.store.loading;
   readonly isDraft = this.store.isDraft;
+  readonly isPublished = this.store.isPublished;
   readonly invalidSections = this.store.invalidSections;
 
   readonly sectionsOpen = signal(true);
@@ -48,12 +63,10 @@ export class CvEditorSidebarComponent {
   );
 
   private getSections(ids: CvSection['id'][]): CvSection[] {
-  return ids
-    .map((id) =>
-      this.store.sections.find((section) => section.id === id),
-    )
-    .filter((section): section is CvSection => Boolean(section));
-}
+    return ids
+      .map((id) => this.store.sections.find((section) => section.id === id))
+      .filter((section): section is CvSection => Boolean(section));
+  }
 
   setActive(sectionId: CvSection['id']): void {
     this.activeSectionChange.emit(sectionId);
@@ -75,7 +88,9 @@ export class CvEditorSidebarComponent {
     }
 
     moveItemInArray(order, event.previousIndex, event.currentIndex);
-    this.store.updateSectionOrder(this.withNonDraggableSections(order, nonDraggableSections));
+    this.store.updateSectionOrder(
+      this.withNonDraggableSections(order, nonDraggableSections),
+    );
   }
 
   private withNonDraggableSections(

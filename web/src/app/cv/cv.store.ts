@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, forkJoin, of, throwError } from 'rxjs';
 import {
@@ -20,10 +20,7 @@ import {
   createAdditionalSectionItem,
   isAdditionalSectionType,
 } from './additional-sections';
-import {
-  CV_FIELD_LIMITS,
-  CV_MIN_TEXT_LENGTH,
-} from './cv-field-limits';
+import { CV_FIELD_LIMITS, CV_MIN_TEXT_LENGTH } from './cv-field-limits';
 
 export interface PersonalData {
   fullName: string;
@@ -92,6 +89,7 @@ export interface CvMetadata {
   id: string;
   title: string;
   ownerEmail: string;
+  isPublished: boolean;
 }
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -140,6 +138,12 @@ export class CvStore {
   readonly reusableEducation = signal<EducationItem[]>([]);
   readonly photoUploading = signal(false);
   readonly isDraft = signal(false);
+  readonly isPublished = computed(() => this.metadata()?.isPublished ?? false);
+  private readonly savedCvSnapshot = signal('');
+  readonly hasUnsavedChanges = computed(
+    () =>
+      this.ready() && this.savedCvSnapshot() !== this.serializeCv(this.cv()),
+  );
   private activeUserId = '';
   private activeCvId = '';
   private pendingPhotoFile: File | null = null;
@@ -177,8 +181,10 @@ export class CvStore {
     this.reusableEducation.set([]);
     this.api.getCv(userId, cvId).subscribe({
       next: (data) => {
-        this.updateState(this.mapApiDataToStore(data));
+        const storeData = this.mapApiDataToStore(data);
+        this.updateState(storeData);
         this.updateMetadata(data);
+        this.markCurrentStateAsSaved();
         this.loadUserSkills(userId);
         this.loadCvSectionLibrary(userId, cvId);
         this.loading.set(false);
@@ -189,6 +195,7 @@ export class CvStore {
         this.loading.set(false);
         this.updateState(this.createDefaultData());
         this.metadata.set(null);
+        this.markCurrentStateAsSaved();
         this.ready.set(true);
       },
     });
@@ -240,7 +247,9 @@ export class CvStore {
         id: cvId,
         title: 'Untitled CV',
         ownerEmail: '',
+        isPublished: false,
       });
+      this.markCurrentStateAsSaved();
       this.setUserSkills(skills);
       this.setCvSectionLibrary(library);
       this.loading.set(false);
@@ -259,8 +268,10 @@ export class CvStore {
     this.error.set(null);
     this.api.getPublicCv(cvId).subscribe({
       next: (data) => {
-        this.updateState(this.mapApiDataToStore(data));
+        const storeData = this.mapApiDataToStore(data);
+        this.updateState(storeData);
         this.updateMetadata(data);
+        this.markCurrentStateAsSaved();
         this.loading.set(false);
         this.ready.set(true);
       },
@@ -269,6 +280,7 @@ export class CvStore {
         this.loading.set(false);
         this.updateState(this.createDefaultData());
         this.metadata.set(null);
+        this.markCurrentStateAsSaved();
         this.ready.set(true);
       },
     });
@@ -280,31 +292,30 @@ export class CvStore {
     callback?: (savedCvId: string) => void,
     errorCallback?: (message: string) => void,
   ): boolean {
-    const validationError = this.getValidationError(this.cv());
-    if (validationError) {
-      this.validationAttempt.update((attempt) => attempt + 1);
-      this.invalidSections.set(this.getInvalidSections(this.cv()));
-      this.error.set(validationError);
-      return false;
-    }
-
     this.loading.set(true);
     this.error.set(null);
-    this.invalidSections.set(new Set());
+    const savedCvSnapshot = this.serializeCv(this.cv());
     const cvData = this.mapStoreDataToApi(this.cv());
     const saveRequest = this.isDraft()
       ? this.api.createCvFromDraft(userId, cvId, cvData)
       : this.api.saveCv(userId, cvId, cvData);
 
     saveRequest.subscribe({
-      next: ({ cvId: savedCvId }) => {
+      next: ({ cvId: savedCvId, isPublished }) => {
         this.activeCvId = savedCvId;
         this.isDraft.set(false);
+        this.updatePublicationStatus(isPublished);
         if (this.pendingPhotoFile) {
-          this.savePendingPhoto(userId, savedCvId, callback, errorCallback);
+          this.savePendingPhoto(
+            userId,
+            savedCvId,
+            savedCvSnapshot,
+            callback,
+            errorCallback,
+          );
           return;
         }
-        this.completeSave(savedCvId, callback);
+        this.completeSave(savedCvId, savedCvSnapshot, callback);
       },
       error: (err: HttpErrorResponse) => {
         const message = this.getSaveErrorMessage(err, cvData);
@@ -317,6 +328,47 @@ export class CvStore {
     return true;
   }
 
+  validateForReadyAction(): boolean {
+    const validationError = this.getValidationError(this.cv());
+    if (!validationError) {
+      this.invalidSections.set(new Set());
+      this.error.set(null);
+      return true;
+    }
+
+    this.validationAttempt.update((attempt) => attempt + 1);
+    this.invalidSections.set(this.getInvalidSections(this.cv()));
+    this.error.set(validationError);
+    return false;
+  }
+
+  setPublication(
+    userId: string,
+    cvId: string,
+    isPublished: boolean,
+    callback?: () => void,
+    errorCallback?: (message: string) => void,
+  ): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.api.setCvPublication(userId, cvId, isPublished).subscribe({
+      next: (result) => {
+        this.updatePublicationStatus(result.isPublished);
+        this.loading.set(false);
+        callback?.();
+      },
+      error: (error: HttpErrorResponse) => {
+        const message = this.getErrorMessage(
+          error,
+          isPublished ? 'Could not publish CV' : 'Could not unpublish CV',
+        );
+        this.error.set(message);
+        this.loading.set(false);
+        errorCallback?.(message);
+      },
+    });
+  }
+
   private mapApiDataToStore(apiData: ApiCvData): CvData {
     return {
       personal: {
@@ -324,7 +376,7 @@ export class CvStore {
         ...(apiData.personal || {}),
         photo: apiData.personal?.photo || '',
       },
-      experience: (apiData.experience || []).map(exp => ({
+      experience: (apiData.experience || []).map((exp) => ({
         id: exp.id || crypto.randomUUID(),
         company: exp.company || '',
         position: exp.position || '',
@@ -338,7 +390,7 @@ export class CvStore {
             : { name: skill.name, icon: skill.icon || null },
         ),
       })),
-      education: (apiData.education || []).map(edu => ({
+      education: (apiData.education || []).map((edu) => ({
         ...edu,
         id: edu.id || crypto.randomUUID(),
       })),
@@ -360,7 +412,7 @@ export class CvStore {
       generalSkills: apiData.generalSkills || [],
       experienceSkillMode: apiData.experienceSkillMode || 'text',
       sectionOrder: apiData.sectionOrder?.length
-        ? apiData.sectionOrder as CvSection['id'][]
+        ? (apiData.sectionOrder as CvSection['id'][])
         : DEFAULT_DATA.sectionOrder,
       template: apiData.template || 'single',
     };
@@ -447,6 +499,7 @@ export class CvStore {
       id: apiData.id || '',
       title: apiData.title || 'Untitled CV',
       ownerEmail: apiData.ownerEmail || '',
+      isPublished: apiData.isPublished ?? false,
     });
   }
 
@@ -461,7 +514,7 @@ export class CvStore {
         summary: storeData.personal.summary,
         photo: this.pendingPhotoFile ? '' : storeData.personal.photo,
       },
-      experience: storeData.experience.map(exp => ({
+      experience: storeData.experience.map((exp) => ({
         id: exp.id,
         company: exp.company,
         position: exp.position,
@@ -495,18 +548,24 @@ export class CvStore {
       description: source.description || '',
       skills: (source.skills || []).map((skill) => ({ ...skill })),
     };
-    this.updateState({ ...this.cv(), experience: [...this.cv().experience, item] });
+    this.updateState({
+      ...this.cv(),
+      experience: [...this.cv().experience, item],
+    });
   }
 
   updateExperience(id: string, patch: Partial<ExperienceItem>) {
     const experience = this.cv().experience.map((e) =>
-      e.id === id ? { ...e, ...patch } : e
+      e.id === id ? { ...e, ...patch } : e,
     );
     this.updateState({ ...this.cv(), experience });
   }
 
   removeExperience(id: string) {
-    this.updateState({ ...this.cv(), experience: this.cv().experience.filter((e) => e.id !== id) });
+    this.updateState({
+      ...this.cv(),
+      experience: this.cv().experience.filter((e) => e.id !== id),
+    });
   }
 
   addEducation(source: Partial<EducationItem> = {}) {
@@ -517,18 +576,24 @@ export class CvStore {
       field: source.field || '',
       year: source.year || '',
     };
-    this.updateState({ ...this.cv(), education: [...this.cv().education, item] });
+    this.updateState({
+      ...this.cv(),
+      education: [...this.cv().education, item],
+    });
   }
 
   updateEducation(id: string, patch: Partial<EducationItem>) {
     const education = this.cv().education.map((e) =>
-      e.id === id ? { ...e, ...patch } : e
+      e.id === id ? { ...e, ...patch } : e,
     );
     this.updateState({ ...this.cv(), education });
   }
 
   removeEducation(id: string) {
-    this.updateState({ ...this.cv(), education: this.cv().education.filter((e) => e.id !== id) });
+    this.updateState({
+      ...this.cv(),
+      education: this.cv().education.filter((e) => e.id !== id),
+    });
   }
 
   addAdditionalSection(type: AdditionalSectionType): AdditionalSectionItem {
@@ -545,7 +610,9 @@ export class CvStore {
     patch: Partial<AdditionalSectionItem>,
   ): void {
     const additionalSections = this.cv().additionalSections.map((item) =>
-      item.id === id ? { ...item, ...patch, id: item.id, type: item.type } : item,
+      item.id === id
+        ? { ...item, ...patch, id: item.id, type: item.type }
+        : item,
     );
     this.updateState({ ...this.cv(), additionalSections });
   }
@@ -578,7 +645,9 @@ export class CvStore {
       name,
       icon: skill.icon || existing?.icon || null,
     });
-    this.userSkills.set([...skills.values()].sort((a, b) => a.name.localeCompare(b.name)));
+    this.userSkills.set(
+      [...skills.values()].sort((a, b) => a.name.localeCompare(b.name)),
+    );
     this.hiddenUserSkills.update((hiddenSkills) => {
       const nextHiddenSkills = new Set(hiddenSkills);
       nextHiddenSkills.delete(name.toLocaleLowerCase());
@@ -650,18 +719,16 @@ export class CvStore {
 
     this.photoUploading.set(true);
     this.error.set(null);
-    this.api
-      .uploadCvPhoto(this.activeUserId, this.activeCvId, file)
-      .subscribe({
-        next: ({ photoUrl }) => {
-          this.updatePersonal({ ...this.cv().personal, photo: photoUrl });
-          this.photoUploading.set(false);
-        },
-        error: (err: HttpErrorResponse) => {
-          this.error.set(this.getErrorMessage(err, 'Failed to upload photo'));
-          this.photoUploading.set(false);
-        },
-      });
+    this.api.uploadCvPhoto(this.activeUserId, this.activeCvId, file).subscribe({
+      next: ({ photoUrl }) => {
+        this.updatePersonal({ ...this.cv().personal, photo: photoUrl });
+        this.photoUploading.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.error.set(this.getErrorMessage(err, 'Failed to upload photo'));
+        this.photoUploading.set(false);
+      },
+    });
   }
 
   deleteProfilePhoto(): void {
@@ -741,12 +808,13 @@ export class CvStore {
   private savePendingPhoto(
     userId: string,
     cvId: string,
+    initialSavedSnapshot: string,
     callback?: (savedCvId: string) => void,
     errorCallback?: (message: string) => void,
   ): void {
     const photoFile = this.pendingPhotoFile;
     if (!photoFile) {
-      this.completeSave(cvId, callback);
+      this.completeSave(cvId, initialSavedSnapshot, callback);
       return;
     }
 
@@ -755,10 +823,12 @@ export class CvStore {
       next: ({ photoUrl }) => {
         this.updatePersonal({ ...this.cv().personal, photo: photoUrl });
         this.releasePendingPhoto();
-        this.api.saveCv(userId, cvId, this.mapStoreDataToApi(this.cv())).subscribe({
+        const uploadedCvSnapshot = this.serializeCv(this.cv());
+        const cvData = this.mapStoreDataToApi(this.cv());
+        this.api.saveCv(userId, cvId, cvData).subscribe({
           next: () => {
             this.photoUploading.set(false);
-            this.completeSave(cvId, callback);
+            this.completeSave(cvId, uploadedCvSnapshot, callback);
           },
           error: (error: HttpErrorResponse) => {
             this.photoUploading.set(false);
@@ -784,20 +854,37 @@ export class CvStore {
 
   private completeSave(
     cvId: string,
+    savedCvSnapshot: string,
     callback?: (savedCvId: string) => void,
   ): void {
     const currentMetadata = this.metadata();
     this.metadata.set({
       id: cvId,
       ownerEmail: currentMetadata?.ownerEmail ?? '',
+      isPublished: currentMetadata?.isPublished ?? false,
       title:
         this.cv().personal.fullName.trim() ||
         this.cv().personal.jobTitle.trim() ||
         currentMetadata?.title ||
         'Untitled CV',
     });
+    this.savedCvSnapshot.set(savedCvSnapshot);
     this.loading.set(false);
     callback?.(cvId);
+  }
+
+  markCurrentStateAsSaved(): void {
+    this.savedCvSnapshot.set(this.serializeCv(this.cv()));
+  }
+
+  private updatePublicationStatus(isPublished: boolean): void {
+    this.metadata.update((metadata) =>
+      metadata ? { ...metadata, isPublished } : metadata,
+    );
+  }
+
+  private serializeCv(data: CvData): string {
+    return JSON.stringify(data);
   }
 
   private createDefaultData(template: CvTemplate = 'single'): CvData {
@@ -913,7 +1000,7 @@ export class CvStore {
       return 'Enter a valid email';
     }
     if (!PHONE_PATTERN.test(personal.phone.trim())) {
-      return 'Phone must start with + and contain 10-15 digits';
+      return 'Phone must start with + and contain 7-15 digits';
     }
     for (const [field, label] of [
       ['fullName', 'Full name'],
@@ -927,7 +1014,10 @@ export class CvStore {
 
     for (let i = 0; i < data.experience.length; i += 1) {
       const item = data.experience[i];
-      if (!this.isValidShortText(item.company) || !this.isValidShortText(item.position)) {
+      if (
+        !this.isValidShortText(item.company) ||
+        !this.isValidShortText(item.position)
+      ) {
         return `Experience ${i + 1} requires company and position`;
       }
       if (!item.startDate.trim()) {
@@ -1019,8 +1109,7 @@ export class CvStore {
 
     if (
       data.generalSkills.some(
-        (skill) =>
-          !skill.trim() || skill.trim().length > CV_FIELD_LIMITS.skill,
+        (skill) => !skill.trim() || skill.trim().length > CV_FIELD_LIMITS.skill,
       )
     ) {
       return `Skills must be ${CV_FIELD_LIMITS.skill} characters or fewer`;
@@ -1039,7 +1128,10 @@ export class CvStore {
   }
 
   private isValidExperience(item: ExperienceItem): boolean {
-    if (!this.isValidShortText(item.company) || !this.isValidShortText(item.position)) {
+    if (
+      !this.isValidShortText(item.company) ||
+      !this.isValidShortText(item.position)
+    ) {
       return false;
     }
     if (!DATE_PATTERN.test(item.startDate)) return false;

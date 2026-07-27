@@ -18,22 +18,15 @@
       placeholder="Frontend Developer"
     />
   </div>
-  <div class="field-row">
-    <app-form-text-field
-      [control]="form.controls.email"
-      label="Email"
-      type="email"
-      placeholder="john@example.com"
-      patternMessage="Enter a valid email"
-    />
-    <app-form-text-field
-      [control]="form.controls.phone"
-      label="Phone"
-      type="tel"
-      placeholder="+380501234567"
-      patternMessage="Use + and 10-15 digits"
-    />
-  </div>
+  <app-form-text-field
+    class="full-width"
+    [control]="form.controls.email"
+    label="Email"
+    type="email"
+    placeholder="john@example.com"
+    patternMessage="Enter a valid email"
+  />
+  <app-phone-field class="full-width" [control]="form.controls.phone" />
   <app-form-text-field
     class="full-width"
     [control]="form.controls.city"

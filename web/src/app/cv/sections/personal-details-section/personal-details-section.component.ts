@@ -1,7 +1,11 @@
 import { Component, DestroyRef, OnInit, effect, inject } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { debounceTime } from 'rxjs';
 import {
   PHONE_PATTERN,
   SHORT_TEXT_PATTERN,
@@ -9,10 +13,8 @@ import {
 } from '../../../shared/validation-patterns';
 import { FormTextFieldComponent } from '../../../shared/form-text-field/form-text-field.component';
 import { FormTextareaFieldComponent } from '../../../shared/form-textarea-field/form-textarea-field.component';
-import {
-  CV_FIELD_LIMITS,
-  CV_MIN_TEXT_LENGTH,
-} from '../../cv-field-limits';
+import { PhoneFieldComponent } from '../../../shared/phone-field/phone-field.component';
+import { CV_FIELD_LIMITS, CV_MIN_TEXT_LENGTH } from '../../cv-field-limits';
 import { CvStore } from '../../cv.store';
 
 @Component({
@@ -22,6 +24,7 @@ import { CvStore } from '../../cv.store';
     ReactiveFormsModule,
     FormTextFieldComponent,
     FormTextareaFieldComponent,
+    PhoneFieldComponent,
   ],
   templateUrl: './personal-details-section.component.html',
 })
@@ -69,7 +72,7 @@ export class PersonalDetailsSectionComponent implements OnInit {
     );
 
     this.form.valueChanges
-      .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((v) => {
         const current = this.store.cv().personal;
         this.store.updatePersonal({

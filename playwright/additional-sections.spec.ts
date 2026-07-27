@@ -17,11 +17,15 @@ async function registerAndLogin(page: Page): Promise<void> {
   await expect(page).toHaveURL('/home');
 }
 
-test('adds, previews and persists an additional CV section', async ({ page }) => {
+test('adds, previews and persists an additional CV section', async ({
+  page,
+}) => {
   await registerAndLogin(page);
 
   await page.getByRole('button', { name: /New CV/ }).click();
-  await page.locator('button.template-option', { hasText: 'Single column' }).click();
+  await page
+    .locator('button.template-option', { hasText: 'Single column' })
+    .click();
   await expect(page).toHaveURL(/\/cv\/[^/]+\/edit\?.*draft=1/);
 
   await page.getByLabel('Full name').fill('Alex Morgan');
@@ -29,7 +33,9 @@ test('adds, previews and persists an additional CV section', async ({ page }) =>
   await page.getByLabel('Email').fill('alex@example.com');
   await page.getByLabel('Phone').fill('+380501234567');
   await page.getByLabel('City').fill('Kyiv');
-  await page.getByLabel('Summary').fill('Product designer focused on useful digital services.');
+  await page
+    .getByLabel('Summary')
+    .fill('Product designer focused on useful digital services.');
   await expect(page.locator('app-cv-preview')).toContainText('Alex Morgan');
 
   await page.getByRole('button', { name: /Additional Sections/ }).click();
@@ -45,7 +51,7 @@ test('adds, previews and persists an additional CV section', async ({ page }) =>
   await expect(page.locator('app-cv-preview')).toContainText('Advanced (C1)');
 
   await page.getByRole('button', { name: 'Save' }).click();
-  await expect(page.getByText('CV saved')).toBeVisible();
+  await expect(page.getByText('Draft saved')).toBeVisible();
   await expect(page).toHaveURL(/\/cv\/[^/]+\/edit$/);
 
   await page.reload();

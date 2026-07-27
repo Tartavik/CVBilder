@@ -1,18 +1,32 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { forkJoin } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import { MatSelectModule } from '@angular/material/select';
+import { Store } from '@ngrx/store';
 import { AuthService } from '../auth.service';
 import { AppIconComponent } from '../shared/app-icon.component';
+import { DatePickerComponent } from '../shared/date-picker/date-picker.component';
 import {
+  CvListQuery,
+  CvSortBy,
+  CvSortOrder,
   CvSummary,
   CvTemplate,
   UsersApiService,
@@ -20,6 +34,10 @@ import {
 import { ErrorService } from '../shared/errors/error.service';
 import { ConfirmDialogComponent } from '../shared/confirm-dialog/confirm-dialog.component';
 import { TemplatePickerDialogComponent } from './template-picker-dialog/template-picker-dialog.component';
+import { publicCvsActions } from './state/public-cvs.actions';
+import { publicCvsFeature } from './state/public-cvs.reducer';
+
+type CvSortValue = `${CvSortBy}:${CvSortOrder}`;
 
 @Component({
   selector: 'app-home',
@@ -30,10 +48,13 @@ import { TemplatePickerDialogComponent } from './template-picker-dialog/template
     MatButtonModule,
     MatCardModule,
     MatProgressSpinnerModule,
+    MatPaginatorModule,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     AppIconComponent,
+    DatePickerComponent,
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
@@ -44,32 +65,77 @@ export class HomeComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly errors = inject(ErrorService);
   private readonly dialog = inject(MatDialog);
+  private readonly store = inject(Store);
 
   readonly myCvs = signal<CvSummary[]>([]);
-  readonly allCvs = signal<CvSummary[]>([]);
-  readonly loading = signal(true);
-  readonly searching = signal(false);
+  readonly myCvsLoading = signal(true);
   readonly deletingCvId = signal<string | null>(null);
   readonly error = signal('');
-  readonly skillSearch = new FormControl('', { nonNullable: true });
+  readonly allCvs = this.store.selectSignal(publicCvsFeature.selectItems);
+  readonly publicCvQuery = this.store.selectSignal(
+    publicCvsFeature.selectQuery,
+  );
+  readonly publicCvsLoading = this.store.selectSignal(
+    publicCvsFeature.selectLoading,
+  );
+  readonly publicCvsError = this.store.selectSignal(
+    publicCvsFeature.selectError,
+  );
+  readonly availableSkills = this.store.selectSignal(
+    publicCvsFeature.selectAvailableSkills,
+  );
+  readonly filterOptionsLoading = this.store.selectSignal(
+    publicCvsFeature.selectFilterOptionsLoading,
+  );
+  readonly totalItems = this.store.selectSignal(
+    publicCvsFeature.selectTotalItems,
+  );
+  readonly totalPages = this.store.selectSignal(
+    publicCvsFeature.selectTotalPages,
+  );
+  readonly hasActiveFilters = computed(() => {
+    const query = this.publicCvQuery();
+    return Boolean(
+      query.author ||
+        query.query ||
+        query.createdFrom ||
+        query.createdTo ||
+        query.skills.length,
+    );
+  });
+  readonly filtersForm = new FormGroup(
+    {
+      query: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.maxLength(300), maxWordsValidator(10)],
+      }),
+      author: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.maxLength(120)],
+      }),
+      createdFrom: new FormControl<Date | null>(null),
+      createdTo: new FormControl<Date | null>(null),
+      skills: new FormControl<string[]>([], { nonNullable: true }),
+    },
+    { validators: [createdDateRangeValidator] },
+  );
+  readonly sortControl = new FormControl<CvSortValue>('createdAt:desc', {
+    nonNullable: true,
+  });
 
   ngOnInit(): void {
     const userId = this.auth.getCurrentUserId() as string;
-
-    forkJoin({
-      current: this.api.getUserCvs(userId),
-      all: this.api.getAllCvs(),
-    }).subscribe({
-      next: ({ current, all }) => {
-        this.myCvs.set(current);
-        this.allCvs.set(all);
-        this.loading.set(false);
+    this.api.getUserCvs(userId).subscribe({
+      next: (cvs) => {
+        this.myCvs.set(cvs);
+        this.myCvsLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {
         this.error.set(this.errors.getMessage(error, 'Failed to load CVs'));
-        this.loading.set(false);
+        this.myCvsLoading.set(false);
       },
     });
+    this.store.dispatch(publicCvsActions.initialize());
   }
 
   createCv(): void {
@@ -118,8 +184,8 @@ export class HomeComponent implements OnInit {
     this.api.deleteCv(userId, cvId).subscribe({
       next: () => {
         this.myCvs.update((cvs) => cvs.filter((cv) => cv.id !== cvId));
-        this.allCvs.update((cvs) => cvs.filter((cv) => cv.id !== cvId));
         this.deletingCvId.set(null);
+        this.store.dispatch(publicCvsActions.refreshRequested());
       },
       error: (error: HttpErrorResponse) => {
         this.error.set(this.errors.getMessage(error, 'Failed to delete CV'));
@@ -128,28 +194,75 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  searchCvs(): void {
-    const skills = this.skillSearch.value
-      .split(',')
-      .map((skill) => skill.trim())
-      .filter(Boolean);
+  applyFilters(): void {
+    if (this.filtersForm.invalid) {
+      this.filtersForm.markAllAsTouched();
+      return;
+    }
 
-    this.searching.set(true);
-    this.error.set('');
-    this.api.getAllCvs(skills).subscribe({
-      next: (cvs) => {
-        this.allCvs.set(cvs);
-        this.searching.set(false);
-      },
-      error: (error: HttpErrorResponse) => {
-        this.error.set(this.errors.getMessage(error, 'Failed to search CVs'));
-        this.searching.set(false);
-      },
+    const values = this.filtersForm.getRawValue();
+    const changes: Partial<CvListQuery> = {
+      query: values.query.trim(),
+      author: values.author.trim(),
+      createdFrom: toIsoDate(values.createdFrom),
+      createdTo: toIsoDate(values.createdTo),
+      skills: values.skills,
+    };
+    this.store.dispatch(publicCvsActions.queryChanged({ changes }));
+  }
+
+  clearFilters(): void {
+    this.filtersForm.reset({
+      query: '',
+      author: '',
+      createdFrom: null,
+      createdTo: null,
+      skills: [],
     });
+    this.applyFilters();
   }
 
-  clearSearch(): void {
-    this.skillSearch.reset();
-    this.searchCvs();
+  changeSort(value: CvSortValue): void {
+    const [sortBy, sortOrder] = value.split(':') as [CvSortBy, CvSortOrder];
+    this.store.dispatch(
+      publicCvsActions.queryChanged({
+        changes: { sortBy, sortOrder },
+      }),
+    );
   }
+
+  changePage(page: number): void {
+    this.store.dispatch(publicCvsActions.queryChanged({ changes: { page } }));
+  }
+}
+
+function createdDateRangeValidator(
+  control: AbstractControl,
+): ValidationErrors | null {
+  const createdFrom = control.get('createdFrom')?.value as
+    | Date
+    | null
+    | undefined;
+  const createdTo = control.get('createdTo')?.value as Date | null | undefined;
+  return createdFrom instanceof Date &&
+    createdTo instanceof Date &&
+    createdFrom.getTime() > createdTo.getTime()
+    ? { createdDateRange: true }
+    : null;
+}
+
+function toIsoDate(value: Date | null): string | null {
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) return null;
+  const year = value.getFullYear();
+  const month = `${value.getMonth() + 1}`.padStart(2, '0');
+  const day = `${value.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function maxWordsValidator(maxWords: number): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = String(control.value ?? '').trim();
+    const wordCount = value ? value.split(/\s+/u).length : 0;
+    return wordCount > maxWords ? { maxWords: { maxWords } } : null;
+  };
 }

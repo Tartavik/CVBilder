@@ -16,6 +16,7 @@ export class FieldErrorDirective {
     ['required', () => this.requiredMessage()],
     ['minlength', () => this.getMinLengthMessage()],
     ['maxlength', () => this.getMaxLengthMessage()],
+    ['invalidPhone', () => this.getPhoneMessage()],
     ['pattern', () => this.patternMessage()],
     ['matDatepickerParse', () => 'Enter a valid date'],
     ['startDateInFuture', () => 'Start date cannot be in the future'],
@@ -26,9 +27,10 @@ export class FieldErrorDirective {
     this.updateMessage();
 
     if (control) {
-      const subscription = merge(control.statusChanges, control.valueChanges).subscribe(
-        () => this.updateMessage(),
-      );
+      const subscription = merge(
+        control.statusChanges,
+        control.valueChanges,
+      ).subscribe(() => this.updateMessage());
       onCleanup(() => subscription.unsubscribe());
     }
   });
@@ -41,17 +43,35 @@ export class FieldErrorDirective {
     const errors = this.control()?.errors;
     if (!errors) return '';
 
-    const matchedError = this.errorMessages.find(([errorName]) => errors[errorName]);
+    const matchedError = this.errorMessages.find(
+      ([errorName]) => errors[errorName],
+    );
     return matchedError?.[1]() ?? 'Invalid value';
   }
 
   private getMinLengthMessage(): string {
-    const requiredLength = this.control()?.errors?.['minlength']?.requiredLength;
+    const requiredLength =
+      this.control()?.errors?.['minlength']?.requiredLength;
     return `Use at least ${requiredLength} characters`;
   }
 
   private getMaxLengthMessage(): string {
-    const requiredLength = this.control()?.errors?.['maxlength']?.requiredLength;
+    const requiredLength =
+      this.control()?.errors?.['maxlength']?.requiredLength;
     return `Use no more than ${requiredLength} characters`;
+  }
+
+  private getPhoneMessage(): string {
+    const errorCode = this.control()?.errors?.['invalidPhone'];
+    switch (errorCode) {
+      case 'TOO_SHORT':
+        return 'Phone number is too short';
+      case 'TOO_LONG':
+        return 'Phone number is too long';
+      case 'INVALID_COUNTRY_CODE':
+        return 'Choose a valid country code';
+      default:
+        return 'Enter a valid phone number';
+    }
   }
 }

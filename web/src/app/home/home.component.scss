@@ -8,7 +8,11 @@
   --accent-soft: #{v.$color-primary-soft};
   --surface: var(--app-surface);
   --surface-soft: var(--app-surface-soft);
-  --panel: linear-gradient(135deg, #{v.$color-primary-soft}, #{v.$color-surface-soft});
+  --panel: linear-gradient(
+    135deg,
+    #{v.$color-primary-soft},
+    #{v.$color-surface-soft}
+  );
   --border: var(--app-border);
   --card-border: var(--app-border);
   --shadow: var(--app-shadow);
@@ -28,7 +32,7 @@
     height: 220px;
     border-radius: 50%;
     background: radial-gradient(circle, rgb(67 97 238 / 16%), transparent 70%);
-    content: "";
+    content: '';
     pointer-events: none;
   }
 }
@@ -44,31 +48,6 @@
 .section-heading,
 mat-card-actions {
   @include m.flex-between;
-}
-
-.create-panel {
-  padding: 24px;
-  border: 1px solid rgba(56, 184, 120, 0.16);
-  border-radius: v.$radius-panel;
-  background: linear-gradient(150deg, rgba(240, 255, 244, 0.95), rgba(248, 252, 255, 0.95));
-  box-shadow: 0 12px 30px rgba(56, 184, 120, 0.08);
-}
-
-.cv-section {
-  margin-top: 32px;
-  padding: 24px;
-  border: 1px solid rgba(56, 184, 120, 0.14);
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 14px 34px rgba(56, 184, 120, 0.08);
-}
-
-.eyebrow {
-  margin: 0;
-  color: var(--accent);
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
 }
 
 .create-panel p,
@@ -132,23 +111,73 @@ mat-card-actions {
   gap: 16px;
 }
 
-.skill-search {
-  display: flex;
-  align-items: flex-start;
+.cv-filters {
+  margin-bottom: 20px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: v.$radius-panel;
+  background: var(--surface);
+}
+
+.filter-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  margin-bottom: 16px;
 
   mat-form-field {
-    flex: 1;
+    width: 100%;
   }
+}
 
-  button {
-    margin-top: 4px;
-  }
+.date-filter {
+  display: grid;
+  grid-column: span 2;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.filter-actions,
+.results-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filter-actions {
+  margin-top: 4px;
 
   app-icon {
     margin-right: 8px;
   }
+}
+
+.filter-error {
+  margin: -4px 0 12px;
+  color: v.$color-danger;
+  font-size: v.$font-size-sm;
+}
+
+.results-toolbar {
+  justify-content: space-between;
+  margin-bottom: 16px;
+
+  p {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  mat-form-field {
+    width: min(220px, 100%);
+  }
+}
+
+.public-results.updating {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+mat-paginator {
+  margin-top: 20px;
 }
 
 .cv-card {
@@ -167,7 +196,7 @@ mat-card-actions {
     transform: scaleX(0.7);
     transform-origin: left;
     transition: transform 0.25s ease;
-    content: "";
+    content: '';
   }
 
   &:hover {
@@ -182,6 +211,17 @@ mat-card-actions {
 
   h3 {
     margin: 0 0 8px;
+  }
+
+  .cv-card__heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+
+    h3 {
+      min-width: 0;
+    }
   }
 
   p {
@@ -217,6 +257,28 @@ mat-card-actions {
   }
 }
 
+.publication-status {
+  flex: 0 0 auto;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: v.$radius-pill;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: v.$font-size-sm;
+  font-weight: 700;
+
+  &.published {
+    border-color: v.$color-success-border;
+    background: v.$color-success-soft;
+    color: v.$color-success;
+  }
+}
+
+.cv-card .draft-note {
+  margin-top: 12px;
+  font-size: v.$font-size-sm;
+}
+
 .public-card {
   background: var(--surface-soft);
 }
@@ -243,11 +305,22 @@ mat-card-actions {
     flex-direction: column;
   }
 
-  .skill-search {
-    flex-direction: column;
+  .filter-fields {
+    grid-template-columns: 1fr;
+  }
 
-    mat-form-field {
-      width: 100%;
-    }
+  .date-filter {
+    grid-column: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .filter-actions,
+  .results-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .results-toolbar mat-form-field {
+    width: 100%;
   }
 }

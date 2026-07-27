@@ -16,9 +16,12 @@
     <app-cv-editor-sidebar
       [cvId]="cvId"
       [deleting]="deleting()"
+      [publicationChanging]="publicationChanging()"
       [activeSection]="activeSection()"
       (activeSectionChange)="activeSection.set($event)"
       (save)="saveCv()"
+      (publish)="publishCv()"
+      (unpublish)="unpublishCv()"
       (deleteCv)="confirmDeleteCv()"
       (exportPdf)="exportPdf()"
       (logout)="logout()"

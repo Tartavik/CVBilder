@@ -8,8 +8,9 @@
       >
         @for (item of reusableExperiences(); track item.id) {
           <mat-option [value]="item.id">
-            {{ item.company }} — {{ item.position }}
-            ({{ item.startDate }}–{{ item.current ? 'Present' : item.endDate }})
+            {{ item.company }} — {{ item.position }} ({{ item.startDate }}–{{
+              item.current ? 'Present' : item.endDate
+            }})
           </mat-option>
         }
       </mat-select>
@@ -18,7 +19,7 @@
   </div>
 }
 
-@for (group of groups; track $index; let i = $index) {
+@for (group of groups(); track group; let i = $index) {
   <div [formGroup]="group" class="exp-item">
     <div class="field-row">
       <app-form-text-field
@@ -33,33 +34,21 @@
       />
     </div>
     <div class="field-row">
-      <mat-form-field appearance="outline">
-        <mat-label>Start date</mat-label>
-        <input
-          matInput
-          readonly
-          [matDatepicker]="startPicker"
-          formControlName="startDate"
-          (click)="startPicker.open()"
-        />
-        <mat-datepicker-toggle matIconSuffix [for]="startPicker" />
-        <mat-datepicker #startPicker />
-        <mat-error appFieldError [control]="group.get('startDate')" />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>End date</mat-label>
-        <input
-          matInput
-          readonly
-          [matDatepicker]="endPicker"
-          formControlName="endDate"
-          (click)="endPicker.open()"
-        />
-        <mat-datepicker-toggle matIconSuffix [for]="endPicker" />
-        <mat-datepicker #endPicker />
-        <mat-error appFieldError [control]="group.get('endDate')" />
-      </mat-form-field>
-      <mat-checkbox formControlName="current">Current</mat-checkbox>
+      <app-date-picker
+        [control]="group.get('startDate')"
+        label="Start date"
+        [max]="group.get('endDate')?.value ?? null"
+      />
+      <app-date-picker
+        [control]="group.get('endDate')"
+        label="End date"
+        [min]="group.get('startDate')?.value ?? null"
+      />
+      <app-checkbox
+        formControlName="current"
+        label="Current"
+        hint="Present role"
+      />
     </div>
     <app-form-textarea-field
       class="full-width"
@@ -74,8 +63,8 @@
         <div class="skills-editor-title">
           <span class="field-label">Skills used in this role</span>
           <p>
-            Type or choose a skill. It is added automatically when you leave
-            the field.
+            Type or choose a skill. It is added automatically when you leave the
+            field.
           </p>
         </div>
         <div class="skill-display-row">
@@ -116,7 +105,7 @@
   </div>
 }
 
-@if (groups.length === 0) {
+@if (groups().length === 0) {
   <p class="empty">No experience added yet.</p>
 }
 

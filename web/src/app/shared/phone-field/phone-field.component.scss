@@ -1,0 +1,42 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.phone-field {
+  position: relative;
+}
+
+.phone-label {
+  position: absolute;
+  z-index: 3;
+  top: -7px;
+  left: 12px;
+  padding: 0 4px;
+  background: var(--app-surface);
+  color: var(--app-muted);
+  font-size: 12px;
+  line-height: 14px;
+  pointer-events: none;
+}
+
+.phone-field:focus-within .phone-label {
+  color: var(--app-sidebar-accent);
+}
+
+.phone-field--invalid .phone-label {
+  color: var(--app-danger);
+}
+
+.phone-error {
+  min-height: 20px;
+  padding: 4px 16px 0;
+  color: var(--app-danger);
+  font-size: 12px;
+  line-height: 16px;
+  visibility: hidden;
+}
+
+.phone-error--visible {
+  visibility: visible;
+}

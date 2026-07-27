@@ -13,9 +13,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { debounceTime } from 'rxjs';
 import { AppIconComponent } from '../../../shared/app-icon.component';
 import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';
+import { MonthPickerComponent } from '../../../shared/date-picker/month-picker.component';
 import { FormTextFieldComponent } from '../../../shared/form-text-field/form-text-field.component';
 import { FormTextareaFieldComponent } from '../../../shared/form-textarea-field/form-textarea-field.component';
 import {
@@ -25,10 +25,7 @@ import {
   getAdditionalItemLabel,
   getAdditionalSectionLabel,
 } from '../../additional-sections';
-import {
-  CV_FIELD_LIMITS,
-  CV_MIN_TEXT_LENGTH,
-} from '../../cv-field-limits';
+import { CV_FIELD_LIMITS, CV_MIN_TEXT_LENGTH } from '../../cv-field-limits';
 import { CvStore } from '../../cv.store';
 
 @Component({
@@ -40,6 +37,7 @@ import { CvStore } from '../../cv.store';
     MatFormFieldModule,
     MatSelectModule,
     AppIconComponent,
+    MonthPickerComponent,
     FormTextFieldComponent,
     FormTextareaFieldComponent,
   ],
@@ -83,12 +81,15 @@ export class AdditionalSectionsSectionComponent implements OnInit {
     });
 
     this.form.valueChanges
-      .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
-      .subscribe((values: Partial<AdditionalSectionItem>[]) => {
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((values: AdditionalSectionFormValue[]) => {
         const ids = this.store.cv().additionalSections.map((item) => item.id);
         values.forEach((value, index) => {
           if (ids[index]) {
-            this.store.updateAdditionalSection(ids[index], value);
+            this.store.updateAdditionalSection(
+              ids[index],
+              toAdditionalSectionPatch(value),
+            );
           }
         });
       });
@@ -169,8 +170,8 @@ export class AdditionalSectionsSectionComponent implements OnInit {
         nonNullable: true,
         validators: [Validators.maxLength(CV_FIELD_LIMITS.longText)],
       }),
-      startDate: new FormControl(item.startDate, { nonNullable: true }),
-      endDate: new FormControl(item.endDate, { nonNullable: true }),
+      startDate: new FormControl(toMonthDate(item.startDate)),
+      endDate: new FormControl(toMonthDate(item.endDate)),
       url: new FormControl(item.url, {
         nonNullable: true,
         validators:
@@ -180,10 +181,7 @@ export class AdditionalSectionsSectionComponent implements OnInit {
                 Validators.maxLength(CV_FIELD_LIMITS.url),
                 httpUrlValidator,
               ]
-            : [
-                Validators.maxLength(CV_FIELD_LIMITS.url),
-                httpUrlValidator,
-              ],
+            : [Validators.maxLength(CV_FIELD_LIMITS.url), httpUrlValidator],
       }),
       level: new FormControl(item.level, {
         nonNullable: true,
@@ -203,13 +201,46 @@ export class AdditionalSectionsSectionComponent implements OnInit {
   }
 }
 
+type AdditionalSectionFormValue = Omit<
+  Partial<AdditionalSectionItem>,
+  'startDate' | 'endDate'
+> & {
+  startDate?: unknown;
+  endDate?: unknown;
+};
+
+function toAdditionalSectionPatch(
+  value: AdditionalSectionFormValue,
+): Partial<AdditionalSectionItem> {
+  return {
+    ...value,
+    startDate: toMonthString(value.startDate),
+    endDate: toMonthString(value.endDate),
+  };
+}
+
+function toMonthDate(value: string): Date | null {
+  const match = /^(\d{4})-(\d{2})$/.exec(value);
+  if (!match) return null;
+  return new Date(Number(match[1]), Number(match[2]) - 1, 1);
+}
+
+function toMonthString(value: unknown): string {
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) return '';
+  const year = value.getFullYear();
+  const month = `${value.getMonth() + 1}`.padStart(2, '0');
+  return `${year}-${month}`;
+}
+
 function httpUrlValidator(control: AbstractControl): ValidationErrors | null {
   const value = `${control.value ?? ''}`.trim();
   if (!value) return null;
 
   try {
     const url = new URL(value);
-    return ['http:', 'https:'].includes(url.protocol) ? null : { pattern: true };
+    return ['http:', 'https:'].includes(url.protocol)
+      ? null
+      : { pattern: true };
   } catch {
     return { pattern: true };
   }

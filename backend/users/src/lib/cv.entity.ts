@@ -41,6 +41,9 @@ export class CvEntity {
   })
   additionalSections!: Array<Record<string, string>>;
 
+  @Column({ name: 'is_published', default: false })
+  isPublished!: boolean;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

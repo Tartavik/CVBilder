@@ -2,24 +2,23 @@
 
 [![CI](https://github.com/Tartavik/CVBilder/actions/workflows/ci.yml/badge.svg?branch=staging)](https://github.com/Tartavik/CVBilder/actions/workflows/ci.yml)
 
-Starter modular monolith workspace for CV builder:
+Full-stack CV builder workspace:
 
-- Frontend: Angular (`web`), Angular Material, NgRx, Reactive Forms
-- Backend: NestJS (`api`), TypeORM
+- Frontend: Angular, Angular Material, NgRx and Reactive Forms
+- Backend: NestJS, JWT authentication and TypeORM
 - Database: PostgreSQL
 - Monorepo tooling: Nx
 
 ## Project structure
 
-- `web` - Angular frontend app
-- `api` - NestJS backend app
-- `frontend/ui` - shared Angular UI library (`@cvbilder/ui`)
-- `backend/core` - shared Nest core module library (`@cvbilder/core`)
+- `web` — Angular application and reusable UI components
+- `api` — NestJS entrypoint, database configuration and migrations
+- `backend/users` — users, CV storage, discovery and authentication
 
 ## Prerequisites
 
-- Node.js 20+
-- npm 10+
+- Node.js 24+
+- npm 11+
 - Docker (for local PostgreSQL)
 
 ## Environment setup
@@ -35,6 +34,10 @@ On Windows PowerShell:
 ```powershell
 Copy-Item .env.example .env
 ```
+
+Set `JWT_SECRET` to a long random value outside local development. Existing
+plaintext passwords from older builds are converted to bcrypt hashes after the
+user's first successful login.
 
 ## Start PostgreSQL
 
@@ -67,8 +70,9 @@ npm run start:all
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Tartavik/CVBilder/tree/staging)
 
 The Render Blueprint creates one public web service and one PostgreSQL database.
-During setup, provide `OPENAI_API_KEY` in Render's secret prompt. The application
-runs database migrations automatically before each start.
+Render generates `JWT_SECRET`. During setup, provide `OPENAI_API_KEY` in
+Render's secret prompt. The application runs database migrations automatically
+before each start.
 
 The free tier is intended for demos: the web service sleeps after inactivity,
 the PostgreSQL database expires after 30 days, and uploaded files can disappear
@@ -81,11 +85,22 @@ preview database expires.
 npm run build
 ```
 
+## Verification
+
+```bash
+npm run lint
+npm run migration:run
+npm run e2e
+```
+
+Playwright starts the frontend and API automatically when they are not already
+running.
+
 ## Continuous integration
 
-GitHub Actions runs linting, production builds, and all database migrations on a
-clean PostgreSQL 16 instance for every push and pull request targeting
-`staging`. The workflow can also be started manually from the **Actions** tab.
+GitHub Actions runs linting, production builds, database migrations and
+Playwright tests on a clean PostgreSQL 16 instance for every push and pull
+request targeting `staging`.
 
 ## Notes
 
@@ -93,4 +108,4 @@ clean PostgreSQL 16 instance for every push and pull request targeting
 - Production deployments can provide `DATABASE_URL` instead of separate DB
   settings.
 - TypeORM is configured with `autoLoadEntities: true` and `synchronize: false`.
-- This is a starter setup only (no CV builder business modules yet).
+- The `/api` endpoint is used as the deployment health check.

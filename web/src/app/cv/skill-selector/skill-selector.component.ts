@@ -1,6 +1,23 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
+import {
+  MatAutocompleteModule,
+  MatAutocompleteTrigger,
+} from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -49,11 +66,29 @@ export class SkillSelectorComponent {
   readonly placeholder = input('e.g. Angular');
   readonly selectedSkillsChange = output<ExperienceSkill[]>();
   private blurAddTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly duplicateSkillValidator = (
+    control: AbstractControl,
+  ): ValidationErrors | null => {
+    const draftName = `${control.value ?? ''}`.trim().toLocaleLowerCase();
+    if (!draftName) return null;
+    return this.selectedSkills().some(
+      (skill) => skill.name.trim().toLocaleLowerCase() === draftName,
+    )
+      ? { duplicateSkill: true }
+      : null;
+  };
 
   readonly skillNameLimit = CV_FIELD_LIMITS.skill;
   readonly skillInput = new FormControl('', {
     nonNullable: true,
-    validators: [Validators.maxLength(CV_FIELD_LIMITS.skill)],
+    validators: [
+      Validators.maxLength(CV_FIELD_LIMITS.skill),
+      this.duplicateSkillValidator,
+    ],
+  });
+  private readonly revalidateDuplicateSkill = effect(() => {
+    this.selectedSkills();
+    this.skillInput.updateValueAndValidity({ emitEvent: false });
   });
   readonly draftIcon = signal<string | null>(null);
   readonly draftRevision = signal(0);
@@ -76,31 +111,32 @@ export class SkillSelectorComponent {
       skills.set(skill.name.toLocaleLowerCase(), {
         name: skill.name,
         icon: skill.icon ?? catalogOption?.icon ?? null,
-        label: catalogOption?.label ?? skill.name.slice(0, 2).toLocaleUpperCase(),
+        label:
+          catalogOption?.label ?? skill.name.slice(0, 2).toLocaleUpperCase(),
         color: catalogOption?.color ?? '#2563eb',
       });
     });
     return [...skills.values()].sort((a, b) => a.name.localeCompare(b.name));
   });
+  readonly availableSkillOptions = computed(() => {
+    const selectedNames = new Set(
+      this.selectedSkills().map((skill) => skill.name.toLocaleLowerCase()),
+    );
+    return this.skillOptions().filter(
+      (skill) => !selectedNames.has(skill.name.toLocaleLowerCase()),
+    );
+  });
 
   addSkill(): void {
     const draftName = this.skillInput.value.trim();
-    if (
-      !draftName ||
-      this.skillInput.invalid ||
-      this.selectedSkills().some(
-        (skill) =>
-          skill.name.toLocaleLowerCase() === draftName.toLocaleLowerCase(),
-      )
-    ) {
-      return;
-    }
+    if (!draftName || this.skillInput.invalid) return;
 
     const selectedOption = this.findOption(draftName);
     const catalogOption = findSkillOptionByName(draftName);
     const newSkill = {
       name: selectedOption?.name ?? draftName,
-      icon: this.draftIcon() ?? selectedOption?.icon ?? catalogOption?.icon ?? null,
+      icon:
+        this.draftIcon() ?? selectedOption?.icon ?? catalogOption?.icon ?? null,
     };
     this.selectedSkillsChange.emit([...this.selectedSkills(), newSkill]);
     this.store.rememberUserSkill(newSkill);
@@ -134,13 +170,26 @@ export class SkillSelectorComponent {
     this.skillInput.setValue(name);
     this.draftIcon.set(this.findOption(name)?.icon ?? null);
     this.refreshDraft();
+    this.addSkill();
+  }
+
+  onSkillInputEnter(
+    event: Event,
+    autocompleteTrigger: MatAutocompleteTrigger,
+  ): void {
+    if (autocompleteTrigger.panelOpen && autocompleteTrigger.activeOption) {
+      return;
+    }
+
+    event.preventDefault();
+    this.addSkill();
   }
 
   filteredSkillOptions(): SkillOption[] {
     this.draftRevision();
     const search = this.skillInput.value.trim().toLocaleLowerCase();
-    if (!search) return this.skillOptions().slice(0, 8);
-    return this.skillOptions()
+    if (!search) return this.availableSkillOptions().slice(0, 8);
+    return this.availableSkillOptions()
       .filter((skill) => skill.name.toLocaleLowerCase().includes(search))
       .slice(0, 8);
   }
@@ -197,7 +246,9 @@ export class SkillSelectorComponent {
       },
       error: () => {
         this.generationState.set('error');
-        this.generationMessage.set('Could not generate an icon right now. Please try again.');
+        this.generationMessage.set(
+          'Could not generate an icon right now. Please try again.',
+        );
       },
     });
   }
@@ -210,7 +261,11 @@ export class SkillSelectorComponent {
   }
 
   onDraftInput(): void {
-    if (this.generationState() !== 'idle' && this.generationState() !== 'generating') {
+    this.skillInput.markAsTouched();
+    if (
+      this.generationState() !== 'idle' &&
+      this.generationState() !== 'generating'
+    ) {
       this.generationState.set('idle');
       this.generationMessage.set(null);
     }
@@ -238,9 +293,7 @@ export class SkillSelectorComponent {
 
     if (!SUPPORTED_SKILL_IMAGE_TYPES.has(file.type)) {
       this.generationState.set('error');
-      this.generationMessage.set(
-        'Use an SVG, PNG, JPG or WebP image.',
-      );
+      this.generationMessage.set('Use an SVG, PNG, JPG or WebP image.');
       inputElement.value = '';
       return;
     }

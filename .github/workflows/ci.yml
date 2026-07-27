@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Lint, build and migrations
+    name: Lint, build, migrations and E2E
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -42,6 +42,7 @@ jobs:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: cvbilder
+      JWT_SECRET: ci-only-jwt-secret-for-browser-tests
 
     steps:
       - name: Check out repository
@@ -72,3 +73,9 @@ jobs:
 
       - name: Validate database migrations
         run: npm run migration:run
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run end-to-end tests
+        run: npm run e2e

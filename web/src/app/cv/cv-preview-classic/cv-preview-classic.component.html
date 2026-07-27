@@ -6,7 +6,12 @@
       <div class="classic-photo-placeholder"></div>
     }
 
-    @if (cv().personal.email || cv().personal.phone || cv().personal.city || cv().personal.summary) {
+    @if (
+      cv().personal.email ||
+      cv().personal.phone ||
+      cv().personal.city ||
+      cv().personal.summary
+    ) {
       <div class="classic-block">
         <h3 class="classic-block-title">DETAILS</h3>
         @if (cv().personal.email) {
@@ -24,7 +29,7 @@
         @if (cv().personal.phone) {
           <div class="classic-detail">
             <span class="detail-icon">✆</span>
-            <span>{{ cv().personal.phone }}</span>
+            <span>{{ formatPhone(cv().personal.phone) }}</span>
           </div>
         }
         @if (cv().personal.summary) {
@@ -64,7 +69,10 @@
                 <div class="classic-exp-item">
                   <div class="classic-exp-header">
                     <strong>{{ exp.position }}, {{ exp.company }}</strong>
-                    <span class="classic-dates">{{ exp.startDate }} — {{ exp.current ? 'Present' : exp.endDate }}</span>
+                    <span class="classic-dates"
+                      >{{ exp.startDate }} —
+                      {{ exp.current ? 'Present' : exp.endDate }}</span
+                    >
                   </div>
                   @if (exp.description) {
                     @for (line of exp.description.split('\n'); track $index) {
@@ -77,7 +85,10 @@
                     @if (cv().experienceSkillMode === 'icons') {
                       <div class="classic-experience-skill-icons">
                         @for (skill of exp.skills; track skill.name) {
-                          <app-skill-icon [name]="skill.name" [icon]="skill.icon" />
+                          <app-skill-icon
+                            [name]="skill.name"
+                            [icon]="skill.icon"
+                          />
                         }
                       </div>
                     } @else {
@@ -99,8 +110,15 @@
               <h2 class="classic-section-title">Education</h2>
               @for (edu of cv().education; track edu.id) {
                 <div class="classic-edu-item">
-                  <strong>{{ edu.degree }}@if (edu.field) {, {{ edu.field }}}</strong>
-                  <div class="classic-edu-institution">{{ edu.institution }}</div>
+                  <strong
+                    >{{ edu.degree }}
+                    @if (edu.field) {
+                      , {{ edu.field }}
+                    }
+                  </strong>
+                  <div class="classic-edu-institution">
+                    {{ edu.institution }}
+                  </div>
                   @if (edu.year) {
                     <div class="classic-dates">{{ edu.year }}</div>
                   }
@@ -120,5 +138,4 @@
       }
     }
   </main>
-
 </div>

@@ -1,5 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -38,7 +43,10 @@ export class LoginComponent {
       Validators.required,
       Validators.pattern(STRICT_EMAIL_PATTERN),
     ]),
-    password: new FormControl('', [Validators.required, Validators.minLength(6)]),
+    password: new FormControl('', [
+      Validators.required,
+      Validators.minLength(6),
+    ]),
   });
 
   readonly loading = signal(false);
@@ -60,8 +68,8 @@ export class LoginComponent {
         }),
       )
       .subscribe({
-        next: (user) => {
-          this.auth.setCurrentUser(user.id);
+        next: ({ user, accessToken }) => {
+          this.auth.setSession(user.id, accessToken);
           this.router.navigate(['/home']);
         },
         error: (err: unknown) => {

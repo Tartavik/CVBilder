@@ -10,6 +10,12 @@ export interface User {
   createdAt: string;
 }
 
+export interface AuthResponse {
+  user: User;
+  accessToken: string;
+  expiresIn: number;
+}
+
 export interface PersonalData {
   fullName: string;
   jobTitle: string;
@@ -66,6 +72,7 @@ export interface CvData {
   ownerEmail?: string;
   createdAt?: string;
   updatedAt?: string;
+  isPublished?: boolean;
   personal: PersonalData;
   experience: ExperienceItem[];
   education: EducationItem[];
@@ -82,6 +89,36 @@ export interface CvSummary {
   ownerEmail: string;
   createdAt: string;
   updatedAt: string;
+  isPublished: boolean;
+}
+
+export type CvSortBy = 'title' | 'createdAt';
+export type CvSortOrder = 'asc' | 'desc';
+
+export interface CvListQuery {
+  page: number;
+  pageSize: number;
+  sortBy: CvSortBy;
+  sortOrder: CvSortOrder;
+  author: string;
+  query: string;
+  createdFrom: string | null;
+  createdTo: string | null;
+  skills: string[];
+}
+
+export interface PaginatedCvs {
+  items: CvSummary[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  };
+}
+
+export interface CvFilterOptions {
+  skills: string[];
 }
 
 export type CvTemplate = 'single' | 'classic';
@@ -112,8 +149,11 @@ export class UsersApiService {
     return this.http.post<User>(this.base, { email, password });
   }
 
-  login(email: string, password: string): Observable<User> {
-    return this.http.post<User>(`${this.base}/login`, { email, password });
+  login(email: string, password: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.base}/login`, {
+      email,
+      password,
+    });
   }
 
   getUserCvs(userId: string): Observable<CvSummary[]> {
@@ -128,9 +168,12 @@ export class UsersApiService {
     userId: string,
     skillName: string,
   ): Observable<{ success: true }> {
-    return this.http.delete<{ success: true }>(`${this.base}/${userId}/skills`, {
-      body: { skillName },
-    });
+    return this.http.delete<{ success: true }>(
+      `${this.base}/${userId}/skills`,
+      {
+        body: { skillName },
+      },
+    );
   }
 
   getCvSectionLibrary(
@@ -155,11 +198,16 @@ export class UsersApiService {
     userId: string,
     profile: Omit<UserProfile, 'id'>,
   ): Observable<UserProfile> {
-    return this.http.patch<UserProfile>(`${this.base}/${userId}/profile`, profile);
+    return this.http.patch<UserProfile>(
+      `${this.base}/${userId}/profile`,
+      profile,
+    );
   }
 
   getSettings(userId: string): Observable<UserSettings | null> {
-    return this.http.get<UserSettings | null>(`${this.base}/${userId}/settings`);
+    return this.http.get<UserSettings | null>(
+      `${this.base}/${userId}/settings`,
+    );
   }
 
   updateSettings(
@@ -172,32 +220,62 @@ export class UsersApiService {
     );
   }
 
-  getAllCvs(skills: string[] = []): Observable<CvSummary[]> {
-    const params = skills.length
-      ? new HttpParams().set('skills', skills.join(','))
-      : undefined;
-    return this.http.get<CvSummary[]>('/api/cvs', { params });
+  getAllCvs(query: CvListQuery): Observable<PaginatedCvs> {
+    let params = new HttpParams()
+      .set('page', query.page)
+      .set('pageSize', query.pageSize)
+      .set('sortBy', query.sortBy)
+      .set('sortOrder', query.sortOrder);
+
+    if (query.author) params = params.set('author', query.author);
+    if (query.query) params = params.set('query', query.query);
+    if (query.createdFrom) {
+      params = params.set('createdFrom', query.createdFrom);
+    }
+    if (query.createdTo) params = params.set('createdTo', query.createdTo);
+    if (query.skills.length) {
+      params = params.set('skills', query.skills.join(','));
+    }
+
+    return this.http.get<PaginatedCvs>('/api/cvs', { params });
+  }
+
+  getCvFilterOptions(): Observable<CvFilterOptions> {
+    return this.http.get<CvFilterOptions>('/api/cvs/filters');
   }
 
   saveCv(
     userId: string,
     cvId: string,
     cvData: CvData,
-  ): Observable<{ success: boolean; cvId: string }> {
-    return this.http.put<{ success: boolean; cvId: string }>(
-      `${this.base}/${userId}/cvs/${cvId}`,
-      cvData,
-    );
+  ): Observable<{ success: boolean; cvId: string; isPublished: boolean }> {
+    return this.http.put<{
+      success: boolean;
+      cvId: string;
+      isPublished: boolean;
+    }>(`${this.base}/${userId}/cvs/${cvId}`, cvData);
   }
 
   createCvFromDraft(
     userId: string,
     cvId: string,
     cvData: CvData,
-  ): Observable<{ success: boolean; cvId: string }> {
-    return this.http.post<{ success: boolean; cvId: string }>(
-      `${this.base}/${userId}/cvs/${cvId}`,
-      cvData,
+  ): Observable<{ success: boolean; cvId: string; isPublished: boolean }> {
+    return this.http.post<{
+      success: boolean;
+      cvId: string;
+      isPublished: boolean;
+    }>(`${this.base}/${userId}/cvs/${cvId}`, cvData);
+  }
+
+  setCvPublication(
+    userId: string,
+    cvId: string,
+    isPublished: boolean,
+  ): Observable<{ isPublished: boolean }> {
+    return this.http.patch<{ isPublished: boolean }>(
+      `${this.base}/${userId}/cvs/${cvId}/publication`,
+      { isPublished },
     );
   }
 
@@ -209,10 +287,7 @@ export class UsersApiService {
     return this.http.get<CvData>(`/api/cvs/${cvId}`);
   }
 
-  deleteCv(
-    userId: string,
-    cvId: string,
-  ): Observable<{ success: true }> {
+  deleteCv(userId: string, cvId: string): Observable<{ success: true }> {
     return this.http.delete<{ success: true }>(
       `${this.base}/${userId}/cvs/${cvId}`,
     );
@@ -248,10 +323,7 @@ export class UsersApiService {
     );
   }
 
-  deleteCvPhoto(
-    userId: string,
-    cvId: string,
-  ): Observable<{ success: true }> {
+  deleteCvPhoto(userId: string, cvId: string): Observable<{ success: true }> {
     return this.http.delete<{ success: true }>(
       `${this.base}/${userId}/cvs/${cvId}/photo`,
     );

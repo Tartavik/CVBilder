@@ -19,29 +19,47 @@
     <p class="error">{{ error() }}</p>
   }
 
-  @if (loading()) {
-    <div class="loading"><mat-spinner diameter="42" /></div>
-  } @else {
-    <section class="cv-section">
-      <div class="section-heading">
-        <div>
-          <h2>My CVs</h2>
-          <p>Open the editor or view the public version.</p>
-        </div>
-        <span class="count">{{ myCvs().length }}</span>
+  <section class="cv-section">
+    <div class="section-heading">
+      <div>
+        <h2>My CVs</h2>
+        <p>Open the editor or view the public version.</p>
       </div>
+      <span class="count">{{ myCvs().length }}</span>
+    </div>
 
+    @if (myCvsLoading()) {
+      <div class="loading"><mat-spinner diameter="42" /></div>
+    } @else {
       @if (myCvs().length) {
         <div class="cv-grid">
           @for (cv of myCvs(); track cv.id) {
             <mat-card class="cv-card">
               <mat-card-content>
-                <h3>{{ cv.title }}</h3>
+                <div class="cv-card__heading">
+                  <h3>{{ cv.title }}</h3>
+                  <span
+                    class="publication-status"
+                    [class.published]="cv.isPublished"
+                  >
+                    {{ cv.isPublished ? 'Published' : 'Draft' }}
+                  </span>
+                </div>
                 <p>Updated {{ cv.updatedAt | date: 'medium' }}</p>
-                <code>/public/cv/{{ cv.id }}</code>
+                @if (cv.isPublished) {
+                  <code>/public/cv/{{ cv.id }}</code>
+                } @else {
+                  <p class="draft-note">
+                    Complete and publish this CV when it is ready.
+                  </p>
+                }
               </mat-card-content>
               <mat-card-actions>
-                <a mat-button color="primary" [routerLink]="['/cv', cv.id, 'edit']">
+                <a
+                  mat-button
+                  color="primary"
+                  [routerLink]="['/cv', cv.id, 'edit']"
+                >
                   <app-icon name="edit" />
                   Edit
                 </a>
@@ -54,75 +72,176 @@
                   (click)="confirmDeleteCv(cv)"
                 >
                   <app-icon
-                    [name]="deletingCvId() === cv.id ? 'hourglass_empty' : 'delete'"
+                    [name]="
+                      deletingCvId() === cv.id ? 'hourglass_empty' : 'delete'
+                    "
                   />
                   Delete
                 </button>
-                <a
-                  mat-button
-                  class="public-link"
-                  [routerLink]="['/public/cv', cv.id]"
-                >
-                  <app-icon name="visibility" />
-                  Public link
-                </a>
+                @if (cv.isPublished) {
+                  <a
+                    mat-button
+                    class="public-link"
+                    [routerLink]="['/public/cv', cv.id]"
+                  >
+                    <app-icon name="visibility" />
+                    Public link
+                  </a>
+                }
               </mat-card-actions>
             </mat-card>
           }
         </div>
       } @else {
-        <div class="empty-state">You have no CVs yet. Create the first one above.</div>
-      }
-    </section>
-
-    <section class="cv-section">
-      <div class="section-heading">
-        <div>
-          <h2>All public CVs</h2>
-          <p>Browse every CV currently published in CVBilder.</p>
+        <div class="empty-state">
+          You have no CVs yet. Create the first one above.
         </div>
-        <span class="count">{{ allCvs().length }}</span>
-      </div>
+      }
+    }
+  </section>
 
-      <div class="skill-search">
+  <section class="cv-section">
+    <div class="section-heading">
+      <div>
+        <h2>All public CVs</h2>
+        <p>Browse, filter and sort every CV published in CVBilder.</p>
+      </div>
+      <span class="count">{{ totalItems() }}</span>
+    </div>
+
+    <form
+      class="cv-filters"
+      [formGroup]="filtersForm"
+      (ngSubmit)="applyFilters()"
+    >
+      <div class="filter-fields">
         <mat-form-field appearance="outline">
-          <mat-label>Search by skills</mat-label>
+          <mat-label>Search words</mat-label>
           <input
             matInput
-            [formControl]="skillSearch"
-            placeholder="Angular, NestJS, PostgreSQL"
-            (keydown.enter)="searchCvs()"
+            formControlName="query"
+            placeholder="Frontend architect Angular"
+            maxlength="300"
           />
-          <mat-hint>Separate skills with commas. All entered skills must match.</mat-hint>
+          <mat-hint>Every word must occur somewhere in the CV.</mat-hint>
+          <mat-error>Use no more than 10 words and 300 characters.</mat-error>
         </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Author</mat-label>
+          <input
+            matInput
+            formControlName="author"
+            placeholder="Name or email"
+            maxlength="120"
+          />
+          <mat-error>Use no more than 120 characters.</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Skills</mat-label>
+          <mat-select
+            formControlName="skills"
+            multiple
+            [disabled]="filterOptionsLoading()"
+          >
+            @for (skill of availableSkills(); track skill) {
+              <mat-option [value]="skill">{{ skill }}</mat-option>
+            }
+          </mat-select>
+          <mat-hint>CVs must contain every selected skill.</mat-hint>
+        </mat-form-field>
+
+        <div class="date-filter">
+          <app-date-picker
+            [control]="filtersForm.controls.createdFrom"
+            label="Created from"
+            [max]="filtersForm.controls.createdTo.value"
+          />
+          <app-date-picker
+            [control]="filtersForm.controls.createdTo"
+            label="Created to"
+            [min]="filtersForm.controls.createdFrom.value"
+          />
+        </div>
+      </div>
+
+      @if (
+        filtersForm.hasError('createdDateRange') &&
+        (filtersForm.touched || filtersForm.dirty)
+      ) {
+        <p class="filter-error">
+          The start date must not be after the end date.
+        </p>
+      }
+
+      <div class="filter-actions">
         <button
           mat-raised-button
           color="primary"
-          type="button"
-          [disabled]="searching()"
-          (click)="searchCvs()"
+          type="submit"
+          [disabled]="filtersForm.invalid || publicCvsLoading()"
         >
           <app-icon name="search" />
-          {{ searching() ? 'Searching...' : 'Search' }}
+          Apply filters
         </button>
-        @if (skillSearch.value) {
-          <button mat-stroked-button type="button" (click)="clearSearch()">
-            Clear
+        @if (hasActiveFilters() || filtersForm.dirty) {
+          <button mat-stroked-button type="button" (click)="clearFilters()">
+            Clear filters
           </button>
         }
       </div>
+    </form>
 
+    <div class="results-toolbar">
+      <p>
+        @if (publicCvsLoading() && !allCvs().length) {
+          Loading CVs…
+        } @else if (totalItems()) {
+          Showing page {{ publicCvQuery().page }} of {{ totalPages() }}
+        } @else {
+          No matching CVs
+        }
+      </p>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Sort by</mat-label>
+        <mat-select
+          [formControl]="sortControl"
+          (selectionChange)="changeSort($event.value)"
+        >
+          <mat-option value="createdAt:desc">Newest first</mat-option>
+          <mat-option value="createdAt:asc">Oldest first</mat-option>
+          <mat-option value="title:asc">Title A–Z</mat-option>
+          <mat-option value="title:desc">Title Z–A</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    @if (publicCvsError()) {
+      <p class="error">{{ publicCvsError() }}</p>
+    }
+
+    @if (publicCvsLoading() && !allCvs().length) {
+      <div class="loading"><mat-spinner diameter="42" /></div>
+    } @else {
       @if (allCvs().length) {
-        <div class="cv-grid">
+        <div
+          class="cv-grid public-results"
+          [class.updating]="publicCvsLoading()"
+        >
           @for (cv of allCvs(); track cv.id) {
             <mat-card class="cv-card public-card">
               <mat-card-content>
                 <h3>{{ cv.title }}</h3>
                 <p>By {{ cv.ownerEmail }}</p>
-                <p>Updated {{ cv.updatedAt | date: 'mediumDate' }}</p>
+                <p>Created {{ cv.createdAt | date: 'mediumDate' }}</p>
               </mat-card-content>
               <mat-card-actions>
-                <a mat-button color="primary" [routerLink]="['/public/cv', cv.id]">
+                <a
+                  mat-button
+                  color="primary"
+                  [routerLink]="['/public/cv', cv.id]"
+                >
                   <app-icon name="visibility" />
                   View CV
                 </a>
@@ -131,8 +250,26 @@
           }
         </div>
       } @else {
-        <div class="empty-state">No public CVs yet.</div>
+        <div class="empty-state">
+          {{
+            hasActiveFilters()
+              ? 'No CVs match these filters.'
+              : 'No public CVs yet.'
+          }}
+        </div>
       }
-    </section>
-  }
+
+      @if (totalPages() > 1) {
+        <mat-paginator
+          aria-label="Public CV pages"
+          [length]="totalItems()"
+          [pageIndex]="publicCvQuery().page - 1"
+          [pageSize]="publicCvQuery().pageSize"
+          [pageSizeOptions]="[20]"
+          [hidePageSize]="true"
+          (page)="changePage($event.pageIndex + 1)"
+        />
+      }
+    }
+  </section>
 </div>

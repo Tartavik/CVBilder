@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Public CV page', () => {
-  test('should open the public CV page after creating a new CV', async ({ page }) => {
+  test('should open the public CV page after creating a new CV', async ({
+    page,
+  }) => {
     const email = `test+${Date.now()}@example.com`;
     const password = 'Password123!';
 
@@ -18,7 +20,9 @@ test.describe('Public CV page', () => {
     await expect(page).toHaveURL('/home');
 
     await page.locator('button:has-text("New CV")').click();
-    await page.locator('button.template-option', { hasText: 'Classic' }).click();
+    await page
+      .locator('button.template-option', { hasText: 'Classic' })
+      .click();
     await expect(page).toHaveURL(/\/cv\/[^/]+\/edit\?.*draft=1/);
 
     await page.getByLabel('Full name').fill('Taylor Morgan');
@@ -30,14 +34,18 @@ test.describe('Public CV page', () => {
     await page.getByLabel('Email').fill('taylor@example.com');
     await page.getByLabel('Phone').fill('+380501234567');
     await page.getByLabel('City').fill('Kyiv');
-    await page.getByLabel('Summary').fill('Product designer focused on useful services.');
+    await page
+      .getByLabel('Summary')
+      .fill('Product designer focused on useful services.');
     await expect(page.locator('app-cv-preview-classic')).toContainText(
       'Product designer focused on useful services.',
     );
     await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByText('CV saved')).toBeVisible();
+    await expect(page.getByText('Draft saved')).toBeVisible();
     await expect(page).toHaveURL(/\/cv\/[^/]+\/edit$/);
 
+    await page.getByRole('button', { name: 'Publish' }).click();
+    await expect(page.getByText('CV published')).toBeVisible();
     await page.getByRole('link', { name: 'Public page' }).click();
     await expect(page).toHaveURL(/\/public\/cv\/[^/]+$/);
     await expect(page.locator('text=Public CV')).toBeVisible();

@@ -80,15 +80,15 @@
           placeholder="Lead developer · Angular, NestJS"
         />
         <div class="field-row">
-          <app-form-text-field
+          <app-month-picker
             [control]="group.get('startDate')"
             label="Start"
-            type="month"
+            [max]="group.get('endDate')?.value ?? null"
           />
-          <app-form-text-field
+          <app-month-picker
             [control]="group.get('endDate')"
             label="End"
-            type="month"
+            [min]="group.get('startDate')?.value ?? null"
           />
         </div>
         <app-form-text-field
@@ -112,11 +112,7 @@
             label="Issuer"
             placeholder="Google"
           />
-          <app-form-text-field
-            [control]="group.get('startDate')"
-            label="Issued"
-            type="month"
-          />
+          <app-month-picker [control]="group.get('startDate')" label="Issued" />
         </div>
         <app-form-text-field
           [control]="group.get('url')"
@@ -152,11 +148,7 @@
             [control]="group.get('subtitle')"
             label="Issuer"
           />
-          <app-form-text-field
-            [control]="group.get('startDate')"
-            label="Date"
-            type="month"
-          />
+          <app-month-picker [control]="group.get('startDate')" label="Date" />
         </div>
         <app-form-textarea-field
           [control]="group.get('description')"
@@ -165,20 +157,17 @@
       }
 
       @case ('volunteering') {
-        <app-form-text-field
-          [control]="group.get('subtitle')"
-          label="Role"
-        />
+        <app-form-text-field [control]="group.get('subtitle')" label="Role" />
         <div class="field-row">
-          <app-form-text-field
+          <app-month-picker
             [control]="group.get('startDate')"
             label="Start"
-            type="month"
+            [max]="group.get('endDate')?.value ?? null"
           />
-          <app-form-text-field
+          <app-month-picker
             [control]="group.get('endDate')"
             label="End"
-            type="month"
+            [min]="group.get('startDate')?.value ?? null"
           />
         </div>
         <app-form-text-field
@@ -197,10 +186,9 @@
             [control]="group.get('subtitle')"
             label="Publisher"
           />
-          <app-form-text-field
+          <app-month-picker
             [control]="group.get('startDate')"
             label="Published"
-            type="month"
           />
         </div>
         <app-form-text-field
@@ -222,15 +210,15 @@
             [control]="group.get('subtitle')"
             label="Issuing organization"
           />
-          <app-form-text-field
+          <app-month-picker
             [control]="group.get('startDate')"
             label="Issued"
-            type="month"
+            [max]="group.get('endDate')?.value ?? null"
           />
-          <app-form-text-field
+          <app-month-picker
             [control]="group.get('endDate')"
             label="Expires"
-            type="month"
+            [min]="group.get('startDate')?.value ?? null"
           />
         </div>
         <app-form-text-field
@@ -248,15 +236,15 @@
           label="Role or membership type"
         />
         <div class="field-row">
-          <app-form-text-field
+          <app-month-picker
             [control]="group.get('startDate')"
             label="Start"
-            type="month"
+            [max]="group.get('endDate')?.value ?? null"
           />
-          <app-form-text-field
+          <app-month-picker
             [control]="group.get('endDate')"
             label="End"
-            type="month"
+            [min]="group.get('startDate')?.value ?? null"
           />
         </div>
         <app-form-textarea-field
@@ -280,15 +268,15 @@
 
       @case ('careerBreak') {
         <div class="field-row">
-          <app-form-text-field
+          <app-month-picker
             [control]="group.get('startDate')"
             label="Start"
-            type="month"
+            [max]="group.get('endDate')?.value ?? null"
           />
-          <app-form-text-field
+          <app-month-picker
             [control]="group.get('endDate')"
             label="End"
-            type="month"
+            [min]="group.get('startDate')?.value ?? null"
           />
         </div>
         <app-form-textarea-field
@@ -304,15 +292,15 @@
           label="Subtitle"
         />
         <div class="field-row">
-          <app-form-text-field
+          <app-month-picker
             [control]="group.get('startDate')"
             label="Start or date"
-            type="month"
+            [max]="group.get('endDate')?.value ?? null"
           />
-          <app-form-text-field
+          <app-month-picker
             [control]="group.get('endDate')"
             label="End"
-            type="month"
+            [min]="group.get('startDate')?.value ?? null"
           />
         </div>
         <app-form-text-field

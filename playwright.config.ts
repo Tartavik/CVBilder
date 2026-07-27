@@ -7,7 +7,24 @@ const config: PlaywrightTestConfig = defineConfig({
   expect: {
     timeout: 5000,
   },
-  reporter: [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]],
+  reporter: [
+    ['list'],
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
+  ],
+  webServer: [
+    {
+      command: 'npm run start:api',
+      url: 'http://127.0.0.1:3000/api',
+      reuseExistingServer: !process.env['CI'],
+      timeout: 120 * 1000,
+    },
+    {
+      command: 'npm run start:web -- --host 127.0.0.1 --port 4200',
+      url: 'http://127.0.0.1:4200',
+      reuseExistingServer: !process.env['CI'],
+      timeout: 120 * 1000,
+    },
+  ],
   use: {
     actionTimeout: 0,
     trace: 'on-first-retry',

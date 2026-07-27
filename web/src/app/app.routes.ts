@@ -1,5 +1,10 @@
 import { Route } from '@angular/router';
+import { provideEffects } from '@ngrx/effects';
+import { provideState } from '@ngrx/store';
 import { authGuard, guestGuard } from './auth.guard';
+import { PublicCvsEffects } from './home/state/public-cvs.effects';
+import { publicCvsFeature } from './home/state/public-cvs.reducer';
+import { pendingChangesGuard } from './cv/cv-editor/pending-changes.guard';
 
 export const appRoutes: Route[] = [
   {
@@ -19,9 +24,7 @@ export const appRoutes: Route[] = [
         path: '',
         pathMatch: 'full',
         loadComponent: () =>
-          import('./landing/landing.component').then(
-            (m) => m.LandingComponent,
-          ),
+          import('./landing/landing.component').then((m) => m.LandingComponent),
       },
       {
         path: 'register',
@@ -34,6 +37,10 @@ export const appRoutes: Route[] = [
       {
         path: 'home',
         canActivate: [authGuard],
+        providers: [
+          provideState(publicCvsFeature),
+          provideEffects(PublicCvsEffects),
+        ],
         loadComponent: () =>
           import('./home/home.component').then((m) => m.HomeComponent),
       },
@@ -42,19 +49,26 @@ export const appRoutes: Route[] = [
   {
     path: 'cv/:cvId/edit',
     canActivate: [authGuard],
+    canDeactivate: [pendingChangesGuard],
     loadComponent: () =>
-      import('./cv/cv-editor/cv-editor.component').then((m) => m.CvEditorComponent),
+      import('./cv/cv-editor/cv-editor.component').then(
+        (m) => m.CvEditorComponent,
+      ),
   },
   {
     path: 'public/cv/:cvId',
     loadComponent: () =>
-      import('./cv/public-cv/public-cv.component').then((m) => m.PublicCvComponent),
+      import('./cv/public-cv/public-cv.component').then(
+        (m) => m.PublicCvComponent,
+      ),
   },
   {
     path: 'users',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./users-list/users-list.component').then((m) => m.UsersListComponent),
+      import('./users-list/users-list.component').then(
+        (m) => m.UsersListComponent,
+      ),
   },
   {
     path: '**',

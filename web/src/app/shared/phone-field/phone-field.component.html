@@ -1,0 +1,35 @@
+@if (formControl(); as phoneControl) {
+  <div class="phone-field" [class.phone-field--invalid]="showError()">
+    <label class="phone-label" [for]="phoneInputId">Phone</label>
+    <intl-tel-input
+      [formControl]="phoneControl"
+      [inputAttributes]="phoneInputAttributes"
+      [loadUtils]="loadUtils"
+      [uiTranslations]="ukrainianPhoneTranslations"
+      [countryOrder]="preferredCountries"
+      [countrySearch]="true"
+      [formatAsYouType]="true"
+      [separateDialCode]="true"
+      [strictMode]="true"
+      [strictRejectAnimation]="true"
+      [allowedNumberTypes]="null"
+      initialCountry="ua"
+      countryNameLocale="uk"
+      countrySelectorMode="AUTO"
+      numberDisplayFormat="INTERNATIONAL"
+      placeholderNumberPolicy="AGGRESSIVE"
+      placeholderNumberType="MOBILE"
+      containerClass="cv-phone-input"
+    />
+  </div>
+  <div
+    class="phone-error"
+    [class.phone-error--visible]="showError()"
+    [id]="phoneErrorId"
+    aria-live="polite"
+  >
+    @if (showError()) {
+      <span appFieldError [control]="phoneControl"></span>
+    }
+  </div>
+}

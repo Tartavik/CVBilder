@@ -6,19 +6,12 @@
     type="email"
     patternMessage="Enter a valid email"
   />
-  <div class="field-row">
-    <app-form-text-field
-      [control]="form.controls.phone"
-      label="Phone"
-      type="tel"
-      placeholder="+380501234567"
-      patternMessage="Use + and 10-15 digits"
-    />
-    <app-form-text-field
-      [control]="form.controls.city"
-      label="City"
-    />
-  </div>
+  <app-phone-field class="full-width" [control]="form.controls.phone" />
+  <app-form-text-field
+    class="full-width"
+    [control]="form.controls.city"
+    label="City"
+  />
   <app-form-textarea-field
     class="full-width"
     [control]="form.controls.summary"

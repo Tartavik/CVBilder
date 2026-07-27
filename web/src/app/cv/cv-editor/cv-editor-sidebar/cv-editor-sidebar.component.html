@@ -106,12 +106,12 @@
           <app-icon name="home" />
           <span>Home</span>
         </a>
-        @if (isDraft()) {
+        @if (isDraft() || !isPublished()) {
           <button
             class="sidebar-action"
             type="button"
             disabled
-            title="Save the CV to open its public page"
+            title="Publish the CV to open its public page"
           >
             <app-icon name="visibility" />
             <span>Public page</span>
@@ -131,6 +131,31 @@
           <app-icon [name]="saving() ? 'hourglass_empty' : 'save'" />
           <span>Save</span>
         </button>
+        @if (isPublished()) {
+          <button
+            class="sidebar-action"
+            type="button"
+            [disabled]="saving() || publicationChanging()"
+            (click)="unpublish.emit()"
+          >
+            <app-icon
+              [name]="publicationChanging() ? 'hourglass_empty' : 'visibility'"
+            />
+            <span>Unpublish</span>
+          </button>
+        } @else {
+          <button
+            class="sidebar-action"
+            type="button"
+            [disabled]="saving() || publicationChanging()"
+            (click)="publish.emit()"
+          >
+            <app-icon
+              [name]="publicationChanging() ? 'hourglass_empty' : 'visibility'"
+            />
+            <span>Publish</span>
+          </button>
+        }
         <button class="sidebar-action" type="button" (click)="exportPdf.emit()">
           <app-icon name="picture_as_pdf" />
           <span>Export PDF</span>
@@ -147,7 +172,11 @@
             <span>Delete CV</span>
           </button>
         }
-        <button class="sidebar-action warn" type="button" (click)="logout.emit()">
+        <button
+          class="sidebar-action warn"
+          type="button"
+          (click)="logout.emit()"
+        >
           <app-icon name="logout" />
           <span>Logout</span>
         </button>

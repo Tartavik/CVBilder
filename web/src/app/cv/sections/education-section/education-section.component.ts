@@ -1,19 +1,28 @@
-import { Component, DestroyRef, OnInit, computed, effect, inject } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  OnInit,
+  computed,
+  effect,
+  inject,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormArray,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { debounceTime } from 'rxjs';
 import { AppIconComponent } from '../../../shared/app-icon.component';
 import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';
 import { FormTextFieldComponent } from '../../../shared/form-text-field/form-text-field.component';
 import { SHORT_TEXT_PATTERN } from '../../../shared/validation-patterns';
-import {
-  CV_FIELD_LIMITS,
-  CV_MIN_TEXT_LENGTH,
-} from '../../cv-field-limits';
+import { CV_FIELD_LIMITS, CV_MIN_TEXT_LENGTH } from '../../cv-field-limits';
 import { CvStore, EducationItem } from '../../cv.store';
 
 @Component({
@@ -51,13 +60,14 @@ export class EducationSectionComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.store.cv().education.forEach((item) =>
-      this.form.push(this.createGroup(item), { emitEvent: false })
-    );
+    this.store
+      .cv()
+      .education.forEach((item) =>
+        this.form.push(this.createGroup(item), { emitEvent: false }),
+      );
 
     this.form.valueChanges
-      .pipe(debounceTime(300),
-      takeUntilDestroyed(this.destroyRef))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((values: Partial<EducationItem>[]) => {
         const ids = this.store.cv().education.map((e) => e.id);
         values.forEach((v, i) => {
@@ -74,19 +84,19 @@ export class EducationSectionComponent implements OnInit {
         Validators.maxLength(CV_FIELD_LIMITS.shortText),
         Validators.pattern(SHORT_TEXT_PATTERN),
       ]),
-      degree:      new FormControl(item?.degree      ?? '', [
+      degree: new FormControl(item?.degree ?? '', [
         Validators.required,
         Validators.minLength(CV_MIN_TEXT_LENGTH),
         Validators.maxLength(CV_FIELD_LIMITS.shortText),
         Validators.pattern(SHORT_TEXT_PATTERN),
       ]),
-      field:       new FormControl(item?.field       ?? '', [
+      field: new FormControl(item?.field ?? '', [
         Validators.required,
         Validators.minLength(CV_MIN_TEXT_LENGTH),
         Validators.maxLength(CV_FIELD_LIMITS.shortText),
         Validators.pattern(SHORT_TEXT_PATTERN),
       ]),
-      year:        new FormControl(item?.year        ?? '', [
+      year: new FormControl(item?.year ?? '', [
         Validators.required,
         Validators.maxLength(4),
         Validators.pattern(/^\d{4}$/),

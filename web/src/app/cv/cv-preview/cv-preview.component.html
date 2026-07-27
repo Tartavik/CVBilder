@@ -8,9 +8,15 @@
         <p class="job-title">{{ cv().personal.jobTitle }}</p>
       }
       <div class="contacts">
-        @if (cv().personal.email) { <span>{{ cv().personal.email }}</span> }
-        @if (cv().personal.phone) { <span>{{ cv().personal.phone }}</span> }
-        @if (cv().personal.city) { <span>{{ cv().personal.city }}</span> }
+        @if (cv().personal.email) {
+          <span>{{ cv().personal.email }}</span>
+        }
+        @if (cv().personal.phone) {
+          <span>{{ formatPhone(cv().personal.phone) }}</span>
+        }
+        @if (cv().personal.city) {
+          <span>{{ cv().personal.city }}</span>
+        }
       </div>
     </div>
     @if (cv().personal.photo) {
@@ -36,7 +42,10 @@
               <div class="exp-item">
                 <div class="exp-header">
                   <strong>{{ exp.position }}</strong>
-                  <span class="dates">{{ exp.startDate }} — {{ exp.current ? 'Present' : exp.endDate }}</span>
+                  <span class="dates"
+                    >{{ exp.startDate }} —
+                    {{ exp.current ? 'Present' : exp.endDate }}</span
+                  >
                 </div>
                 <div class="company">{{ exp.company }}</div>
                 @if (exp.description) {
@@ -46,7 +55,10 @@
                   @if (cv().experienceSkillMode === 'icons') {
                     <div class="experience-skill-icons">
                       @for (skill of exp.skills; track skill.name) {
-                        <app-skill-icon [name]="skill.name" [icon]="skill.icon" />
+                        <app-skill-icon
+                          [name]="skill.name"
+                          [icon]="skill.icon"
+                        />
                       }
                     </div>
                   } @else {
@@ -72,7 +84,12 @@
                   <strong>{{ edu.institution }}</strong>
                   <span class="dates">{{ edu.year }}</span>
                 </div>
-                <div class="edu-degree">{{ edu.degree }}@if (edu.field) {, {{ edu.field }}}</div>
+                <div class="edu-degree">
+                  {{ edu.degree }}
+                  @if (edu.field) {
+                    , {{ edu.field }}
+                  }
+                </div>
               </div>
             }
           </div>
@@ -92,9 +109,7 @@
       }
       @case ('additional') {
         @if (cv().additionalSections.length) {
-          <app-additional-sections-preview
-            [items]="cv().additionalSections"
-          />
+          <app-additional-sections-preview [items]="cv().additionalSections" />
         }
       }
     }
