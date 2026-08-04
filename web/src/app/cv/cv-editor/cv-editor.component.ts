@@ -53,7 +53,7 @@ export class CvEditorComponent implements OnInit, PendingChangesAware {
   ngOnInit(): void {
     const userId = this.auth.getCurrentUserId() as string;
     this.userId = userId;
-    this.theme.load(userId).subscribe({
+    this.theme.load().subscribe({
       error: () => this.theme.apply('light'),
     });
     if (this.route.snapshot.queryParamMap.get('draft') === '1') {
@@ -248,7 +248,7 @@ export class CvEditorComponent implements OnInit, PendingChangesAware {
 
   private deleteCv(): void {
     this.deleting.set(true);
-    this.api.deleteCv(this.userId, this.cvId).subscribe({
+    this.api.deleteCv(this.cvId).subscribe({
       next: () => {
         this.store.markCurrentStateAsSaved();
         this.router.navigate(['/home'], { replaceUrl: true });

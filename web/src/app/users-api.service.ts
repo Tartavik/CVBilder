@@ -139,6 +139,7 @@ export interface UserProfile {
 @Injectable({ providedIn: 'root' })
 export class UsersApiService {
   private readonly base = '/api/users';
+  private readonly me = `${this.base}/me`;
   private readonly http = inject(HttpClient);
 
   getAll(): Observable<User[]> {
@@ -146,78 +147,53 @@ export class UsersApiService {
   }
 
   register(email: string, password: string): Observable<User> {
-    return this.http.post<User>(this.base, { email, password });
+    return this.http.post<User>('/api/auth/register', { email, password });
   }
 
   login(email: string, password: string): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.base}/login`, {
+    return this.http.post<AuthResponse>('/api/auth/login', {
       email,
       password,
     });
   }
 
-  getUserCvs(userId: string): Observable<CvSummary[]> {
-    return this.http.get<CvSummary[]>(`${this.base}/${userId}/cvs`);
+  getUserCvs(): Observable<CvSummary[]> {
+    return this.http.get<CvSummary[]>(`${this.me}/cvs`);
   }
 
-  getUserSkills(userId: string): Observable<UserSkill[]> {
-    return this.http.get<UserSkill[]>(`${this.base}/${userId}/skills`);
+  getUserSkills(): Observable<UserSkill[]> {
+    return this.http.get<UserSkill[]>(`${this.me}/skills`);
   }
 
-  deleteUserSkill(
-    userId: string,
-    skillName: string,
-  ): Observable<{ success: true }> {
-    return this.http.delete<{ success: true }>(
-      `${this.base}/${userId}/skills`,
-      {
-        body: { skillName },
-      },
-    );
+  deleteUserSkill(skillName: string): Observable<{ success: true }> {
+    return this.http.delete<{ success: true }>(`${this.me}/skills`, {
+      body: { skillName },
+    });
   }
 
-  getCvSectionLibrary(
-    userId: string,
-    cvId?: string,
-  ): Observable<CvSectionLibrary> {
+  getCvSectionLibrary(cvId?: string): Observable<CvSectionLibrary> {
     if (!cvId) {
-      return this.http.get<CvSectionLibrary>(
-        `${this.base}/${userId}/cv-library`,
-      );
+      return this.http.get<CvSectionLibrary>(`${this.me}/cv-library`);
     }
-    return this.http.get<CvSectionLibrary>(
-      `${this.base}/${userId}/cvs/${cvId}/library`,
-    );
+    return this.http.get<CvSectionLibrary>(`${this.me}/cvs/${cvId}/library`);
   }
 
-  getProfile(userId: string): Observable<UserProfile | null> {
-    return this.http.get<UserProfile | null>(`${this.base}/${userId}/profile`);
+  getProfile(): Observable<UserProfile | null> {
+    return this.http.get<UserProfile | null>(`${this.me}/profile`);
   }
 
-  updateProfile(
-    userId: string,
-    profile: Omit<UserProfile, 'id'>,
-  ): Observable<UserProfile> {
-    return this.http.patch<UserProfile>(
-      `${this.base}/${userId}/profile`,
-      profile,
-    );
+  updateProfile(profile: Omit<UserProfile, 'id'>): Observable<UserProfile> {
+    return this.http.patch<UserProfile>(`${this.me}/profile`, profile);
   }
 
-  getSettings(userId: string): Observable<UserSettings | null> {
-    return this.http.get<UserSettings | null>(
-      `${this.base}/${userId}/settings`,
-    );
+  getSettings(): Observable<UserSettings | null> {
+    return this.http.get<UserSettings | null>(`${this.me}/settings`);
   }
 
   updateSettings(
-    userId: string,
     settings: Pick<UserSettings, 'theme'>,
   ): Observable<UserSettings> {
-    return this.http.patch<UserSettings>(
-      `${this.base}/${userId}/settings`,
-      settings,
-    );
+    return this.http.patch<UserSettings>(`${this.me}/settings`, settings);
   }
 
   getAllCvs(query: CvListQuery): Observable<PaginatedCvs> {
@@ -245,7 +221,6 @@ export class UsersApiService {
   }
 
   saveCv(
-    userId: string,
     cvId: string,
     cvData: CvData,
   ): Observable<{ success: boolean; cvId: string; isPublished: boolean }> {
@@ -253,11 +228,10 @@ export class UsersApiService {
       success: boolean;
       cvId: string;
       isPublished: boolean;
-    }>(`${this.base}/${userId}/cvs/${cvId}`, cvData);
+    }>(`${this.me}/cvs/${cvId}`, cvData);
   }
 
   createCvFromDraft(
-    userId: string,
     cvId: string,
     cvData: CvData,
   ): Observable<{ success: boolean; cvId: string; isPublished: boolean }> {
@@ -265,67 +239,57 @@ export class UsersApiService {
       success: boolean;
       cvId: string;
       isPublished: boolean;
-    }>(`${this.base}/${userId}/cvs/${cvId}`, cvData);
+    }>(`${this.me}/cvs/${cvId}`, cvData);
   }
 
   setCvPublication(
-    userId: string,
     cvId: string,
     isPublished: boolean,
   ): Observable<{ isPublished: boolean }> {
     return this.http.patch<{ isPublished: boolean }>(
-      `${this.base}/${userId}/cvs/${cvId}/publication`,
+      `${this.me}/cvs/${cvId}/publication`,
       { isPublished },
     );
   }
 
-  getCv(userId: string, cvId: string): Observable<CvData> {
-    return this.http.get<CvData>(`${this.base}/${userId}/cvs/${cvId}`);
+  getCv(cvId: string): Observable<CvData> {
+    return this.http.get<CvData>(`${this.me}/cvs/${cvId}`);
   }
 
   getPublicCv(cvId: string): Observable<CvData> {
     return this.http.get<CvData>(`/api/cvs/${cvId}`);
   }
 
-  deleteCv(userId: string, cvId: string): Observable<{ success: true }> {
-    return this.http.delete<{ success: true }>(
-      `${this.base}/${userId}/cvs/${cvId}`,
-    );
+  deleteCv(cvId: string): Observable<{ success: true }> {
+    return this.http.delete<{ success: true }>(`${this.me}/cvs/${cvId}`);
   }
 
-  uploadCvPhoto(
-    userId: string,
-    cvId: string,
-    file: File,
-  ): Observable<{ photoUrl: string }> {
+  uploadCvPhoto(cvId: string, file: File): Observable<{ photoUrl: string }> {
     const body = new FormData();
     body.append('photo', file);
     return this.http.post<{ photoUrl: string }>(
-      `${this.base}/${userId}/cvs/${cvId}/photo`,
+      `${this.me}/cvs/${cvId}/photo`,
       body,
     );
   }
 
   generateSkillIcon(
-    userId: string,
     cvId: string | null,
     skillName: string,
   ): Observable<SkillIconGenerationResult> {
     if (!cvId) {
       return this.http.post<SkillIconGenerationResult>(
-        `${this.base}/${userId}/skills/icon/generate`,
+        `${this.me}/skills/icon/generate`,
         { skillName },
       );
     }
     return this.http.post<SkillIconGenerationResult>(
-      `${this.base}/${userId}/cvs/${cvId}/skills/icon/generate`,
+      `${this.me}/cvs/${cvId}/skills/icon/generate`,
       { skillName },
     );
   }
 
-  deleteCvPhoto(userId: string, cvId: string): Observable<{ success: true }> {
-    return this.http.delete<{ success: true }>(
-      `${this.base}/${userId}/cvs/${cvId}/photo`,
-    );
+  deleteCvPhoto(cvId: string): Observable<{ success: true }> {
+    return this.http.delete<{ success: true }>(`${this.me}/cvs/${cvId}/photo`);
   }
 }

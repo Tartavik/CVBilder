@@ -33,6 +33,12 @@ export class AuthService {
     return Boolean(this.currentUserId() && this.accessToken());
   }
 
+  hasRole(role: string): boolean {
+    const accessToken = this.accessToken();
+    if (!accessToken) return false;
+    return this.decodePayload(accessToken)?.role === role;
+  }
+
   private getStoredSession(): {
     userId: string;
     accessToken: string;
@@ -68,18 +74,24 @@ export class AuthService {
   }
 
   private isExpired(accessToken: string): boolean {
+    const payload = this.decodePayload(accessToken);
+    return !payload?.exp || payload.exp * 1000 <= Date.now();
+  }
+
+  private decodePayload(
+    accessToken: string,
+  ): { exp?: number; role?: string } | null {
     try {
       const encodedPayload = accessToken.split('.')[1];
-      if (!encodedPayload) return true;
-
+      if (!encodedPayload) return null;
       const base64 = encodedPayload.replace(/-/g, '+').replace(/_/g, '/');
       const paddedBase64 = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
-      const payload = JSON.parse(atob(paddedBase64)) as { exp?: number };
-      return (
-        typeof payload.exp !== 'number' || payload.exp * 1000 <= Date.now()
-      );
+      return JSON.parse(atob(paddedBase64)) as {
+        exp?: number;
+        role?: string;
+      };
     } catch {
-      return true;
+      return null;
     }
   }
 }

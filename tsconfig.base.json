@@ -1,6 +1,7 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "baseUrl": ".",
     "rootDir": ".",
     "sourceMap": true,
     "declaration": false,
@@ -14,6 +15,7 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "paths": {
+      "@cvbilder/backend": ["./backend/users/src/index.ts"],
       "@cvbilder/users": ["./backend/users/src/index.ts"]
     }
   },

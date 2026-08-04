@@ -179,14 +179,14 @@ export class CvStore {
     this.hiddenUserSkills.set(new Set());
     this.reusableExperiences.set([]);
     this.reusableEducation.set([]);
-    this.api.getCv(userId, cvId).subscribe({
+    this.api.getCv(cvId).subscribe({
       next: (data) => {
         const storeData = this.mapApiDataToStore(data);
         this.updateState(storeData);
         this.updateMetadata(data);
         this.markCurrentStateAsSaved();
-        this.loadUserSkills(userId);
-        this.loadCvSectionLibrary(userId, cvId);
+        this.loadUserSkills();
+        this.loadCvSectionLibrary(cvId);
         this.loading.set(false);
         this.ready.set(true);
       },
@@ -216,7 +216,7 @@ export class CvStore {
     this.reusableEducation.set([]);
 
     forkJoin({
-      profile: this.api.getProfile(userId).pipe(
+      profile: this.api.getProfile().pipe(
         catchError((error: HttpErrorResponse) => {
           this.error.set(
             this.getErrorMessage(error, 'Failed to load profile details'),
@@ -224,9 +224,9 @@ export class CvStore {
           return of(null);
         }),
       ),
-      skills: this.api.getUserSkills(userId).pipe(catchError(() => of([]))),
+      skills: this.api.getUserSkills().pipe(catchError(() => of([]))),
       library: this.api
-        .getCvSectionLibrary(userId)
+        .getCvSectionLibrary()
         .pipe(
           catchError(() =>
             of({ experience: [], education: [] } as CvSectionLibrary),
@@ -297,8 +297,8 @@ export class CvStore {
     const savedCvSnapshot = this.serializeCv(this.cv());
     const cvData = this.mapStoreDataToApi(this.cv());
     const saveRequest = this.isDraft()
-      ? this.api.createCvFromDraft(userId, cvId, cvData)
-      : this.api.saveCv(userId, cvId, cvData);
+      ? this.api.createCvFromDraft(cvId, cvData)
+      : this.api.saveCv(cvId, cvData);
 
     saveRequest.subscribe({
       next: ({ cvId: savedCvId, isPublished }) => {
@@ -351,7 +351,7 @@ export class CvStore {
   ): void {
     this.loading.set(true);
     this.error.set(null);
-    this.api.setCvPublication(userId, cvId, isPublished).subscribe({
+    this.api.setCvPublication(cvId, isPublished).subscribe({
       next: (result) => {
         this.updatePublicationStatus(result.isPublished);
         this.loading.set(false);
@@ -672,7 +672,7 @@ export class CvStore {
       new Set([...previousHiddenSkills, normalizedName]),
     );
 
-    this.api.deleteUserSkill(this.activeUserId, name).subscribe({
+    this.api.deleteUserSkill(name).subscribe({
       error: (error: HttpErrorResponse) => {
         this.userSkills.set(previousSkills);
         this.hiddenUserSkills.set(previousHiddenSkills);
@@ -688,7 +688,6 @@ export class CvStore {
       return throwError(() => new Error('Active CV is not loaded'));
     }
     return this.api.generateSkillIcon(
-      this.activeUserId,
       this.isDraft() ? null : this.activeCvId,
       skillName,
     );
@@ -719,7 +718,7 @@ export class CvStore {
 
     this.photoUploading.set(true);
     this.error.set(null);
-    this.api.uploadCvPhoto(this.activeUserId, this.activeCvId, file).subscribe({
+    this.api.uploadCvPhoto(this.activeCvId, file).subscribe({
       next: ({ photoUrl }) => {
         this.updatePersonal({ ...this.cv().personal, photo: photoUrl });
         this.photoUploading.set(false);
@@ -742,8 +741,8 @@ export class CvStore {
     this.updateState({ ...this.cv(), sectionOrder });
   }
 
-  private loadUserSkills(userId: string): void {
-    this.api.getUserSkills(userId).subscribe({
+  private loadUserSkills(): void {
+    this.api.getUserSkills().subscribe({
       next: (skills) => this.setUserSkills(skills),
       error: () => {
         this.userSkills.set([]);
@@ -767,8 +766,8 @@ export class CvStore {
     );
   }
 
-  private loadCvSectionLibrary(userId: string, cvId?: string): void {
-    this.api.getCvSectionLibrary(userId, cvId).subscribe({
+  private loadCvSectionLibrary(cvId?: string): void {
+    this.api.getCvSectionLibrary(cvId).subscribe({
       next: (library) => this.setCvSectionLibrary(library),
       error: () => {
         this.reusableExperiences.set([]);
@@ -819,13 +818,13 @@ export class CvStore {
     }
 
     this.photoUploading.set(true);
-    this.api.uploadCvPhoto(userId, cvId, photoFile).subscribe({
+    this.api.uploadCvPhoto(cvId, photoFile).subscribe({
       next: ({ photoUrl }) => {
         this.updatePersonal({ ...this.cv().personal, photo: photoUrl });
         this.releasePendingPhoto();
         const uploadedCvSnapshot = this.serializeCv(this.cv());
         const cvData = this.mapStoreDataToApi(this.cv());
-        this.api.saveCv(userId, cvId, cvData).subscribe({
+        this.api.saveCv(cvId, cvData).subscribe({
           next: () => {
             this.photoUploading.set(false);
             this.completeSave(cvId, uploadedCvSnapshot, callback);

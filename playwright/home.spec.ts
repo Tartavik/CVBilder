@@ -54,7 +54,7 @@ test.describe('Home page flows', () => {
     expect(userId).toBeTruthy();
     await page.getByRole('link', { name: 'Home' }).click();
 
-    const response = await page.request.get(`/api/users/${userId}/cvs`, {
+    const response = await page.request.get('/api/users/me/cvs', {
       headers: await authHeaders(page),
     });
     expect(response.ok()).toBeTruthy();
@@ -115,7 +115,7 @@ test.describe('Home page flows', () => {
     const userId = await page.evaluate(() =>
       sessionStorage.getItem('currentUserId'),
     );
-    const response = await page.request.get(`/api/users/${userId}/cvs`, {
+    const response = await page.request.get('/api/users/me/cvs', {
       headers: await authHeaders(page),
     });
     expect(response.ok()).toBeTruthy();
@@ -141,7 +141,7 @@ test.describe('Home page flows', () => {
     const saveResponsePromise = page.waitForResponse(
       (response) =>
         response.request().method() === 'POST' &&
-        /\/api\/users\/[^/]+\/cvs\/[^/]+$/.test(response.url()),
+        /\/api\/users\/me\/cvs\/[^/]+$/.test(response.url()),
     );
     await page.getByRole('button', { name: 'Save' }).click();
     expect((await saveResponsePromise).ok()).toBeTruthy();
@@ -155,7 +155,7 @@ test.describe('Home page flows', () => {
     expect(draftCvId).toBeTruthy();
 
     const savedDraft = await page.request.get(
-      `/api/users/${userId}/cvs/${draftCvId}`,
+      `/api/users/me/cvs/${draftCvId}`,
       { headers: await authHeaders(page) },
     );
     expect(savedDraft.ok()).toBeTruthy();
@@ -256,7 +256,7 @@ test.describe('Home page flows', () => {
     const deleteResponsePromise = page.waitForResponse(
       (response) =>
         response.request().method() === 'DELETE' &&
-        /\/api\/users\/[^/]+\/skills$/.test(response.url()),
+        /\/api\/users\/me\/skills$/.test(response.url()),
     );
     await page
       .getByRole('button', { name: 'Delete AWS from skill list' })
@@ -272,10 +272,9 @@ test.describe('Home page flows', () => {
     const userId = await page.evaluate(() =>
       sessionStorage.getItem('currentUserId'),
     );
-    const skillsResponse = await page.request.get(
-      `/api/users/${userId}/skills`,
-      { headers: await authHeaders(page) },
-    );
+    const skillsResponse = await page.request.get('/api/users/me/skills', {
+      headers: await authHeaders(page),
+    });
     expect(skillsResponse.ok()).toBeTruthy();
     expect(await skillsResponse.json()).toContainEqual(
       expect.objectContaining({ name: 'AWS', hidden: true }),
@@ -344,7 +343,7 @@ test.describe('Home page flows', () => {
       'Built and maintained accessible web applications.',
     );
 
-    const saveUrl = /\/api\/users\/[^/]+\/cvs\/[^/]+$/;
+    const saveUrl = /\/api\/users\/me\/cvs\/[^/]+$/;
     await page.route(saveUrl, async (route) => {
       if (route.request().method() !== 'POST') {
         await route.continue();
@@ -374,12 +373,12 @@ test.describe('Home page flows', () => {
     const requestPromise = page.waitForRequest(
       (request) =>
         request.method() === 'POST' &&
-        /\/api\/users\/[^/]+\/cvs\/[^/]+$/.test(request.url()),
+        /\/api\/users\/me\/cvs\/[^/]+$/.test(request.url()),
     );
     const responsePromise = page.waitForResponse(
       (response) =>
         response.request().method() === 'POST' &&
-        /\/api\/users\/[^/]+\/cvs\/[^/]+$/.test(response.url()),
+        /\/api\/users\/me\/cvs\/[^/]+$/.test(response.url()),
     );
     await page.getByRole('button', { name: 'Save' }).click();
 
@@ -427,7 +426,7 @@ test.describe('Home page flows', () => {
     const saveResponsePromise = page.waitForResponse(
       (response) =>
         response.request().method() === 'POST' &&
-        /\/api\/users\/[^/]+\/cvs\/[^/]+$/.test(response.url()),
+        /\/api\/users\/me\/cvs\/[^/]+$/.test(response.url()),
     );
     await page.getByRole('button', { name: 'Save' }).click();
     expect((await saveResponsePromise).ok()).toBeTruthy();
@@ -514,7 +513,7 @@ test.describe('Home page flows', () => {
     const saveResponsePromise = page.waitForResponse(
       (response) =>
         response.request().method() === 'POST' &&
-        /\/api\/users\/[^/]+\/cvs\/[^/]+$/.test(response.url()),
+        /\/api\/users\/me\/cvs\/[^/]+$/.test(response.url()),
     );
     await page.getByRole('button', { name: 'Save' }).click();
     const saveResponse = await saveResponsePromise;
@@ -533,7 +532,7 @@ test.describe('Home page flows', () => {
       sessionStorage.getItem('currentUserId'),
     );
     expect(userId).toBeTruthy();
-    let response = await page.request.get(`/api/users/${userId}/cvs`, {
+    let response = await page.request.get('/api/users/me/cvs', {
       headers: await authHeaders(page),
     });
     expect(await response.json()).toHaveLength(1);
@@ -549,7 +548,7 @@ test.describe('Home page flows', () => {
     await dialog.getByRole('button', { name: 'Delete' }).click();
 
     await expect(cvCard).toHaveCount(0);
-    response = await page.request.get(`/api/users/${userId}/cvs`, {
+    response = await page.request.get('/api/users/me/cvs', {
       headers: await authHeaders(page),
     });
     expect(response.ok()).toBeTruthy();

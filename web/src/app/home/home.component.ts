@@ -20,7 +20,6 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { Store } from '@ngrx/store';
-import { AuthService } from '../auth.service';
 import { AppIconComponent } from '../shared/app-icon.component';
 import { DatePickerComponent } from '../shared/date-picker/date-picker.component';
 import {
@@ -61,7 +60,6 @@ type CvSortValue = `${CvSortBy}:${CvSortOrder}`;
 })
 export class HomeComponent implements OnInit {
   private readonly api = inject(UsersApiService);
-  private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly errors = inject(ErrorService);
   private readonly dialog = inject(MatDialog);
@@ -124,8 +122,7 @@ export class HomeComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    const userId = this.auth.getCurrentUserId() as string;
-    this.api.getUserCvs(userId).subscribe({
+    this.api.getUserCvs().subscribe({
       next: (cvs) => {
         this.myCvs.set(cvs);
         this.myCvsLoading.set(false);
@@ -177,11 +174,10 @@ export class HomeComponent implements OnInit {
   }
 
   private deleteCv(cvId: string): void {
-    const userId = this.auth.getCurrentUserId() as string;
     this.deletingCvId.set(cvId);
     this.error.set('');
 
-    this.api.deleteCv(userId, cvId).subscribe({
+    this.api.deleteCv(cvId).subscribe({
       next: () => {
         this.myCvs.update((cvs) => cvs.filter((cv) => cv.id !== cvId));
         this.deletingCvId.set(null);

@@ -11,6 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ErrorStateMatcher } from '@angular/material/core';
 import { UsersApiService } from '../users-api.service';
 import { AuthService } from '../auth.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -51,6 +52,12 @@ export class LoginComponent {
 
   readonly loading = signal(false);
   readonly error = signal('');
+  readonly invalidCredentials = signal(false);
+  readonly loginErrorStateMatcher: ErrorStateMatcher = {
+    isErrorState: (control, form) =>
+      this.invalidCredentials() ||
+      !!(control?.invalid && (control.touched || form?.submitted)),
+  };
   private errorTimer: ReturnType<typeof setTimeout> | null = null;
 
   submit() {
@@ -78,6 +85,7 @@ export class LoginComponent {
             return;
           }
           if (err instanceof HttpErrorResponse && err.status === 401) {
+            this.invalidCredentials.set(true);
             this.showError('Invalid email or password');
             return;
           }
@@ -88,6 +96,12 @@ export class LoginComponent {
 
   goToRegister() {
     this.router.navigate(['/register']);
+  }
+
+  clearInvalidCredentials(): void {
+    if (!this.invalidCredentials()) return;
+    this.invalidCredentials.set(false);
+    this.clearError();
   }
 
   private showError(message: string): void {

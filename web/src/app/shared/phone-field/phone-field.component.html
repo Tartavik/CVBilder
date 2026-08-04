@@ -28,8 +28,6 @@
     [id]="phoneErrorId"
     aria-live="polite"
   >
-    @if (showError()) {
-      <span appFieldError [control]="phoneControl"></span>
-    }
+    <span appFieldError [control]="phoneControl"></span>
   </div>
 }

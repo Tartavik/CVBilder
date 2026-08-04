@@ -7,11 +7,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import {
-  FormControl,
-  FormGroup,
-  Validators,
-} from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../auth.service';
@@ -62,8 +58,8 @@ export class AppHeaderComponent implements OnInit {
     const userId = this.auth.getCurrentUserId();
     if (!userId) return;
 
-    this.themeService.load(userId).subscribe();
-    this.api.getProfile(userId).subscribe({
+    this.themeService.load().subscribe();
+    this.api.getProfile().subscribe({
       next: (profile) => {
         if (!profile) return;
         this.profileForm.patchValue({
@@ -90,7 +86,7 @@ export class AppHeaderComponent implements OnInit {
     const previousTheme = this.theme();
     const nextTheme: ThemeMode = previousTheme === 'light' ? 'dark' : 'light';
 
-    this.themeService.save(userId, nextTheme).subscribe({
+    this.themeService.save(nextTheme).subscribe({
       error: (error: HttpErrorResponse) => {
         this.themeService.apply(previousTheme);
         this.setProfileMessage(
@@ -115,7 +111,7 @@ export class AppHeaderComponent implements OnInit {
     this.profileMessage.set('');
 
     this.api
-      .updateProfile(userId, {
+      .updateProfile({
         firstName: value.firstName.trim(),
         lastName: value.lastName.trim(),
         location: value.location.trim() || null,

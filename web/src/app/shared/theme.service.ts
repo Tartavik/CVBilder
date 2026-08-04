@@ -9,8 +9,8 @@ export class ThemeService {
   readonly theme = signal<ThemeMode>('light');
   readonly saving = signal(false);
 
-  load(userId: string): Observable<UserSettings | null> {
-    return this.api.getSettings(userId).pipe(
+  load(): Observable<UserSettings | null> {
+    return this.api.getSettings().pipe(
       tap((settings) => this.apply(settings?.theme ?? 'light')),
       catchError(() => {
         this.apply('light');
@@ -19,10 +19,10 @@ export class ThemeService {
     );
   }
 
-  save(userId: string, theme: ThemeMode): Observable<UserSettings> {
+  save(theme: ThemeMode): Observable<UserSettings> {
     this.saving.set(true);
     this.apply(theme);
-    return this.api.updateSettings(userId, { theme }).pipe(
+    return this.api.updateSettings({ theme }).pipe(
       tap((settings) => this.apply(settings.theme)),
       finalize(() => this.saving.set(false)),
     );

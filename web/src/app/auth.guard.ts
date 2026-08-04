@@ -15,3 +15,10 @@ export const guestGuard: CanActivateFn = () => {
 
   return !auth.isLoggedIn() || router.createUrlTree(['/home']);
 };
+
+export const adminGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+
+  return auth.hasRole('admin') || router.createUrlTree(['/home']);
+};

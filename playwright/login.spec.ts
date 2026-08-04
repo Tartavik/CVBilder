@@ -48,7 +48,7 @@ test.describe('Auth flow', () => {
     const registrationResponsePromise = page.waitForResponse(
       (response) =>
         response.request().method() === 'POST' &&
-        response.url().endsWith('/api/users'),
+        response.url().endsWith('/api/auth/register'),
     );
     await page.locator('button:has-text("Create account")').click();
     const registrationResponse = await registrationResponsePromise;
@@ -66,7 +66,7 @@ test.describe('Auth flow', () => {
     const loginResponsePromise = page.waitForResponse(
       (response) =>
         response.request().method() === 'POST' &&
-        response.url().endsWith('/api/users/login'),
+        response.url().endsWith('/api/auth/login'),
     );
     await page.locator('button:has-text("Login")').click();
     const loginResponse = await loginResponsePromise;
@@ -90,19 +90,14 @@ test.describe('Auth flow', () => {
     await expect(page).toHaveURL('/home');
     await expect(page.getByRole('button', { name: 'Log out' })).toBeVisible();
 
-    const unauthenticatedResponse = await page.request.get(
-      `/api/users/${loginPayload.user.id}/cvs`,
-    );
+    const unauthenticatedResponse = await page.request.get('/api/users/me/cvs');
     expect(unauthenticatedResponse.status()).toBe(401);
 
-    const forbiddenResponse = await page.request.get(
-      '/api/users/00000000-0000-4000-8000-000000000000/cvs',
-      {
-        headers: {
-          Authorization: `Bearer ${loginPayload.accessToken}`,
-        },
+    const forbiddenResponse = await page.request.get('/api/users', {
+      headers: {
+        Authorization: `Bearer ${loginPayload.accessToken}`,
       },
-    );
+    });
     expect(forbiddenResponse.status()).toBe(403);
   });
 
@@ -113,7 +108,7 @@ test.describe('Auth flow', () => {
     const loginResponsePromise = page.waitForResponse(
       (response) =>
         response.request().method() === 'POST' &&
-        response.url().endsWith('/api/users/login'),
+        response.url().endsWith('/api/auth/login'),
     );
     await page.getByRole('button', { name: 'Login' }).click();
     const loginResponse = await loginResponsePromise;
@@ -122,9 +117,36 @@ test.describe('Auth flow', () => {
     const errorToast = page.locator('.login-toast', {
       hasText: 'Invalid email or password',
     });
+    const emailField = page
+      .getByLabel('Email')
+      .locator('xpath=ancestor::mat-form-field');
+    const passwordField = page
+      .getByLabel('Password')
+      .locator('xpath=ancestor::mat-form-field');
+
     await expect(errorToast).toBeVisible();
+    await expect(emailField).toHaveClass(/mat-form-field-invalid/);
+    await expect(passwordField).toHaveClass(/mat-form-field-invalid/);
+    await expect(page.getByLabel('Email')).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
+    await expect(page.getByLabel('Password')).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
+    const credentialsError = page.locator('mat-error', {
+      hasText: 'Invalid email or password',
+    });
+    await expect(credentialsError).toBeVisible();
     await expect(page.getByRole('button', { name: 'Login' })).toBeEnabled();
     await expect(page.locator('mat-spinner')).toHaveCount(0);
     await expect(errorToast).toBeHidden({ timeout: 3000 });
+    await expect(credentialsError).toBeVisible();
+
+    await page.getByLabel('Email').fill(`updated-${Date.now()}@example.com`);
+    await expect(credentialsError).toBeHidden();
+    await expect(emailField).not.toHaveClass(/mat-form-field-invalid/);
+    await expect(passwordField).not.toHaveClass(/mat-form-field-invalid/);
   });
 });

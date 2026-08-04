@@ -1,7 +1,7 @@
 import { Route } from '@angular/router';
 import { provideEffects } from '@ngrx/effects';
 import { provideState } from '@ngrx/store';
-import { authGuard, guestGuard } from './auth.guard';
+import { adminGuard, authGuard, guestGuard } from './auth.guard';
 import { PublicCvsEffects } from './home/state/public-cvs.effects';
 import { publicCvsFeature } from './home/state/public-cvs.reducer';
 import { pendingChangesGuard } from './cv/cv-editor/pending-changes.guard';
@@ -64,7 +64,7 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'users',
-    canActivate: [authGuard],
+    canActivate: [authGuard, adminGuard],
     loadComponent: () =>
       import('./users-list/users-list.component').then(
         (m) => m.UsersListComponent,

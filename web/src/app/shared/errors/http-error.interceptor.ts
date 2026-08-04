@@ -21,7 +21,7 @@ export const httpErrorInterceptor: HttpInterceptorFn = (request, next) => {
         if (
           error.status === 401 &&
           accessToken &&
-          !request.url.endsWith('/users/login')
+          !request.url.endsWith('/auth/login')
         ) {
           auth.expireSession();
         }
